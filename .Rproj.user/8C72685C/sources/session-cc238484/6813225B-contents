@@ -21,7 +21,11 @@ leaflet() %>%
     color      = "white",
     weight     = 1,
     popup      = ~paste0(
+      "<b>Taxonomic Order:</b> ", taxorder, "<br>",
+      "<b>Taxonomic  sub-Order:</b> ", taxsuborder, "<br>",
       "<b>MUKEY:</b> ", MUKEY, "<br>",
       "<b>Component:</b> ", compname
     )
   )
+
+#run names(soil_polygons) to get the component terms
