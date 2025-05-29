@@ -12,6 +12,36 @@ monument_data <- st_read("CSNM_Polygons_with_Data.geojson", quiet = TRUE)
 cat("Original data dimensions:", nrow(monument_data), "rows,", ncol(monument_data), "columns\n")
 cat("Unique map units (MUKEY):", length(unique(monument_data$MUKEY)), "\n")
 
+# Check and fix coordinate system
+current_crs <- st_crs(monument_data)
+cat("Current CRS:", current_crs$input, "\n")
+
+# Transform to WGS84 (EPSG:4326) for web compatibility if needed
+if (current_crs$input != "EPSG:4326" && !is.na(current_crs$input)) {
+  cat("Transforming to WGS84 for web compatibility...\n")
+  monument_data <- st_transform(monument_data, 4326)
+  cat("Transformation complete. New CRS: EPSG:4326\n")
+} else if (is.na(current_crs$input)) {
+  cat("Warning: No CRS defined. Setting to WGS84...\n")
+  monument_data <- st_set_crs(monument_data, 4326)
+} else {
+  cat("Data already in WGS84\n")
+}
+
+# Verify the coordinates are reasonable
+bbox <- st_bbox(monument_data)
+cat("Coordinates - Lat:", round(bbox["ymin"], 4), "to", round(bbox["ymax"], 4),
+    "Lng:", round(bbox["xmin"], 4), "to", round(bbox["xmax"], 4), "\n")
+
+# Check if coordinates are reasonable for Oregon/California border
+if (bbox["ymin"] >= 40 && bbox["ymax"] <= 48 &&
+    bbox["xmin"] >= -125 && bbox["xmax"] <= -115) {
+  cat("✓ Coordinates look correct for the Cascade-Siskiyou region!\n")
+} else {
+  cat("⚠ Warning: Coordinates may be incorrect for CSNM region\n")
+  cat("Expected roughly: Lat 42-43, Lng -122 to -123\n")
+}
+
 # Check what we're working with
 cat("\nSample of majcompflag values:\n")
 print(table(monument_data$majcompflag, useNA = "ifany"))
@@ -81,13 +111,19 @@ if (non_major_kept > 0) {
   print(examples)
 }
 
-# Write the filtered GeoJSON
+# Write the filtered GeoJSON (ensuring WGS84)
 output_filename <- "CSNM_Polygons_MajorOnly.geojson"
 cat("\nWriting filtered data to:", output_filename, "\n")
 
+# Ensure the output is definitely in WGS84
+if (st_crs(filtered_data)$input != "EPSG:4326") {
+  cat("Final coordinate system check - converting to WGS84...\n")
+  filtered_data <- st_transform(filtered_data, 4326)
+}
+
 st_write(filtered_data, output_filename, delete_dsn = TRUE)
 
-cat("Export complete!\n")
+cat("Export complete! Output is in WGS84 (EPSG:4326) format.\n")
 cat("Original file size:", file.size("CSNM_Polygons_with_Data.geojson"), "bytes\n")
 cat("Filtered file size:", file.size(output_filename), "bytes\n")
 
@@ -116,6 +152,8 @@ cat("\nSummary saved to: CSNM_MajorComponents_Summary.csv\n")
 cat("\n=== FILTERING COMPLETE ===\n")
 cat("Input file: CSNM_Polygons_with_Data.geojson\n")
 cat("Output file:", output_filename, "\n")
+cat("Output CRS: EPSG:4326 (WGS84) - Ready for web mapping!\n")
 cat("Rows before filtering:", nrow(monument_data), "\n")
 cat("Rows after filtering:", nrow(filtered_data), "\n")
 cat("Reduction:", nrow(monument_data) - nrow(filtered_data), "rows removed\n")
+cat("File is now compatible with geojson.io, Leaflet, and other web mapping tools!\n")

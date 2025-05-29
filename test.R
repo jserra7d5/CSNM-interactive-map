@@ -1,163 +1,67 @@
-library(shiny)
+# Barebones Leaflet Map for CSNM Major Soil Components
+
+# Load libraries
 library(leaflet)
 library(sf)
-library(raster)
-library(httr)
-library(jsonlite)
-library(DT)
-library(shinydashboard)
-library(plotly)
+library(RColorBrewer)
 
-ui <- dashboardPage(
-  dashboardHeader(title = "Cascade-Siskiyou Soil Explorer"),
-  
-  dashboardSidebar(
-    sidebarMenu(
-      menuItem("Interactive Map", tabName = "map"),
-      menuItem("Soil Properties", tabName = "properties"),
-      menuItem("Data Export", tabName = "export")
-    ),
-    
-    # Data source selection
-    checkboxGroupInput("data_sources",
-                       "Data Sources:",
-                       choices = list(
-                         "SSURGO (SoilWeb)" = "ssurgo",
-                         "SoilGrids 250m" = "soilgrids",
-                         "Soil Explorer" = "soil_explorer"
-                       ),
-                       selected = c("ssurgo", "soilgrids")
-    ),
-    
-    # Property selection
-    selectInput("soil_property",
-                "Soil Property:",
-                choices = list(
-                  "Soil Classification" = "classification",
-                  "pH" = "ph",
-                  "Organic Carbon" = "oc",
-                  "Bulk Density" = "bd",
-                  "Clay Content" = "clay",
-                  "Sand Content" = "sand"
-                )
-    )
-  ),
-  
-  dashboardBody(
-    tabItems(
-      tabItem(tabName = "map",
-              fluidRow(
-                box(width = 12, status = "primary",
-                    leafletOutput("soil_map", height = "600px")
-                )
-              ),
-              fluidRow(
-                box(width = 6, title = "Point Information",
-                    verbatimTextOutput("point_info")
-                ),
-                box(width = 6, title = "Soil Profile",
-                    plotlyOutput("soil_profile")
-                )
-              )
-      )
-    )
-  )
-)
+# Load data
+soil_data <- st_read("CSNM_Polygons_MajorOnly.geojson", quiet = TRUE)
 
-server <- function(input, output, session) {
-  
-  # Initialize map
-  output$soil_map <- renderLeaflet({
-    leaflet() %>%
-      addTiles() %>%
-      setView(lng = -122.5, lat = 42.0, zoom = 11) %>%
-      
-      # Add monument boundary
-      addPolygons(
-        data = monument_boundary,
-        fillOpacity = 0.1,
-        weight = 2,
-        color = "red"
-      ) %>%
-      
-      # Add click event
-      htmlwidgets::onRender("
-        function(el, x) {
-          this.on('click', function(e) {
-            Shiny.setInputValue('map_click', {
-              lat: e.latlng.lat,
-              lng: e.latlng.lng
-            });
-          });
-        }
-      ")
-  })
-  
-  # Add WMS layers based on selection
-  observe({
-    leafletProxy("soil_map") %>%
-      clearGroup("soil_layers")
-    
-    if("ssurgo" %in% input$data_sources) {
-      leafletProxy("soil_map") %>%
-        addWMSTiles(
-          baseUrl = "https://casoilresource.lawr.ucdavis.edu/cgi-bin/mapserv",
-          layers = "soilmu_a",
-          options = WMSTileOptions(
-            format = "image/png",
-            transparent = TRUE,
-            map = "/var/www/html/soilweb/mapfile/soilweb.map"
-          ),
-          group = "soil_layers"
-        )
-    }
-    
-    if("soilgrids" %in% input$data_sources) {
-      # Add SoilGrids WMS layer
-      leafletProxy("soil_map") %>%
-        addWMSTiles(
-          baseUrl = "https://maps.isric.org/mapserv",
-          layers = paste0("phh2o_0-5cm_mean"),
-          options = WMSTileOptions(
-            format = "image/png",
-            transparent = TRUE,
-            map = "/map/phh2o.map"
-          ),
-          group = "soil_layers"
-        )
-    }
-  })
-  
-  # Handle map clicks
-  observeEvent(input$map_click, {
-    lat <- input$map_click$lat
-    lng <- input$map_click$lng
-    
-    # Query all selected data sources
-    soil_data <- query_soil_data(lat, lng, input$data_sources)
-    
-    output$point_info <- renderText({
-      paste0(
-        "Coordinates: ", round(lat, 4), ", ", round(lng, 4), "\n",
-        "SSURGO Map Unit: ", soil_data$ssurgo$muname, "\n",
-        "Soil Series: ", soil_data$ssurgo$compname, "\n",
-        "pH (0-5cm): ", soil_data$soilgrids$ph_0_5, "\n",
-        "Organic Carbon: ", soil_data$soilgrids$oc_0_5, " g/kg"
-      )
-    })
-  })
+# Find soil order column and unique values
+if ("taxorder" %in% names(soil_data)) {
+  color_column <- "taxorder"
+} else {
+  order_cols <- names(soil_data)[grepl("order|tax", names(soil_data), ignore.case = TRUE)]
+  color_column <- order_cols[1]
 }
 
-query_soil_data <- function(lat, lng, sources) {
-  results <- list()
-  
-  if("ssurgo" %in% sources) {
-    results$ssurgo <- query_ssurgo(lat, lng)
-  }
-  
-  if("soilgrids" %in% sources) {
-    results$soilgrids <- query_soilgrids(lat, lng)
-  }
-  
-  return(results)
+unique_orders <- unique(soil_data[[color_column]])
+unique_orders <- unique_orders[!is.na(unique_orders) & unique_orders != ""]
+
+# Create color palette
+n_colors <- length(unique_orders)
+if (n_colors <= 12) {
+  colors <- RColorBrewer::brewer.pal(min(n_colors, 12), "Set3")
+} else {
+  colors <- rainbow(n_colors)
 }
+
+pal <- colorFactor(palette = colors, domain = unique_orders, na.color = "gray")
+
+# Get map center
+bbox <- st_bbox(soil_data)
+center_lat <- mean(c(bbox["ymin"], bbox["ymax"]))
+center_lng <- mean(c(bbox["xmin"], bbox["xmax"]))
+
+# Create map
+leaflet(soil_data) %>%
+  addProviderTiles(providers$Esri.WorldTerrain) %>%
+  addPolygons(
+    fillColor = ~pal(get(color_column)),
+    fillOpacity = 0.7,
+    color = "white",
+    weight = 1,
+    highlightOptions = highlightOptions(
+      weight = 3,
+      color = "yellow",
+      fillOpacity = 0.9,
+      bringToFront = TRUE
+    ),
+    popup = ~paste0(
+      "<strong>MUKEY:</strong> ", 
+      if ("MUKEY" %in% names(soil_data)) MUKEY else "N/A", "<br>",
+      "<strong>Component:</strong> ", 
+      if ("compname" %in% names(soil_data)) compname else "N/A", "<br>",
+      "<strong>Soil Order:</strong> ", get(color_column), "<br>",
+      "<strong>Percentage:</strong> ", 
+      if ("comppct_r" %in% names(soil_data)) paste0(comppct_r, "%") else "N/A"
+    )
+  ) %>%
+  addLegend(
+    pal = pal,
+    values = ~get(color_column),
+    title = "Soil Orders",
+    position = "bottomright"
+  ) %>%
+  setView(lng = center_lng, lat = center_lat, zoom = 11)
