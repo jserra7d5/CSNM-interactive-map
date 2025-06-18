@@ -173,8 +173,6 @@ create_main_map <- function(app_data) {
       debug_polygon_data(app_data$polygons)
       map <- add_polygon_layers(map, app_data$polygons)
       cat("Polygons added to map successfully\n")
-    } else {
-      cat("WARNING: No polygon data available\n")
     }
     
     # Add raster layers

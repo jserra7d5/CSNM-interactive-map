@@ -1,8 +1,16 @@
 # map_utils.R - Map and Spatial Utility Functions
 
+# Cache for soil order palette
+.soil_palette_cache <- NULL
+
 #' Create soil order color palette function
 #' @return colorFactor function for soil orders
 create_soil_order_palette <- function() {
+  # Return cached palette if available
+  if (!is.null(.soil_palette_cache)) {
+    return(.soil_palette_cache)
+  }
+  
   # Get all unique soil orders from the data, including any unexpected ones
   all_orders <- unique(c(names(SOIL_ORDER_COLORS), "Unknown"))
   
@@ -10,8 +18,10 @@ create_soil_order_palette <- function() {
   colors <- SOIL_ORDER_COLORS[all_orders]
   names(colors) <- all_orders
   
-  # Use na.color for any values not in our defined palette
-  colorFactor(colors, domain = all_orders, na.color = "#808080")
+  # Create and cache the palette
+  .soil_palette_cache <<- colorFactor(colors, domain = all_orders, na.color = "#808080")
+  
+  return(.soil_palette_cache)
 }
 
 #' Extract soil profile data at a point - optimized version
@@ -143,32 +153,36 @@ add_polygon_layers <- function(map, polygons) {
 #' @return leaflet map object with raster layers added
 add_raster_layers <- function(map, raster_data) {
   # Add OC layers
-  if (!is.null(raster_data$oc)) {
+  if (!is.null(raster_data$oc) && length(raster_data$oc) > 0) {
     cat("Adding", length(raster_data$oc), "OC raster layers\n")
-    for (i in 1:length(raster_data$oc)) {
-      map <- map %>%
-        addRasterImage(
-          raster_data$oc[[i]]$raster,
-          colors = raster_data$oc[[i]]$palette,
-          opacity = 0.8,
-          group = paste0("oc_", i),
-          project = FALSE
-        )
+    for (i in seq_along(raster_data$oc)) {
+      if (!is.null(raster_data$oc[[i]])) {
+        map <- map %>%
+          addRasterImage(
+            raster_data$oc[[i]]$raster,
+            colors = raster_data$oc[[i]]$palette,
+            opacity = 0.8,
+            group = paste0("oc_", i),
+            project = FALSE
+          )
+      }
     }
   }
   
   # Add pH layers
-  if (!is.null(raster_data$ph)) {
+  if (!is.null(raster_data$ph) && length(raster_data$ph) > 0) {
     cat("Adding", length(raster_data$ph), "pH raster layers\n")
-    for (i in 1:length(raster_data$ph)) {
-      map <- map %>%
-        addRasterImage(
-          raster_data$ph[[i]]$raster,
-          colors = raster_data$ph[[i]]$palette,
-          opacity = 0.8,
-          group = paste0("ph_", i),
-          project = FALSE
-        )
+    for (i in seq_along(raster_data$ph)) {
+      if (!is.null(raster_data$ph[[i]])) {
+        map <- map %>%
+          addRasterImage(
+            raster_data$ph[[i]]$raster,
+            colors = raster_data$ph[[i]]$palette,
+            opacity = 0.8,
+            group = paste0("ph_", i),
+            project = FALSE
+          )
+      }
     }
   }
   

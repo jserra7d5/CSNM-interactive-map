@@ -1,9 +1,18 @@
 # data_module.R - Data Loading and Processing Functions
 
+# Global cache for processed data
+.data_cache <- new.env()
+
 #' Load and prepare all spatial data
 #' @return List containing polygons, components, and raster data
 load_and_prepare_data <- function() {
   cat("Starting data loading process...\n")
+  
+  # Check if data is already cached
+  if (exists("app_data", envir = .data_cache)) {
+    cat("Using cached data...\n")
+    return(get("app_data", envir = .data_cache))
+  }
   
   # Load raster data
   raster_data <- load_raster_data()
@@ -11,17 +20,30 @@ load_and_prepare_data <- function() {
   # Load polygon data
   polygon_data <- load_polygon_data()
   
-  return(list(
+  # Create app data
+  app_data <- list(
     polygons = polygon_data$polygons,
     components = polygon_data$components,
     rasters = raster_data
-  ))
+  )
+  
+  # Cache the data
+  assign("app_data", app_data, envir = .data_cache)
+  
+  return(app_data)
 }
 
 #' Load and process multi-band raster stacks
 #' @return List containing processed OC and pH raster data
 load_raster_data <- function() {
   cat("Loading raster data...\n")
+  
+  # Enable parallel processing if available
+  if (requireNamespace("parallel", quietly = TRUE) && parallel::detectCores() > 1) {
+    n_cores <- max(1, parallel::detectCores() %/% 2)
+    raster::beginCluster(n_cores)
+    on.exit(raster::endCluster())
+  }
   
   raster_data <- list()
   
@@ -48,13 +70,15 @@ load_oc_rasters <- function() {
   
   cat("Processing OC stack with", nlayers(oc_stack), "bands\n")
   
-  # Reproject stack to Web Mercator
-  oc_proj <- projectRaster(oc_stack, crs = PROJECTION_CRS, method = "ngb")
+  # Reproject stack to Web Mercator - use bilinear for better performance
+  oc_proj <- projectRaster(oc_stack, crs = PROJECTION_CRS, method = "bilinear")
   
-  # Create individual processed layers for each depth
-  oc_layers <- list()
+  # Create individual processed layers for each depth - optimize memory usage
+  oc_layers <- vector("list", nlayers(oc_proj))
   for (i in 1:nlayers(oc_proj)) {
     oc_layers[[i]] <- process_oc_layer(oc_proj[[i]], i)
+    # Clear individual layer from memory after processing
+    oc_proj[[i]] <- NULL
   }
   
   return(oc_layers)
@@ -74,14 +98,16 @@ load_ph_rasters <- function() {
   
   cat("Processing pH stack with", nlayers(ph_stack), "bands\n")
   
-  # Reproject and convert pH (divide by 10 for decimal pH)
-  ph_proj <- projectRaster(ph_stack, crs = PROJECTION_CRS, method = "ngb")
+  # Reproject and convert pH (divide by 10 for decimal pH) - use bilinear for better performance
+  ph_proj <- projectRaster(ph_stack, crs = PROJECTION_CRS, method = "bilinear")
   ph_decimal <- ph_proj / 10
   
-  # Create individual processed layers for each depth
-  ph_layers <- list()
+  # Create individual processed layers for each depth - optimize memory usage
+  ph_layers <- vector("list", nlayers(ph_decimal))
   for (i in 1:nlayers(ph_decimal)) {
     ph_layers[[i]] <- process_ph_layer(ph_decimal[[i]], i)
+    # Clear individual layer from memory after processing
+    ph_decimal[[i]] <- NULL
   }
   
   return(ph_layers)
@@ -92,13 +118,15 @@ load_ph_rasters <- function() {
 #' @param depth_index Integer index for depth level
 #' @return List with processed raster, domain, and palette
 process_oc_layer <- function(layer, depth_index) {
-  values <- na.omit(getValues(layer))
-  unique_vals <- sort(unique(values))
+  # Use more efficient value extraction
+  values <- values(layer)
+  values <- values[!is.na(values)]
   
-  domain <- if(length(unique_vals) > 1) {
-    c(unique_vals[2], max(unique_vals))
+  # Optimize domain calculation
+  if (length(values) > 1) {
+    domain <- c(min(values), max(values))
   } else {
-    range(unique_vals)
+    domain <- range(values)
   }
   
   # Choose color palette based on depth
@@ -116,13 +144,15 @@ process_oc_layer <- function(layer, depth_index) {
 #' @param depth_index Integer index for depth level
 #' @return List with processed raster, domain, and palette
 process_ph_layer <- function(layer, depth_index) {
-  values <- na.omit(getValues(layer))
-  unique_vals <- sort(unique(values))
+  # Use more efficient value extraction
+  values <- values(layer)
+  values <- values[!is.na(values)]
   
-  domain <- if(length(unique_vals) > 1) {
-    c(unique_vals[2], max(unique_vals))
+  # Optimize domain calculation
+  if (length(values) > 1) {
+    domain <- c(min(values), max(values))
   } else {
-    range(unique_vals)
+    domain <- range(values)
   }
   
   return(list(
@@ -199,15 +229,24 @@ load_mapunit_table <- function() {
 #' @return sf object with soil polygon data
 load_soil_polygons <- function(mapunit_table) {
   tryCatch({
-    st_read(DATA_PATHS$soil_polygons, quiet = TRUE) %>%
+    # Load with optimized settings
+    polygons <- st_read(DATA_PATHS$soil_polygons, quiet = TRUE) %>%
       st_transform(4326) %>%
       st_cast("POLYGON") %>%
+      # Optimize data processing
       dplyr::mutate(
         MUKEY = as.character(MUKEY),
-        taxorder = ifelse(is.na(taxorder) | taxorder == "", "Unknown", taxorder)
+        taxorder = dplyr::case_when(
+          is.na(taxorder) | taxorder == "" ~ "Unknown",
+          TRUE ~ taxorder
+        )
       ) %>%
+      # Join with mapunit table
       dplyr::left_join(mapunit_table, by = "MUKEY") %>%
-      st_simplify(dTolerance = 0.0001)
+      # Simplify polygons for better performance
+      st_simplify(dTolerance = 0.0001, preserveTopology = TRUE)
+    
+    return(polygons)
   }, error = function(e) {
     warning("Could not load soil polygons: ", e$message)
     NULL
@@ -218,9 +257,11 @@ load_soil_polygons <- function(mapunit_table) {
 #' @param soil_polygons sf object with soil data
 #' @return Data frame with component information
 extract_component_info <- function(soil_polygons) {
+  # Use more efficient data extraction
   soil_polygons %>%
     st_drop_geometry() %>%
-    dplyr::distinct(MUKEY, compname, comppct_r, majcompflag, taxorder) %>%
+    dplyr::select(MUKEY, compname, comppct_r, majcompflag, taxorder) %>%
+    dplyr::distinct() %>%
     dplyr::filter(!is.na(MUKEY))
 }
 
@@ -228,10 +269,10 @@ extract_component_info <- function(soil_polygons) {
 #' @param component_info Data frame with component information
 #' @return Data frame with major taxonomic orders
 get_major_taxonomic_orders <- function(component_info) {
+  # Optimize the grouping and selection
   component_info %>%
     dplyr::group_by(MUKEY) %>%
-    dplyr::arrange(desc(majcompflag == "Yes"), desc(comppct_r)) %>%
-    dplyr::slice(1) %>%
+    dplyr::slice_max(order_by = comppct_r, n = 1, with_ties = FALSE) %>%
     dplyr::ungroup() %>%
     dplyr::select(MUKEY, major_taxorder = taxorder)
 }
