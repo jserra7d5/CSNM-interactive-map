@@ -22,8 +22,12 @@ create_sidebar <- function() {
     
     hr(),
     
-    create_layer_controls(),
-    create_boundary_controls(),
+    # Main controls - always show initially, hidden by server when needed
+    div(id = "main_controls",
+        create_layer_controls(),
+        create_boundary_controls()
+    ),
+    
     create_selection_info_panel()
   )
 }
@@ -85,15 +89,43 @@ create_boundary_controls <- function() {
 #' @return List of UI elements for selection info
 create_selection_info_panel <- function() {
   list(
-    conditionalPanel(
-      condition = "output.has_polygon_data && output.has_click_data",
-      hr(),
-      h5("Selected Point Info:"),
-      verbatimTextOutput("selection_info", placeholder = TRUE),
-      
-      hr(),
-      h5("Soil Profile:"),
-      plotlyOutput("soil_profile", height = "300px")
+    # Main view - show when not in profile view
+    div(id = "main_view",
+        conditionalPanel(
+          condition = "output.has_polygon_data && output.has_click_data",
+          hr(),
+          h5("Selected Point Info:"),
+          uiOutput("selection_info_formatted")
+        )
+    ),
+    
+    # Profile view - initially hidden, shown by server when needed
+    div(id = "profile_view", style = "display: none;",
+        hr(),
+        # Back button
+        actionButton("back_to_main", 
+                     label = HTML("<i class='fa fa-arrow-left'></i> Back to Map"), 
+                     class = "btn-primary btn-sm",
+                     style = "margin-bottom: 15px;"),
+        
+        h5("Soil Profile:"),
+        plotlyOutput("soil_profile", height = "300px"),
+        
+        hr(),
+        h5("NRCS Soil Series:"),
+        conditionalPanel(
+          condition = "output.has_nrcs_data == true",
+          plotOutput("nrcs_soil_profile", height = "400px")
+        ),
+        conditionalPanel(
+          condition = "output.has_nrcs_data == false",
+          div(
+            style = "text-align: center; padding: 20px; color: #666;",
+            icon("info-circle"),
+            br(), br(),
+            "Loading NRCS soil profile data..."
+          )
+        )
     )
   )
 }
@@ -102,6 +134,7 @@ create_selection_info_panel <- function() {
 #' @return dashboardBody object
 create_main_body <- function() {
   dashboardBody(
+    useShinyjs(),
     create_custom_css(),
     create_tab_items()
   )

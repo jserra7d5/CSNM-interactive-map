@@ -5,6 +5,7 @@
 suppressPackageStartupMessages({
   library(shiny)
   library(shinydashboard)
+  library(shinyjs)
   library(sf)
   library(leaflet)
   library(raster)
@@ -21,6 +22,7 @@ source("data_module.R")
 source("ui_module.R")
 source("map_utils.R")
 source("plot_utils.R")
+source("soil_aqp_module.R")
 source("server_module.R")
 
 # Define UI ----
