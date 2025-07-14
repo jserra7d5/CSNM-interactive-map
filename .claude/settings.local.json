@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:casoilresource.lawr.ucdavis.edu)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)"
+    ],
+    "deny": []
+  }
+}
