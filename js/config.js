@@ -22,6 +22,10 @@ const CONFIG = {
             ph: [
                 "phh2o_0.5cm_mean", "phh2o_5.15cm_mean", "phh2o_15.30cm_mean",
                 "phh2o_30.60cm_mean", "phh2o_60.100cm_mean", "phh2o_100.200cm_mean"
+            ],
+            meanTemp: [
+                "temp_0.5cm_mean", "temp_5.15cm_mean", "temp_15.30cm_mean",
+                "temp_30.60cm_mean", "temp_60.100cm_mean", "temp_100.200cm_mean"
             ]
         },
         depthsCm: [2.5, 10, 22.5, 45, 80, 150], // Mid-points for profile plotting
@@ -33,7 +37,8 @@ const CONFIG = {
                 shallow: ["#F5F5DC", "#DDD7AA", "#C19A6B", "#8B7355", "#5D4E37"],
                 deep: ["#F0F8FF", "#B0C4DE", "#4682B4", "#2F4F4F", "#1C1C1C"]
             },
-            ph: ["#0000FF", "#4169E1", "#00BFFF", "#32CD32", "#FFFF00", "#FFA500", "#FF4500", "#FF0000"]
+            ph: ["#0000FF", "#4169E1", "#00BFFF", "#32CD32", "#FFFF00", "#FFA500", "#FF4500", "#FF0000"],
+            meanTemp: ["#0000FF", "#4169E1", "#00BFFF", "#32CD32", "#FFFF00", "#FFA500", "#FF4500", "#FF0000"]
         }
     },
     
@@ -84,6 +89,7 @@ const CONFIG = {
     dataPaths: {
         ocRaster: "CSNM_OC_AllDepths.tif",
         phRaster: "CSNM_pH_AllDepths.tif",
+        meanTempRaster: "data/rasters/CSNM_MeanTemperature_PRISM.tif",
         mapunitTable: "data/Mapunit_OR_table.csv",
         soilPolygons: "CSNM_Polygons_WGS84.geojson", // Reprojected to WGS84
         boundaryPolygon: "data/CSNM_boundary_WGS84.geojson",
@@ -118,6 +124,11 @@ const CONFIG = {
             name: "OpenStreetMap",
             url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        },
+        terrain: {
+            name: "Terrain",
+            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+            attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
         },
         satellite: {
             name: "Satellite",

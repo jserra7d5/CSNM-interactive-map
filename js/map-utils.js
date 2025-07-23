@@ -42,8 +42,8 @@ class MapManager {
         // Create base layers
         this.createBaseLayers();
         
-        // Set default base layer
-        this.setBaseLayer('osm');
+        // Set default base layer to terrain
+        this.setBaseLayer('terrain');
         
         // Setup event listeners
         this.setupEventListeners();
@@ -53,17 +53,22 @@ class MapManager {
     
     // Create base map layers
     createBaseLayers() {
+        console.log('Creating base layers...');
         Object.entries(CONFIG.baseLayers).forEach(([key, config]) => {
+            console.log(`Creating layer: ${key} with URL: ${config.url}`);
             const layer = L.tileLayer(config.url, {
                 attribution: config.attribution,
                 maxZoom: 18
             });
             this.layers.base.set(key, layer);
         });
+        console.log('Base layers created:', Array.from(this.layers.base.keys()));
     }
     
     // Set base layer
     setBaseLayer(layerKey) {
+        console.log(`Setting base layer to: ${layerKey}`);
+        
         // Remove current base layer
         if (this.currentBaseLayer) {
             this.map.removeLayer(this.currentBaseLayer);
@@ -74,6 +79,10 @@ class MapManager {
         if (newLayer) {
             newLayer.addTo(this.map);
             this.currentBaseLayer = newLayer;
+            console.log(`Base layer ${layerKey} added successfully`);
+        } else {
+            console.error(`Base layer ${layerKey} not found!`);
+            console.log('Available layers:', Array.from(this.layers.base.keys()));
         }
     }
     
@@ -676,7 +685,7 @@ class MapManager {
     }
     
     // Update legend and layer visibility based on current layer type
-    updateLayers(layerType, depth = 0) {
+    async updateLayers(layerType, depth = 0) {
         const legendElement = document.getElementById('soil-legend');
         const soilLayer = this.layers.polygons.get('soil');
         const permanentBoundaryLayer = this.layers.polygons.get('permanent-boundaries');
@@ -709,7 +718,7 @@ class MapManager {
             if (legendElement) {
                 this.showSoilOrderLegend();
             }
-        } else if (layerType === 'oc' || layerType === 'ph' || layerType === 'landcover' || layerType === 'elevation') {
+        } else if (layerType === 'oc' || layerType === 'ph' || layerType === 'meanTemp' || layerType === 'landcover' || layerType === 'elevation') {
             // Hide soil polygons and permanent boundaries for raster layers
             if (soilLayer && this.map.hasLayer(soilLayer)) {
                 this.map.removeLayer(soilLayer);
@@ -719,7 +728,7 @@ class MapManager {
             }
             
             // Load raster layer first, then show appropriate legend
-            this.loadRasterLayer(layerType, depth);
+            await this.loadRasterLayer(layerType, depth);
         } else {
             // Hide soil-related layers for satellite/other, but keep monument boundary
             if (soilLayer && this.map.hasLayer(soilLayer)) {
@@ -738,6 +747,19 @@ class MapManager {
     async loadRasterLayer(property, depth) {
         console.log(`Loading ${property} raster for depth level ${depth}`);
         
+        // Show loading screen for elevation
+        if (property === 'elevation') {
+            // Find the UI controller through the global app instance
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) {
+                const loadingText = loadingElement.querySelector('span');
+                if (loadingText) {
+                    loadingText.textContent = 'Loading elevation and hillshade data...';
+                }
+                loadingElement.style.display = 'flex';
+            }
+        }
+        
         // For elevation, create hillshade background first
         if (property === 'elevation') {
             await this.createHillshadeBackground();
@@ -745,6 +767,14 @@ class MapManager {
         
         // Create either a real TIFF layer or fall back to mock data
         const rasterInfo = await this.createRasterLayer(property, depth);
+        
+        // Hide loading screen for elevation after raster is added
+        if (property === 'elevation') {
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+        }
         
         // Show appropriate legend after raster is loaded
         if (rasterInfo && rasterInfo.dataRange) {
@@ -769,9 +799,19 @@ class MapManager {
                     [42.3, -122.3]   // Northeast corner
                 ];
                 const rasterLayer = rasterManager.createMockRasterOverlay(property, depth, bounds);
+                let dataRange;
+                if (property === 'oc') {
+                    dataRange = { min: 0, max: 20 };
+                } else if (property === 'ph') {
+                    dataRange = { min: 4.0, max: 8.5 };
+                } else if (property === 'meanTemp') {
+                    dataRange = { min: 8.0, max: 18.0 };
+                } else {
+                    dataRange = { min: 40, max: 80 };
+                }
                 rasterResult = {
                     layer: rasterLayer,
-                    dataRange: property === 'oc' ? { min: 0, max: 20 } : { min: 40, max: 80 } // Mock ranges
+                    dataRange: dataRange
                 };
             }
             
@@ -860,14 +900,28 @@ class MapManager {
             // Show elevation gradient legend
             this.showElevationLegend(legendElement, legendItems, dataRange);
         } else {
-            // Show continuous raster legend for OC and pH
+            // Show continuous raster legend for OC, pH, and Mean Temperature
             const depthLabel = CONFIG.depthLevels.labels[depth];
-            const propertyName = property === 'oc' ? 'Soil Organic Carbon' : 'Soil pH';
+            let propertyName;
+            if (property === 'oc') {
+                propertyName = 'Soil Organic Carbon';
+            } else if (property === 'ph') {
+                propertyName = 'Soil pH';
+            } else if (property === 'meanTemp') {
+                propertyName = 'Mean Temperature';
+            }
             
             // Set legend title with units
             const legendTitle = legendElement.querySelector('h4');
             if (legendTitle) {
-                const units = property === 'oc' ? '[dg/kg]' : '[pH]';
+                let units;
+                if (property === 'oc') {
+                    units = '[g/kg]';
+                } else if (property === 'ph') {
+                    units = '[pH]';
+                } else if (property === 'meanTemp') {
+                    units = '[°C]';
+                }
                 legendTitle.textContent = `${propertyName} (${depthLabel}) ${units}`;
             }
             

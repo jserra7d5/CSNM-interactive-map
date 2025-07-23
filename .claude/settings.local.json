@@ -3,7 +3,8 @@
     "allow": [
       "WebFetch(domain:casoilresource.lawr.ucdavis.edu)",
       "Bash(mkdir:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

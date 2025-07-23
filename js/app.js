@@ -186,21 +186,23 @@ class SoilExplorerApp {
     }
     
     // Handle map type changes
-    handleMapTypeChange(detail) {
+    async handleMapTypeChange(detail) {
         const { mapType, depth } = detail;
         
         console.log(`Map type changed to: ${mapType}`);
         
-        // Update base layer if switching to/from satellite
+        // Update base layer based on map type
         if (mapType === 'satellite') {
             this.mapManager.setBaseLayer('satellite');
+        } else if (mapType === 'elevation') {
+            this.mapManager.setBaseLayer('topo');
         } else {
-            this.mapManager.setBaseLayer('osm');
+            this.mapManager.setBaseLayer('terrain');
         }
         
         // Update layers and legend visibility
         const currentDepth = this.uiController.getCurrentState().currentDepth;
-        this.mapManager.updateLayers(mapType, currentDepth);
+        await this.mapManager.updateLayers(mapType, currentDepth);
         
         // Raster layers are now handled in updateLayers method
     }

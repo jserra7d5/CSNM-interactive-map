@@ -314,6 +314,10 @@ class DataLoader {
                 // pH often increases slightly with depth
                 value = 6.0 + (depth / 100) * 0.5 + (Math.random() - 0.5) * 0.8;
                 value = Math.max(4.0, Math.min(8.5, value));
+            } else if (property === 'meanTemp') {
+                // Mean temperature typically increases with depth (geothermal gradient)
+                value = 10.0 + (depth / 50) * 2.0 + (Math.random() - 0.5) * 1.5;
+                value = Math.max(8.0, Math.min(18.0, value));
             } else {
                 value = Math.random() * 10;
             }

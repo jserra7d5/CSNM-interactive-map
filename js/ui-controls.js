@@ -174,7 +174,7 @@ class UIController {
         this.currentMapType = mapType;
         
         // Show/hide depth controls based on map type
-        const showDepthControls = mapType === 'oc' || mapType === 'ph';
+        const showDepthControls = mapType === 'oc' || mapType === 'ph' || mapType === 'meanTemp';
         
         if (this.elements.depthControls) {
             this.elements.depthControls.style.display = showDepthControls ? 'block' : 'none';
@@ -182,7 +182,14 @@ class UIController {
         
         // Update depth label
         if (this.elements.depthLabel && showDepthControls) {
-            const label = mapType === 'oc' ? 'Organic Carbon Depth:' : 'pH Depth:';
+            let label;
+            if (mapType === 'oc') {
+                label = 'Organic Carbon Depth:';
+            } else if (mapType === 'ph') {
+                label = 'pH Depth:';
+            } else if (mapType === 'meanTemp') {
+                label = 'Mean Temperature Depth:';
+            }
             this.elements.depthLabel.textContent = label;
         }
         

@@ -166,6 +166,30 @@ class RasterManager {
                     const hillshadeRasters = await hillshadeImage.readRasters();
                     hillshadeData = hillshadeRasters[0];
                     console.log('Hillshade data loaded successfully');
+                    
+                    // Debug: Check hillshade value range
+                    try {
+                        const hillshadeValues = hillshadeData.filter(val => val !== null && !isNaN(val));
+                        const uniqueValues = [...new Set(hillshadeValues)].sort((a, b) => a - b);
+                        console.log('Hillshade unique values (first 10):', uniqueValues.slice(0, 10));
+                        console.log('Hillshade unique values (last 10):', uniqueValues.slice(-10));
+                        console.log('Hillshade min:', Math.min(...hillshadeValues));
+                        console.log('Hillshade max:', Math.max(...hillshadeValues));
+                        
+                        // Count how many pixels have specific values that might be no-data
+                        const valueCounts = {};
+                        hillshadeData.forEach(val => {
+                            if (val !== null && !isNaN(val)) {
+                                valueCounts[val] = (valueCounts[val] || 0) + 1;
+                            }
+                        });
+                        
+                        // Show most common values
+                        const sortedCounts = Object.entries(valueCounts).sort((a, b) => b[1] - a[1]);
+                        console.log('Most common hillshade values:', sortedCounts.slice(0, 10).map(([val, count]) => `${val}: ${count} pixels`));
+                    } catch (debugError) {
+                        console.error('Error in hillshade debugging:', debugError);
+                    }
                 }
             } catch (error) {
                 console.warn('Could not load hillshade data:', error.message);
@@ -247,6 +271,8 @@ class RasterManager {
         const imageData = ctx.createImageData(width, height);
         
         // Color the pixels based on values
+        let hillshadeDebugCount = 0;
+        let hillshadeStats = { processed: 0, noData: 0, clamped: 0, validRange: 0 };
         for (let i = 0; i < data.length; i++) {
             const value = data[i];
             
@@ -278,13 +304,60 @@ class RasterManager {
                 // For elevation with hillshade, blend the colors
                 if (property === 'elevation' && hillshadeData && hillshadeData[i] !== undefined) {
                     const hillshadeValue = hillshadeData[i];
-                    const blendedRgb = this.blendWithHillshade(rgb, hillshadeValue);
                     
-                    const pixelIndex = i * 4;
-                    imageData.data[pixelIndex] = blendedRgb.r;     // Red
-                    imageData.data[pixelIndex + 1] = blendedRgb.g; // Green
-                    imageData.data[pixelIndex + 2] = blendedRgb.b; // Blue
-                    imageData.data[pixelIndex + 3] = 180;          // Slightly more transparent for blending
+                    // More comprehensive no-data detection for hillshade based on research
+                    // Hillshade should be 0-255 grayscale, but edge artifacts can create extreme values
+                    // Common issues: values promoted to 16-bit (like 256), negative values, compression artifacts
+                    const hillshadeIsNoData = hillshadeValue === null || 
+                                            hillshadeValue === undefined || 
+                                            isNaN(hillshadeValue) || 
+                                            hillshadeValue === 0 ||          // Common NoData for hillshade
+                                            hillshadeValue === 255 ||        // Sometimes used as NoData
+                                            hillshadeValue === 256 ||        // 16-bit promoted NoData
+                                            hillshadeValue === -1 ||         // Negative NoData
+                                            hillshadeValue === -9999 ||      // Standard NoData
+                                            hillshadeValue === -3.4028235e+38 || // Float32 NoData
+                                            hillshadeValue < 0 ||            // Any negative value
+                                            hillshadeValue > 255;            // Any value above 8-bit range
+                    
+                    // Clamp valid hillshade values to 0-255 range to prevent display artifacts
+                    let clampedHillshade = hillshadeValue;
+                    if (!hillshadeIsNoData) {
+                        clampedHillshade = Math.max(0, Math.min(255, hillshadeValue));
+                    }
+                    
+                    // Track hillshade statistics
+                    hillshadeStats.processed++;
+                    if (hillshadeIsNoData) {
+                        hillshadeStats.noData++;
+                    } else if (clampedHillshade !== hillshadeValue) {
+                        hillshadeStats.clamped++;
+                    } else {
+                        hillshadeStats.validRange++;
+                    }
+                    
+                    // Debug: log first few problematic pixels and some random samples
+                    if (hillshadeDebugCount < 20 && (hillshadeIsNoData || clampedHillshade !== hillshadeValue || i % 100000 === 0)) {
+                        console.log(`Pixel ${i}: hillshade=${hillshadeValue}, isNoData=${hillshadeIsNoData}, clamped=${clampedHillshade}, elevation=${value}`);
+                        hillshadeDebugCount++;
+                    }
+                    
+                    if (!hillshadeIsNoData) {
+                        const blendedRgb = this.blendWithHillshade(rgb, clampedHillshade);
+                        
+                        const pixelIndex = i * 4;
+                        imageData.data[pixelIndex] = blendedRgb.r;     // Red
+                        imageData.data[pixelIndex + 1] = blendedRgb.g; // Green
+                        imageData.data[pixelIndex + 2] = blendedRgb.b; // Blue
+                        imageData.data[pixelIndex + 3] = 230;          // Higher opacity (0.9 * 255 = 230)
+                    } else {
+                        // If hillshade is no-data, make this pixel transparent even if elevation is valid
+                        const pixelIndex = i * 4;
+                        imageData.data[pixelIndex] = 0;     // Red
+                        imageData.data[pixelIndex + 1] = 0; // Green
+                        imageData.data[pixelIndex + 2] = 0; // Blue
+                        imageData.data[pixelIndex + 3] = 0; // Alpha (fully transparent)
+                    }
                 } else {
                     // Debug first few pixels for land cover
                     if (property === 'landcover' && i < 5) {
@@ -302,6 +375,11 @@ class RasterManager {
         
         // Put image data on canvas
         ctx.putImageData(imageData, 0, 0);
+        
+        // Log hillshade statistics if elevation was processed
+        if (property === 'elevation' && hillshadeStats.processed > 0) {
+            console.log('Hillshade processing summary:', hillshadeStats);
+        }
         
         // Create Leaflet canvas overlay
         const bounds = [
@@ -444,12 +522,16 @@ class RasterManager {
             return `data/rasters/oc/CSNM_OC_${depthSuffix}.tif`;
         } else if (property === 'ph') {
             return `data/rasters/ph/CSNM_pH_${depthSuffix}.tif`;
+        } else if (property === 'meanTemp') {
+            // Mean temperature uses a single file, not depth-specific files
+            return CONFIG.dataPaths.meanTempRaster;
         }
         
         // Fallback to original config paths
         const filenames = {
             'oc': CONFIG.dataPaths.ocRaster,
             'ph': CONFIG.dataPaths.phRaster,
+            'meanTemp': CONFIG.dataPaths.meanTempRaster,
             'landcover': CONFIG.dataPaths.landCover,
             'elevation': CONFIG.dataPaths.elevation
         };
@@ -601,6 +683,28 @@ class RasterManager {
                 const intensity = Math.abs(normalized - 0.5) / 0.17; // Distance from center
                 return `rgb(50, ${Math.floor(150 + 105 * (1 - intensity))}, 50)`;
             }
+        } else if (property === 'meanTemp') {
+            // Mean temperature uses blue (cold) to red (hot) color scheme
+            const range = max - min;
+            const normalized = (value - min) / range; // 0 to 1
+            
+            if (normalized < 0.25) {
+                // Cold: blue to cyan
+                const intensity = normalized / 0.25;
+                return `rgb(${Math.floor(0 + 65 * intensity)}, ${Math.floor(105 * intensity)}, ${Math.floor(255 - 40 * intensity)})`;
+            } else if (normalized < 0.5) {
+                // Cool: cyan to green
+                const intensity = (normalized - 0.25) / 0.25;
+                return `rgb(${Math.floor(65 - 15 * intensity)}, ${Math.floor(105 + 100 * intensity)}, ${Math.floor(215 - 165 * intensity)})`;
+            } else if (normalized < 0.75) {
+                // Warm: green to yellow
+                const intensity = (normalized - 0.5) / 0.25;
+                return `rgb(${Math.floor(50 + 205 * intensity)}, ${Math.floor(205 + 50 * intensity)}, ${Math.floor(50 - 50 * intensity)})`;
+            } else {
+                // Hot: yellow to red
+                const intensity = (normalized - 0.75) / 0.25;
+                return `rgb(${Math.floor(255)}, ${Math.floor(255 - 255 * intensity)}, ${Math.floor(0)})`;
+            }
         }
         
         return '#888888';
@@ -611,6 +715,7 @@ class RasterManager {
         const units = {
             'oc': 'g/kg',
             'ph': 'pH units',
+            'meanTemp': '°C',
             'landcover': 'class',
             'elevation': 'meters'
         };
@@ -630,7 +735,7 @@ class RasterManager {
     
     // Check if raster data is available for a property
     isRasterAvailable(property) {
-        const availableRasters = ['oc', 'ph', 'landcover', 'elevation'];
+        const availableRasters = ['oc', 'ph', 'meanTemp', 'landcover', 'elevation'];
         return availableRasters.includes(property);
     }
     
@@ -648,6 +753,13 @@ class RasterManager {
                 name: 'Soil pH',
                 description: 'Soil pH (H2O)',
                 units: 'pH units',
+                source: 'SoilGrids 250m',
+                depths: CONFIG.depthLevels.labels
+            },
+            'meanTemp': {
+                name: 'Mean Temperature',
+                description: 'Mean annual soil temperature',
+                units: '°C',
                 source: 'SoilGrids 250m',
                 depths: CONFIG.depthLevels.labels
             },
