@@ -1,0 +1,14 @@
+serve.py
+server.log
+CSNM-interactive-map-OLD/
+*.pyc
+__pycache__/
+.DS_Store
+.git/
+.gitignore
+elevation_map_bug.png
+menu_example.png
+image.png
+MIGRATION_GUIDE.md
+recent_updates.md
+LATEST_UPDATES.md

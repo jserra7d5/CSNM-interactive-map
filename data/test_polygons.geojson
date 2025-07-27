@@ -1,0 +1,89 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "MUSYM": "ABC",
+        "taxorder": "Mollisols",
+        "compname": "Test Soil A",
+        "comppct_r": 75
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-122.48, 42.08],
+            [-122.46, 42.08],
+            [-122.46, 42.10],
+            [-122.48, 42.10],
+            [-122.48, 42.08]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "MUSYM": "DEF",
+        "taxorder": "Ultisols",
+        "compname": "Test Soil B",
+        "comppct_r": 65
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-122.46, 42.08],
+            [-122.44, 42.08],
+            [-122.44, 42.10],
+            [-122.46, 42.10],
+            [-122.46, 42.08]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "MUSYM": "GHI",
+        "taxorder": "Inceptisols",
+        "compname": "Test Soil C",
+        "comppct_r": 85
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-122.48, 42.10],
+            [-122.46, 42.10],
+            [-122.46, 42.12],
+            [-122.48, 42.12],
+            [-122.48, 42.10]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "MUSYM": "JKL",
+        "taxorder": "Vertisols",
+        "compname": "Test Soil D",
+        "comppct_r": 90
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-122.46, 42.10],
+            [-122.44, 42.10],
+            [-122.44, 42.12],
+            [-122.46, 42.12],
+            [-122.46, 42.10]
+          ]
+        ]
+      }
+    }
+  ]
+}

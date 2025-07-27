@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cascade-Siskiyou Soil Explorer</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <i class="fas fa-map"></i>
+                    Cascade-Siskiyou Soil Explorer
+                </h1>
+                <div class="header-controls">
+                    <button id="info-btn" class="btn btn-info">
+                        <i class="fas fa-info-circle"></i>
+                        Info
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-container">
+            <!-- Map Container -->
+            <main class="map-container">
+                <div id="map" class="map"></div>
+                
+                <!-- Dropdown Menu System -->
+                <div class="dropdown-menu-container">
+                    <!-- Menu 1: SSURGO DATA -->
+                    <div class="dropdown-menu" id="menu-ssurgo">
+                        <div class="dropdown-header" data-menu="ssurgo">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>SSURGO DATA</span>
+                        </div>
+                        <div class="dropdown-content">
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="ssurgo">
+                                <span class="radio-label">SoilWeb View</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Menu 2: SOIL CLASS & PROPERTIES -->
+                    <div class="dropdown-menu" id="menu-soil-properties">
+                        <div class="dropdown-header" data-menu="soil-properties">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>SOIL CLASS & PROPERTIES</span>
+                        </div>
+                        <div class="dropdown-content">
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="soil">
+                                <span class="radio-label">Soil Orders</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="oc">
+                                <span class="radio-label">Organic Carbon</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="ph">
+                                <span class="radio-label">Soil pH</span>
+                            </label>
+                            <!-- Future: Family Particle Size will go here -->
+                            
+                            <!-- Depth Controls -->
+                            <div class="depth-control-wrapper" id="depth-controls" style="display: none;">
+                                <label class="depth-label">Depth:</label>
+                                <select id="depth-selector" class="form-select">
+                                    <option value="0">0-5 cm</option>
+                                    <option value="1">5-15 cm</option>
+                                    <option value="2">15-30 cm</option>
+                                    <option value="3">30-60 cm</option>
+                                    <option value="4">60-100 cm</option>
+                                    <option value="5">100-200 cm</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Menu 3: SOIL FORMING FACTORS -->
+                    <div class="dropdown-menu" id="menu-forming-factors">
+                        <div class="dropdown-header" data-menu="forming-factors">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>SOIL FORMING FACTORS</span>
+                        </div>
+                        <div class="dropdown-content">
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="meanTemp">
+                                <span class="radio-label">Mean Temperature</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="landcover">
+                                <span class="radio-label">Land Cover</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="elevation">
+                                <span class="radio-label">Elevation</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="satellite" checked>
+                                <span class="radio-label">Satellite</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Menu 4: OVERLAYS -->
+                    <div class="dropdown-menu" id="menu-overlays">
+                        <div class="dropdown-header" data-menu="overlays">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>OVERLAYS</span>
+                        </div>
+                        <div class="dropdown-content">
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="show-boundaries">
+                                <span class="checkbox-label">Map Unit Boundaries</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="show-highways">
+                                <span class="checkbox-label">Highways</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="show-service-roads">
+                                <span class="checkbox-label">Service Roads</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="show-information-center">
+                                <span class="checkbox-label">Information Center</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SSURGO Info Panel (appears when clicking on map units) -->
+                <div id="ssurgo-info-panel" class="ssurgo-info-panel" style="display: none;">
+                    <div class="panel-header">
+                        <h3>Map Unit Information</h3>
+                        <button class="panel-close" id="close-ssurgo-panel">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="info-section">
+                            <div class="section-header" data-section="composition">
+                                <i class="fas fa-caret-down section-arrow"></i>
+                                <span>Map Unit Composition</span>
+                            </div>
+                            <div class="section-content" id="composition-content"></div>
+                        </div>
+                        <div class="info-section">
+                            <div class="section-header" data-section="mapunit">
+                                <i class="fas fa-caret-down section-arrow"></i>
+                                <span>Map Unit Data</span>
+                            </div>
+                            <div class="section-content" id="mapunit-content"></div>
+                        </div>
+                        <div class="info-section">
+                            <div class="section-header" data-section="metadata">
+                                <i class="fas fa-caret-down section-arrow"></i>
+                                <span>Survey Metadata</span>
+                            </div>
+                            <div class="section-content" id="metadata-content"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Landing Page Welcome Overlay -->
+                <div id="landing-overlay" class="landing-overlay">
+                    <div class="landing-content">
+                        <h1>Cascade-Siskiyou National Monument<br>Soil Explorer</h1>
+                        <p class="landing-description">
+                            Explore soil properties, classifications, and environmental factors across the monument's diverse landscape.
+                        </p>
+                        <p class="landing-instructions">
+                            Select a map from the menus on the left to begin exploring.
+                        </p>
+                        <button id="get-started-btn" class="btn btn-primary btn-lg">
+                            Get Started
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Map Overlays -->
+                <div id="soil-legend" class="map-legend" style="display: none;">
+                    <h4>Soil Orders</h4>
+                    <div id="legend-items" class="legend-items">
+                        <!-- Legend items will be dynamically generated -->
+                    </div>
+                </div>
+
+                <!-- Mouse Coordinates -->
+                <div id="mouse-coords" class="mouse-coords">
+                    <span id="coords-display">--, --</span>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="loading" class="loading-overlay" style="display: flex;">
+                    <div class="loading-content">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Loading soil data...</span>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Info Modal -->
+        <div id="info-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Dataset Information</h2>
+                    <button id="close-modal" class="modal-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h3>Data Sources</h3>
+                    <ul>
+                        <li>Soil Survey Geographic Database (SSURGO)</li>
+                        <li>SoilGrids 250m Resolution (ISRIC) - Multi-depth profiles</li>
+                        <li>USDA Soil Taxonomy Classification</li>
+                    </ul>
+                    
+                    <h3>Available Depths</h3>
+                    <ul>
+                        <li>0-5 cm</li>
+                        <li>5-15 cm</li>
+                        <li>15-30 cm</li>
+                        <li>30-60 cm</li>
+                        <li>60-100 cm</li>
+                        <li>100-200 cm</li>
+                    </ul>
+                    
+                    <h3>Map Layers</h3>
+                    <ul>
+                        <li><strong>Soil Orders:</strong> USDA Soil Taxonomy at the order level</li>
+                        <li><strong>Organic Carbon:</strong> Multiple depths, g/kg</li>
+                        <li><strong>Soil pH:</strong> Multiple depths, decimal units</li>
+                    </ul>
+                    
+                    <h3>Interactive Features</h3>
+                    <ul>
+                        <li>Click any location to see soil profiles</li>
+                        <li>Select different depths for raster visualization</li>
+                        <li>Toggle map unit boundaries</li>
+                        <li>View detailed soil component information</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <script src="https://unpkg.com/geotiff@2.1.3/dist-browser/geotiff.js" onload="console.log('GeoTIFF loaded:', typeof GeoTIFF)" onerror="console.error('Failed to load GeoTIFF')"></script>
+    <script>
+        // Additional check when page loads
+        window.addEventListener('load', function() {
+            console.log('Page loaded. GeoTIFF check:', {
+                'GeoTIFF': typeof GeoTIFF,
+                'window.GeoTIFF': typeof window.GeoTIFF,
+                'available': typeof GeoTIFF !== 'undefined' || typeof window.GeoTIFF !== 'undefined'
+            });
+        });
+    </script>
+    <script src="js/config.js"></script>
+    <script src="js/data-loader.js"></script>
+    <script src="js/raster-utils.js"></script>
+    <script src="js/map-utils.js"></script>
+    <script src="js/ui-controls.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

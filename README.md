@@ -1,146 +1,166 @@
-# Cascade-Siskiyou Soil Explorer - Refactored Structure
+# Cascade-Siskiyou Soil Explorer - JavaScript Version
 
-This document explains the new modular structure of the Shiny application for better maintainability and organization.
+A modern web-based application for exploring soil data in the Cascade-Siskiyou National Monument, translated from the original R Shiny application.
 
-## File Structure
+## Features Implemented
 
-```
-├── app.R                 # Main application entry point
-├── config.R              # Configuration and constants
-├── data_module.R          # Data loading and processing functions
-├── ui_module.R            # User interface components
-├── map_utils.R            # Map and spatial utilities
-├── plot_utils.R           # Plotting and visualization utilities
-├── server_module.R        # Server logic functions
-└── README.md             # This file
-```
+### ✅ Core Map Functionality
+- **Interactive Leaflet map** with multiple base layers (OpenStreetMap, Satellite, Topographic)
+- **Soil polygon display** with soil order classification and USDA-standard color coding
+- **Real TIFF raster support** using GeoTIFF.js for client-side processing
+- **Multi-depth soil data** with 6 depth levels (0-5cm to 100-200cm)
+- **Responsive sidebar** with collapsible controls and mobile support
+- **Mouse coordinate display** showing current lat/lng position
 
-## Module Descriptions
+### ✅ Data Layers
+- **Soil Orders**: Colored polygons with taxonomic classifications (Alfisols, Mollisols, etc.)
+- **Organic Carbon**: Enhanced 3-tier color scheme for better contrast between low/high values
+- **Soil pH**: Red-green-blue gradient with proper pH scaling
+- **Land Cover**: ESA WorldCover 2021 classification with discrete color mapping
+- **Elevation with Hillshade**: Terrain visualization combining elevation colors with hillshade relief
 
-### 📁 `app.R` - Main Application
-- **Purpose**: Entry point that loads libraries and sources all modules
-- **Size**: ~20 lines (down from 800+)
-- **Contains**: Library imports, module sourcing, UI/server definitions, app launch
+### ✅ Map Overlays
+- **Map Unit Boundaries**: Toggleable yellow dashed boundary lines
+- **Highways**: Deep blue thick lines for major highways
+- **Service Roads**: Green thinner lines for service roads
+- **Information Center**: Purple star marker at visitor center location
+- **Monument Boundary**: Always-visible red dashed boundary
+- **Color Previews**: Visual indicators next to overlay checkboxes when enabled
 
-### 📁 `config.R` - Configuration & Constants
-- **Purpose**: Centralized configuration management
-- **Contains**:
-  - Map projection settings and center coordinates
-  - Depth level definitions and color palettes
-  - Soil order color schemes
-  - File paths for data sources
-- **Benefits**: Easy to modify settings without hunting through code
+### ✅ Enhanced Visualization
+- **Hillshade Integration**: Combines hillshade background with colored elevation data for 3D terrain effect
+- **Transparency Handling**: Proper no-data value filtering for clean boundaries
+- **Crisp Pixel Rendering**: Optimized for raster data display
+- **Interactive Popups**: Click any layer for detailed information
+- **Progressive Loading**: Loading screen with status updates
 
-### 📁 `data_module.R` - Data Processing
-- **Purpose**: All data loading and preprocessing functions
-- **Key Functions**:
-  - `load_and_prepare_data()` - Main data loading orchestrator
-  - `load_raster_data()` - Handle OC and pH raster processing
-  - `load_polygon_data()` - Process soil polygons and components
-  - `process_oc_layer()` / `process_ph_layer()` - Individual layer processing
-- **Benefits**: Isolated data logic, easier testing and debugging
+### ✅ UI Components
+- **Layer selector** for 6 different map types (Soil Orders, Organic Carbon, pH, Land Cover, Elevation, Satellite)
+- **Depth selector** for OC and pH layers with all 6 SSURGO depth intervals
+- **Overlay toggles** for boundaries, roads, and points of interest
+- **Info modal** with comprehensive dataset information
+- **Keyboard shortcuts** (S for sidebar, I for info, Esc to close)
+- **Mobile responsive** design with collapsible sidebar
 
-### 📁 `ui_module.R` - User Interface
-- **Purpose**: All UI component creation functions
-- **Key Functions**:
-  - `create_dashboard_ui()` - Main UI orchestrator
-  - `create_sidebar()` - Sidebar with controls
-  - `create_layer_controls()` - Map layer selection inputs
-  - `create_legend_html()` - Soil order legend
-- **Benefits**: Clean separation of UI logic, reusable components
+### ✅ Technical Implementation
+- **Real TIFF Loading**: Client-side TIFF processing with fallback support
+- **Modular Architecture**: Separate utilities for raster, map, UI, and data management
+- **Event-Driven Design**: Custom events for component communication
+- **Error Handling**: Graceful fallbacks and user feedback
+- **Performance Optimized**: Caching and efficient rendering
 
-### 📁 `map_utils.R` - Spatial & Mapping Functions
-- **Purpose**: Leaflet map creation and spatial operations
-- **Key Functions**:
-  - `create_base_map()` - Base leaflet map
-  - `add_polygon_layers()` / `add_raster_layers()` - Layer management
-  - `extract_soil_profile()` - Point-based data extraction
-  - `handle_layer_switching()` - Dynamic layer visibility
-- **Benefits**: Focused spatial functionality, easier map feature development
+## How to Test the Application
 
-### 📁 `plot_utils.R` - Visualization Functions
-- **Purpose**: Plotly chart creation and data formatting
-- **Key Functions**:
-  - `create_soil_profile_plot()` - Main plotting orchestrator
-  - `create_oc_plot()` / `create_ph_plot()` - Individual property plots
-  - `format_selection_info()` - Text formatting for selected points
-- **Benefits**: Separated plotting logic, easier to modify visualizations
+1. **Start the development server**:
+   ```bash
+   cd "/mnt/c/Users/redst/Documents/CSNM Map Apps/CSNM-interactive-map"
+   python3 serve.py
+   ```
 
-### 📁 `server_module.R` - Server Logic
-- **Purpose**: Reactive logic and event handling
-- **Key Functions**:
-  - `create_server()` - Main server orchestrator
-  - `setup_map_outputs()` - Map-related reactive outputs
-  - `handle_map_click()` / `handle_shape_click()` - User interaction handlers
-  - `setup_interaction_observers()` - Event observer setup
-- **Benefits**: Organized reactive logic, easier debugging of interactions
+2. **Open your browser** to `http://localhost:8000`
 
-## Key Improvements
+3. **Test different layer types**:
+   - **Soil Orders**: Default view showing colored soil classifications
+   - **Organic Carbon**: Enhanced color scheme with 6 depth levels
+   - **Soil pH**: pH gradient visualization with depth selection
+   - **Land Cover**: ESA WorldCover 2021 with 11 land cover classes
+   - **Elevation**: Terrain colors with hillshade relief for 3D effect
+   - **Satellite**: Standard satellite imagery base layer
 
-### 🎯 **Maintainability**
-- **Before**: 800+ line single file
-- **After**: 7 focused modules (~100-150 lines each)
-- **Benefit**: Much easier to find and modify specific functionality
+4. **Test overlay controls**:
+   - **Map Unit Boundaries**: Toggle yellow dashed polygon boundaries
+   - **Highways**: Show/hide deep blue highway lines
+   - **Service Roads**: Toggle green service road lines
+   - **Information Center**: Purple star marker at visitor center
+   - **Color Previews**: Notice color indicators appear when overlays are checked
 
-### 🔧 **Debugging**
-- **Before**: Complex interactions buried in large file
-- **After**: Clear separation of concerns with focused functions
-- **Benefit**: Easier to isolate and fix issues
+5. **Test enhanced elevation**:
+   - Select "Elevation" to see combined hillshade + elevation colors
+   - Notice the 3D terrain effect from hillshade blending
+   - Transparent areas outside monument boundary
+   - Click anywhere for elevation values in meters
 
-### 🔄 **Reusability**
-- **Before**: Monolithic functions doing multiple things
-- **After**: Single-purpose functions that can be reused
-- **Benefit**: Components can be easily reused or swapped out
+## Data Sources and Processing
 
-### 📚 **Readability**
-- **Before**: Long file requiring lots of scrolling
-- **After**: Logical grouping of related functions
-- **Benefit**: Faster understanding for new developers
+**Soil Polygon Data**: Real SSURGO data from CSNM in `CSNM_Polygons_WGS84.geojson`
+- Dominant component filtering (majcompflag = "Yes" or highest comppct_r)
+- Soil order extraction from taxorder field
+- WGS84 reprojected for web mapping
 
-### ⚡ **Performance**
-- **Before**: All functions loaded regardless of use
-- **After**: Modular loading (could add conditional loading later)
-- **Benefit**: Potential for lazy loading and better memory management
+**Raster Data**: Multi-format TIFF support
+- **Organic Carbon**: Multi-depth files (0-5cm through 100-200cm)
+- **Soil pH**: H2O pH values across all depth intervals  
+- **Land Cover**: ESA WorldCover 2021 10m resolution
+- **Elevation**: USGS 10m DEM with accompanying hillshade
 
-## Usage Notes
+**Vector Overlays**:
+- Highway and service road networks
+- Monument boundary polygon
+- Points of interest (Information Center)
 
-### 🚀 **Running the Application**
-```r
-# Simply run the main file - it handles all sourcing
-shiny::runApp("app.R")
-```
+## Architecture
 
-### 🛠 **Making Changes**
+The application uses a clean modular architecture:
 
-1. **Configuration changes**: Edit `config.R`
-2. **UI modifications**: Edit `ui_module.R`
-3. **Map functionality**: Edit `map_utils.R`
-4. **Data processing**: Edit `data_module.R`
-5. **Plotting changes**: Edit `plot_utils.R`
-6. **Server logic**: Edit `server_module.R`
+- **`js/config.js`** - Configuration, constants, and color schemes
+- **`js/data-loader.js`** - Asynchronous data loading with caching
+- **`js/raster-utils.js`** - TIFF processing, color mapping, and hillshade blending
+- **`js/map-utils.js`** - Leaflet integration, layer management, and legends
+- **`js/ui-controls.js`** - UI event handling and state management
+- **`js/app.js`** - Main application orchestration and event coordination
 
-### 🧪 **Testing Individual Components**
-```r
-# Test data loading
-source("config.R")
-source("data_module.R")
-test_data <- load_and_prepare_data()
+## Technical Features
 
-# Test UI components
-source("config.R")
-source("ui_module.R")
-test_ui <- create_dashboard_ui()
-```
+### Enhanced Organic Carbon Visualization
+- **3-Tier Color System**: Light cream → orange/brown → dark brown
+- **Better Contrast**: Improved differentiation between low and high values
+- **Depth-Specific**: Separate color scaling for each depth interval
 
-## Future Enhancements
+### Hillshade + Elevation Integration
+- **Dual Layer Approach**: Grayscale hillshade background + colored elevation overlay
+- **Pixel-Level Blending**: Custom algorithm combines elevation colors with hillshade intensity
+- **3D Terrain Effect**: Creates realistic topographic relief visualization
+- **Smart Transparency**: Proper no-data handling for clean monument boundaries
 
-With this modular structure, future improvements become much easier:
+### Real TIFF Processing
+- **Client-Side**: Uses GeoTIFF.js for browser-based TIFF reading
+- **Multi-Band Support**: Handles complex multi-depth soil rasters
+- **Fallback System**: Graceful degradation if TIFF loading fails
+- **Optimized Rendering**: Crisp pixel display with proper color mapping
 
-- **Add new data sources**: Modify `data_module.R`
-- **New visualization types**: Add to `plot_utils.R`
-- **Additional map layers**: Extend `map_utils.R`
-- **UI improvements**: Update `ui_module.R`
-- **Performance optimizations**: Target specific modules
-- **Unit testing**: Test individual modules in isolation
+### Land Cover Classification
+- **ESA WorldCover 2021**: Complete 11-class land cover system
+- **Discrete Colors**: Scientifically accurate color scheme for each class
+- **Interactive Labels**: Click for land cover class information
 
-This refactored structure provides a solid foundation for ongoing development and maintenance of the soil mapping application.
+## Browser Console
+
+Open Developer Tools (F12) and check the Console for:
+- TIFF loading progress and data analysis
+- Layer switching confirmations
+- Hillshade blending status
+- Performance timing information
+- Debug data about raster value ranges
+
+## Recent Updates
+
+**Enhanced Terrain Visualization**:
+- Combined hillshade and elevation for realistic 3D effect
+- Proper transparency handling outside monument boundaries
+- Pixel-level color blending algorithms
+
+**Improved Organic Carbon Display**:
+- 3-tier color scheme for better extreme value differentiation
+- Enhanced legend with color gradients
+- Depth-specific color optimization
+
+**Complete Overlay System**:
+- Highway and service road networks
+- Information Center purple star marker
+- Color preview indicators in UI
+- Comprehensive toggle controls
+
+**Fixed Data Issues**:
+- Eliminated gray background boxes around raster data
+- Proper no-data value filtering for all raster types
+- Transparent areas outside monument boundaries
