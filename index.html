@@ -34,22 +34,35 @@
 
         <!-- Main Content -->
         <div class="main-container">
-            <!-- Sidebar -->
-            <aside class="sidebar" id="sidebar">
-                <div class="sidebar-header">
-                    <h3>Map Controls</h3>
-                    <button id="sidebar-toggle" class="sidebar-toggle">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                </div>
-
-                <div class="sidebar-content">
-                    <!-- Layer Controls -->
-                    <div class="control-group">
-                        <h4>Map Layer</h4>
-                        <div class="radio-group">
+            <!-- Map Container -->
+            <main class="map-container">
+                <div id="map" class="map"></div>
+                
+                <!-- Dropdown Menu System -->
+                <div class="dropdown-menu-container">
+                    <!-- Menu 1: SSURGO DATA -->
+                    <div class="dropdown-menu" id="menu-ssurgo">
+                        <div class="dropdown-header" data-menu="ssurgo">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>SSURGO DATA</span>
+                        </div>
+                        <div class="dropdown-content">
                             <label class="radio-option">
-                                <input type="radio" name="map_type" value="soil" checked>
+                                <input type="radio" name="map_type" value="ssurgo">
+                                <span class="radio-label">SoilWeb View</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Menu 2: SOIL CLASS & PROPERTIES -->
+                    <div class="dropdown-menu" id="menu-soil-properties">
+                        <div class="dropdown-header" data-menu="soil-properties">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>SOIL CLASS & PROPERTIES</span>
+                        </div>
+                        <div class="dropdown-content">
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="soil">
                                 <span class="radio-label">Soil Orders</span>
                             </label>
                             <label class="radio-option">
@@ -60,6 +73,30 @@
                                 <input type="radio" name="map_type" value="ph">
                                 <span class="radio-label">Soil pH</span>
                             </label>
+                            <!-- Future: Family Particle Size will go here -->
+                            
+                            <!-- Depth Controls -->
+                            <div class="depth-control-wrapper" id="depth-controls" style="display: none;">
+                                <label class="depth-label">Depth:</label>
+                                <select id="depth-selector" class="form-select">
+                                    <option value="0">0-5 cm</option>
+                                    <option value="1">5-15 cm</option>
+                                    <option value="2">15-30 cm</option>
+                                    <option value="3">30-60 cm</option>
+                                    <option value="4">60-100 cm</option>
+                                    <option value="5">100-200 cm</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Menu 3: SOIL FORMING FACTORS -->
+                    <div class="dropdown-menu" id="menu-forming-factors">
+                        <div class="dropdown-header" data-menu="forming-factors">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>SOIL FORMING FACTORS</span>
+                        </div>
+                        <div class="dropdown-content">
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="meanTemp">
                                 <span class="radio-label">Mean Temperature</span>
@@ -73,89 +110,87 @@
                                 <span class="radio-label">Elevation</span>
                             </label>
                             <label class="radio-option">
-                                <input type="radio" name="map_type" value="satellite">
+                                <input type="radio" name="map_type" value="satellite" checked>
                                 <span class="radio-label">Satellite</span>
                             </label>
                         </div>
                     </div>
 
-                    <!-- Depth Controls (for OC and pH) -->
-                    <div class="control-group" id="depth-controls" style="display: none;">
-                        <h4 id="depth-label">Depth</h4>
-                        <select id="depth-selector" class="form-select">
-                            <option value="0">0-5 cm</option>
-                            <option value="1">5-15 cm</option>
-                            <option value="2">15-30 cm</option>
-                            <option value="3">30-60 cm</option>
-                            <option value="4">60-100 cm</option>
-                            <option value="5">100-200 cm</option>
-                        </select>
-                    </div>
-
-                    <!-- Overlay Controls -->
-                    <div class="control-group">
-                        <h4>Map Overlays</h4>
-                        <label class="checkbox-option">
-                            <input type="checkbox" id="show-boundaries">
-                            <span class="checkbox-label">Show Map Unit Boundaries</span>
-                            <div class="overlay-color-preview" id="boundaries-color" style="display: none;">
-                                <div class="color-line" style="background-color: #FFD700; border: 1px dashed #B8860B;"></div>
-                            </div>
-                        </label>
-                        <label class="checkbox-option">
-                            <input type="checkbox" id="show-highways">
-                            <span class="checkbox-label">Show Highways</span>
-                            <div class="overlay-color-preview" id="highways-color" style="display: none;">
-                                <div class="color-line" style="background-color: #0b4e99; height: 4px;"></div>
-                            </div>
-                        </label>
-                        <label class="checkbox-option">
-                            <input type="checkbox" id="show-service-roads">
-                            <span class="checkbox-label">Show Service Roads</span>
-                            <div class="overlay-color-preview" id="service-roads-color" style="display: none;">
-                                <div class="color-line" style="background-color: #228B22; height: 2px;"></div>
-                            </div>
-                        </label>
-                        <label class="checkbox-option">
-                            <input type="checkbox" id="show-information-center">
-                            <span class="checkbox-label">Show Information Center</span>
-                            <div class="overlay-color-preview" id="information-center-color" style="display: none;">
-                                <div class="color-star" style="color: #8a2be2; font-size: 12px;">★</div>
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Selection Info Panel -->
-                    <div id="selection-info" class="selection-info" style="display: none;">
-                        <div class="info-header">
-                            <h4>Selected Point Info</h4>
+                    <!-- Menu 4: OVERLAYS -->
+                    <div class="dropdown-menu" id="menu-overlays">
+                        <div class="dropdown-header" data-menu="overlays">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>OVERLAYS</span>
                         </div>
-                        <div id="selection-content" class="info-content">
-                            <!-- Dynamic content will be inserted here -->
-                        </div>
-                    </div>
-
-                    <!-- Profile View Panel -->
-                    <div id="profile-view" class="profile-view" style="display: none;">
-                        <div class="profile-header">
-                            <button id="back-to-main" class="btn btn-primary btn-sm">
-                                <i class="fas fa-arrow-left"></i>
-                                Back to Map
-                            </button>
-                        </div>
-                        <div class="profile-content">
-                            <h4>Soil Profile</h4>
-                            <div id="soil-profile-chart" class="chart-container">
-                                <!-- Soil profile chart will be rendered here -->
-                            </div>
+                        <div class="dropdown-content">
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="show-boundaries">
+                                <span class="checkbox-label">Map Unit Boundaries</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="show-highways">
+                                <span class="checkbox-label">Highways</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="show-service-roads">
+                                <span class="checkbox-label">Service Roads</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" id="show-information-center">
+                                <span class="checkbox-label">Information Center</span>
+                            </label>
                         </div>
                     </div>
                 </div>
-            </aside>
 
-            <!-- Map Container -->
-            <main class="map-container">
-                <div id="map" class="map"></div>
+                <!-- SSURGO Info Panel (appears when clicking on map units) -->
+                <div id="ssurgo-info-panel" class="ssurgo-info-panel" style="display: none;">
+                    <div class="panel-header">
+                        <h3>Map Unit Information</h3>
+                        <button class="panel-close" id="close-ssurgo-panel">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="info-section">
+                            <div class="section-header" data-section="composition">
+                                <i class="fas fa-caret-down section-arrow"></i>
+                                <span>Map Unit Composition</span>
+                            </div>
+                            <div class="section-content" id="composition-content"></div>
+                        </div>
+                        <div class="info-section">
+                            <div class="section-header" data-section="mapunit">
+                                <i class="fas fa-caret-down section-arrow"></i>
+                                <span>Map Unit Data</span>
+                            </div>
+                            <div class="section-content" id="mapunit-content"></div>
+                        </div>
+                        <div class="info-section">
+                            <div class="section-header" data-section="metadata">
+                                <i class="fas fa-caret-down section-arrow"></i>
+                                <span>Survey Metadata</span>
+                            </div>
+                            <div class="section-content" id="metadata-content"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Landing Page Welcome Overlay -->
+                <div id="landing-overlay" class="landing-overlay">
+                    <div class="landing-content">
+                        <h1>Cascade-Siskiyou National Monument<br>Soil Explorer</h1>
+                        <p class="landing-description">
+                            Explore soil properties, classifications, and environmental factors across the monument's diverse landscape.
+                        </p>
+                        <p class="landing-instructions">
+                            Select a map from the menus on the left to begin exploring.
+                        </p>
+                        <button id="get-started-btn" class="btn btn-primary btn-lg">
+                            Get Started
+                        </button>
+                    </div>
+                </div>
                 
                 <!-- Map Overlays -->
                 <div id="soil-legend" class="map-legend" style="display: none;">

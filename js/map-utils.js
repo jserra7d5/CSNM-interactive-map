@@ -168,14 +168,10 @@ class MapManager {
         this.layers.polygons.set('permanent-boundaries', permanentBoundaryLayer);
         this.layers.polygons.set('toggleable-boundaries', toggleableBoundaryLayer);
         
-        // Add soil layer to map (always visible)
+        // Don't add layers to map here - let updateLayers handle it when user selects a map type
         this.currentPolygonLayer = soilLayer;
-        soilLayer.addTo(this.map);
         
-        // Add permanent boundaries for soil orders
-        permanentBoundaryLayer.addTo(this.map);
-        
-        // Fit map to polygon bounds
+        // Fit map to polygon bounds (but don't display the layer)
         this.fitToBounds(soilLayer);
     }
     
@@ -613,8 +609,18 @@ class MapManager {
             for (let i = 0; i < data.length; i++) {
                 const value = data[i];
                 
-                // Check for no-data values in hillshade
-                const isNoData = value === null || isNaN(value) || value === -9999 || value === -3.4028235e+38 || value < 0;
+                // Check for no-data values in hillshade (match criteria from raster-utils.js)
+                const isNoData = value === null || 
+                               value === undefined || 
+                               isNaN(value) || 
+                               value === 0 ||          // Common NoData for hillshade
+                               value === 255 ||        // Sometimes used as NoData
+                               value === 256 ||        // 16-bit promoted NoData
+                               value === -1 ||         // Negative NoData
+                               value === -9999 ||      // Standard NoData
+                               value === -3.4028235e+38 || // Float32 NoData
+                               value < 0 ||            // Any negative value
+                               value > 255;            // Any value above 8-bit range
                 
                 const pixelIndex = i * 4;
                 if (isNoData) {
@@ -686,6 +692,12 @@ class MapManager {
     
     // Update legend and layer visibility based on current layer type
     async updateLayers(layerType, depth = 0) {
+        // If no layer type selected, hide all layers except monument boundary
+        if (!layerType) {
+            this.hideAllLayers();
+            return;
+        }
+        
         const legendElement = document.getElementById('soil-legend');
         const soilLayer = this.layers.polygons.get('soil');
         const permanentBoundaryLayer = this.layers.polygons.get('permanent-boundaries');
@@ -707,7 +719,21 @@ class MapManager {
             monumentBoundaryLayer.addTo(this.map);
         }
         
-        if (layerType === 'soil') {
+        if (layerType === 'ssurgo') {
+            // SSURGO view - show only boundaries without fill colors
+            // Hide filled soil polygons
+            if (soilLayer && this.map.hasLayer(soilLayer)) {
+                this.map.removeLayer(soilLayer);
+            }
+            // Show permanent boundaries
+            if (permanentBoundaryLayer && !this.map.hasLayer(permanentBoundaryLayer)) {
+                permanentBoundaryLayer.addTo(this.map);
+            }
+            // Hide legend for SSURGO view
+            if (legendElement) {
+                legendElement.style.display = 'none';
+            }
+        } else if (layerType === 'soil') {
             // Show soil polygons, permanent boundaries, and legend
             if (soilLayer && !this.map.hasLayer(soilLayer)) {
                 soilLayer.addTo(this.map);
@@ -1135,6 +1161,40 @@ class MapManager {
     // Get map instance
     getMap() {
         return this.map;
+    }
+    
+    // Hide all layers except monument boundary
+    hideAllLayers() {
+        const monumentBoundaryLayer = this.layers.overlays.get('monument-boundary');
+        const legendElement = document.getElementById('soil-legend');
+        
+        // Hide legend
+        if (legendElement) {
+            legendElement.style.display = 'none';
+        }
+        
+        // Remove all polygon layers
+        this.layers.polygons.forEach((layer, key) => {
+            if (this.map.hasLayer(layer)) {
+                this.map.removeLayer(layer);
+            }
+        });
+        
+        // Remove current raster layer
+        if (this.currentRasterLayer && this.map.hasLayer(this.currentRasterLayer)) {
+            this.map.removeLayer(this.currentRasterLayer);
+            this.currentRasterLayer = null;
+        }
+        
+        // Remove hillshade layer
+        if (this.hillshadeLayer && this.map.hasLayer(this.hillshadeLayer)) {
+            this.map.removeLayer(this.hillshadeLayer);
+        }
+        
+        // Ensure monument boundary stays visible
+        if (monumentBoundaryLayer && !this.map.hasLayer(monumentBoundaryLayer)) {
+            monumentBoundaryLayer.addTo(this.map);
+        }
     }
     
     // Cleanup

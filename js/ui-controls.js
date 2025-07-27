@@ -3,57 +3,102 @@
 
 class UIController {
     constructor() {
-        this.sidebarCollapsed = false;
         this.currentView = 'main'; // 'main' or 'profile'
-        this.currentMapType = 'soil';
+        this.currentMapType = 'satellite'; // Default to satellite view
         this.currentDepth = 0;
         this.showBoundaries = false;
         this.showHighways = false;
         this.showServiceRoads = false;
         this.showInformationCenter = false;
+        // Initialize dropdown states from localStorage or default to all closed
+        this.dropdownStates = this.loadDropdownStates() || {
+            'ssurgo': false,
+            'soil-properties': false,
+            'forming-factors': false,
+            'overlays': false
+        };
         
         this.elements = {};
         this.initializeElements();
         this.setupEventListeners();
+        this.applyDropdownStates();
+        
+        // Ensure satellite radio is checked on init
+        const satelliteRadio = document.querySelector('input[name="map_type"][value="satellite"]');
+        if (satelliteRadio) {
+            satelliteRadio.checked = true;
+        }
     }
     
     // Initialize DOM element references
     initializeElements() {
         this.elements = {
-            sidebar: document.getElementById('sidebar'),
-            sidebarToggle: document.getElementById('sidebar-toggle'),
+            // Dropdown menus
+            dropdownHeaders: document.querySelectorAll('.dropdown-header'),
+            dropdownMenus: document.querySelectorAll('.dropdown-menu'),
+            
+            // Map type radios
             mapTypeRadios: document.querySelectorAll('input[name="map_type"]'),
+            
+            // Depth controls
             depthControls: document.getElementById('depth-controls'),
-            depthLabel: document.getElementById('depth-label'),
             depthSelector: document.getElementById('depth-selector'),
+            
+            // Overlay checkboxes
             boundariesCheckbox: document.getElementById('show-boundaries'),
             highwaysCheckbox: document.getElementById('show-highways'),
             serviceRoadsCheckbox: document.getElementById('show-service-roads'),
             informationCenterCheckbox: document.getElementById('show-information-center'),
-            selectionInfo: document.getElementById('selection-info'),
-            selectionContent: document.getElementById('selection-content'),
-            profileView: document.getElementById('profile-view'),
-            backToMainBtn: document.getElementById('back-to-main'),
+            
+            // Landing page
+            landingOverlay: document.getElementById('landing-overlay'),
+            getStartedBtn: document.getElementById('get-started-btn'),
+            
+            // SSURGO info panel
+            ssurgoInfoPanel: document.getElementById('ssurgo-info-panel'),
+            closeSsurgoPanel: document.getElementById('close-ssurgo-panel'),
+            sectionHeaders: document.querySelectorAll('.section-header'),
+            
+            // Other UI elements
             infoBtn: document.getElementById('info-btn'),
             infoModal: document.getElementById('info-modal'),
             closeModalBtn: document.getElementById('close-modal'),
             loading: document.getElementById('loading'),
-            soilLegend: document.getElementById('soil-legend'),
-            boundariesColorPreview: document.getElementById('boundaries-color'),
-            highwaysColorPreview: document.getElementById('highways-color'),
-            serviceRoadsColorPreview: document.getElementById('service-roads-color'),
-            informationCenterColorPreview: document.getElementById('information-center-color')
+            soilLegend: document.getElementById('soil-legend')
         };
     }
     
     // Setup event listeners for UI controls
     setupEventListeners() {
-        // Sidebar toggle
-        if (this.elements.sidebarToggle) {
-            this.elements.sidebarToggle.addEventListener('click', () => {
-                this.toggleSidebar();
+        // Dropdown menu headers
+        this.elements.dropdownHeaders.forEach(header => {
+            header.addEventListener('click', (e) => {
+                const menuType = header.dataset.menu;
+                this.toggleDropdown(menuType);
+            });
+        });
+        
+        // Landing page Get Started button
+        if (this.elements.getStartedBtn) {
+            this.elements.getStartedBtn.addEventListener('click', () => {
+                this.closeLandingPage();
             });
         }
+        
+        // SSURGO panel close button
+        if (this.elements.closeSsurgoPanel) {
+            this.elements.closeSsurgoPanel.addEventListener('click', () => {
+                this.closeSsurgoPanel();
+            });
+        }
+        
+        // SSURGO panel section headers
+        this.elements.sectionHeaders.forEach(header => {
+            header.addEventListener('click', (e) => {
+                const section = header.dataset.section;
+                this.toggleSection(section);
+            });
+        });
         
         // Map type radio buttons
         this.elements.mapTypeRadios.forEach(radio => {
@@ -517,6 +562,132 @@ class UIController {
                 this.handleBoundariesToggle(state.showBoundaries);
             }
         }
+    }
+    
+    // New dropdown menu methods
+    
+    // Toggle dropdown menu visibility
+    toggleDropdown(menuType) {
+        const menu = document.getElementById(`menu-${menuType}`);
+        if (!menu) return;
+        
+        const isCollapsed = menu.classList.contains('collapsed');
+        
+        // Toggle the menu
+        if (isCollapsed) {
+            menu.classList.remove('collapsed');
+            this.dropdownStates[menuType] = true;
+        } else {
+            menu.classList.add('collapsed');
+            this.dropdownStates[menuType] = false;
+        }
+        
+        // Save the state to localStorage
+        this.saveDropdownStates();
+    }
+    
+    // Close landing page
+    closeLandingPage() {
+        if (this.elements.landingOverlay) {
+            this.elements.landingOverlay.style.display = 'none';
+        }
+    }
+    
+    // Open SSURGO info panel
+    openSsurgoPanel(mapUnitData) {
+        if (this.elements.ssurgoInfoPanel) {
+            this.elements.ssurgoInfoPanel.style.display = 'flex';
+            this.populateSsurgoPanel(mapUnitData);
+        }
+    }
+    
+    // Close SSURGO info panel
+    closeSsurgoPanel() {
+        if (this.elements.ssurgoInfoPanel) {
+            this.elements.ssurgoInfoPanel.style.display = 'none';
+        }
+    }
+    
+    // Toggle section in SSURGO panel
+    toggleSection(sectionName) {
+        const section = document.querySelector(`.info-section .section-header[data-section="${sectionName}"]`).parentElement;
+        if (section) {
+            section.classList.toggle('collapsed');
+        }
+    }
+    
+    // Populate SSURGO panel with data
+    populateSsurgoPanel(data) {
+        // Map Unit Composition
+        const compositionContent = document.getElementById('composition-content');
+        if (compositionContent && data.components) {
+            let html = '<table class="info-table">';
+            html += '<tr><th>Component</th><th>%</th><th>Kind</th></tr>';
+            data.components.forEach(comp => {
+                html += `<tr>
+                    <td>${comp.compname || 'N/A'}</td>
+                    <td>${comp.comppct_r || 'N/A'}</td>
+                    <td>${comp.compkind || 'N/A'}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            compositionContent.innerHTML = html;
+        }
+        
+        // Map Unit Data
+        const mapunitContent = document.getElementById('mapunit-content');
+        if (mapunitContent) {
+            const muData = data.mapunit || {};
+            mapunitContent.innerHTML = `
+                <div class="info-item"><strong>MUKEY:</strong> ${muData.mukey || 'N/A'}</div>
+                <div class="info-item"><strong>MUSYM:</strong> ${muData.musym || 'N/A'}</div>
+                <div class="info-item"><strong>Name:</strong> ${muData.muname || 'N/A'}</div>
+                <div class="info-item"><strong>Acres:</strong> ${muData.muacres ? muData.muacres.toFixed(1) : 'N/A'}</div>
+            `;
+        }
+        
+        // Survey Metadata
+        const metadataContent = document.getElementById('metadata-content');
+        if (metadataContent) {
+            metadataContent.innerHTML = `
+                <div class="info-item"><strong>Survey Area:</strong> ${data.areasymbol || 'N/A'}</div>
+                <div class="info-item"><strong>Spatial Version:</strong> ${data.spatialver || 'N/A'}</div>
+            `;
+        }
+    }
+    
+    // Load dropdown states from localStorage
+    loadDropdownStates() {
+        try {
+            const savedStates = localStorage.getItem('csnm-dropdown-states');
+            return savedStates ? JSON.parse(savedStates) : null;
+        } catch (error) {
+            console.error('Error loading dropdown states:', error);
+            return null;
+        }
+    }
+    
+    // Save dropdown states to localStorage
+    saveDropdownStates() {
+        try {
+            localStorage.setItem('csnm-dropdown-states', JSON.stringify(this.dropdownStates));
+        } catch (error) {
+            console.error('Error saving dropdown states:', error);
+        }
+    }
+    
+    // Apply saved dropdown states on initialization
+    applyDropdownStates() {
+        Object.entries(this.dropdownStates).forEach(([menuType, isOpen]) => {
+            const menu = document.getElementById(`menu-${menuType}`);
+            if (menu) {
+                if (isOpen) {
+                    menu.classList.remove('collapsed');
+                } else {
+                    menu.classList.add('collapsed');
+                }
+            }
+        });
     }
 }
 

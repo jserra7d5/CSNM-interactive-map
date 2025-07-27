@@ -109,11 +109,12 @@ class SoilExplorerApp {
                 console.log('Service roads loaded');
             }
             
-            // Update layers for initial map type (soil orders)
-            this.uiController.updateLoadingMessage('Setting up soil orders map...');
-            this.mapManager.updateLayers('soil');
+            // Initialize with satellite view as default
+            this.uiController.updateLoadingMessage('Loading satellite view...');
+            this.mapManager.setBaseLayer('satellite');
+            await this.mapManager.updateLayers('satellite');
             
-            // Hide loading screen once soil orders map is ready
+            // Hide loading screen
             this.uiController.hideLoading();
             
         } catch (error) {
@@ -265,11 +266,72 @@ class SoilExplorerApp {
         
         console.log('Feature selected:', feature.properties);
         
-        // Get detailed soil information
-        const soilDetails = this.getSoilDetails(feature.properties);
+        // Check current map type
+        const currentMapType = this.uiController.getCurrentState().currentMapType;
         
-        // Extract soil profile for the location
-        this.extractSoilProfile(latlng.lat, latlng.lng, feature.properties);
+        if (currentMapType === 'ssurgo') {
+            // In SSURGO mode, show the SSURGO info panel
+            this.showSsurgoInfo(feature);
+        } else {
+            // In other modes, show soil details and profile
+            const soilDetails = this.getSoilDetails(feature.properties);
+            
+            // Extract soil profile for the location
+            this.extractSoilProfile(latlng.lat, latlng.lng, feature.properties);
+        }
+    }
+    
+    // Show SSURGO info panel with map unit data
+    showSsurgoInfo(feature) {
+        // Get all components for this map unit
+        const mukey = feature.properties.MUKEY || feature.properties.mukey;
+        const components = this.getMapUnitComponents(mukey);
+        
+        // Prepare data for the panel
+        const ssurgoData = {
+            mapunit: {
+                mukey: mukey,
+                musym: feature.properties.MUSYM || feature.properties.musym,
+                muname: feature.properties.muname || 'N/A',
+                muacres: feature.properties.muacres || 0
+            },
+            components: components,
+            areasymbol: feature.properties.AREASYMBOL || 'N/A',
+            spatialver: feature.properties.SPATIALVER || 'N/A'
+        };
+        
+        // Open the SSURGO panel
+        this.uiController.openSsurgoPanel(ssurgoData);
+    }
+    
+    // Get all components for a map unit
+    getMapUnitComponents(mukey) {
+        if (!this.appData || !this.appData.soilPolygons) return [];
+        
+        const components = [];
+        const seen = new Set();
+        
+        // Search through all features to find components with this mukey
+        this.appData.soilPolygons.features.forEach(feature => {
+            const props = feature.properties;
+            if (props.mukey === mukey || props.MUKEY === mukey) {
+                const compKey = `${props.compname}_${props.comppct_r}`;
+                if (!seen.has(compKey)) {
+                    seen.add(compKey);
+                    components.push({
+                        compname: props.compname || 'Unknown',
+                        comppct_r: props.comppct_r || 0,
+                        compkind: props.compkind || 'N/A',
+                        majcompflag: props.majcompflag || 'No'
+                    });
+                }
+            }
+        });
+        
+        // Sort by percentage (highest first)
+        components.sort((a, b) => (b.comppct_r || 0) - (a.comppct_r || 0));
+        
+        return components;
     }
     
     // Extract soil profile data

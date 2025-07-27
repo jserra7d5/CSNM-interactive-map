@@ -49,59 +49,262 @@ body {
     height: calc(100vh - 60px);
 }
 
-/* Sidebar */
-.sidebar {
-    width: 350px;
-    background: white;
-    border-right: 1px solid #ddd;
+/* Dropdown Menu System */
+.dropdown-menu-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
     display: flex;
     flex-direction: column;
-    transition: margin-left 0.3s ease;
-    z-index: 999;
-    position: relative;
+    gap: 10px;
 }
 
-.sidebar.collapsed {
-    margin-left: -320px;
+.dropdown-menu {
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    min-width: 250px;
 }
 
-.sidebar-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
+.dropdown-header {
+    background: #4A90E2;
+    color: white;
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 4px 4px 0 0;
+    transition: background-color 0.2s;
+}
+
+.dropdown-header:hover {
+    background: #357ABD;
+}
+
+.dropdown-arrow {
+    transition: transform 0.3s;
+    font-size: 12px;
+}
+
+.dropdown-menu.collapsed .dropdown-arrow {
+    transform: rotate(-90deg);
+}
+
+.dropdown-content {
+    max-height: 300px;
+    overflow-y: auto;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 10px;
+}
+
+.dropdown-menu.collapsed .dropdown-content {
+    max-height: 0;
+    padding: 0 10px;
+    overflow: hidden;
+}
+
+/* Depth Control in Dropdown */
+.depth-control-wrapper {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.depth-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* SSURGO Info Panel */
+.ssurgo-info-panel {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    width: 350px;
+    max-height: 80vh;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1001;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
     background: #f8f9fa;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.sidebar-header h3 {
+.panel-header h3 {
+    margin: 0;
     font-size: 18px;
     color: #333;
 }
 
-.sidebar-toggle {
+.panel-close {
     background: none;
     border: none;
-    font-size: 16px;
+    font-size: 20px;
     color: #666;
     cursor: pointer;
-    padding: 5px;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 4px;
     transition: background-color 0.2s;
 }
 
-.sidebar-toggle:hover {
+.panel-close:hover {
     background-color: #e9ecef;
 }
 
-.sidebar.collapsed .sidebar-toggle i {
-    transform: rotate(180deg);
-}
-
-.sidebar-content {
+.panel-content {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 15px;
+}
+
+.info-section {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.section-header {
+    background: #4A90E2;
+    color: white;
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.section-arrow {
+    transition: transform 0.3s;
+    font-size: 12px;
+}
+
+.info-section.collapsed .section-arrow {
+    transform: rotate(-90deg);
+}
+
+.section-content {
+    padding: 15px;
+    background: white;
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+}
+
+.info-section.collapsed .section-content {
+    max-height: 0;
+    padding: 0 15px;
+}
+
+/* Landing Page Overlay */
+.landing-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.landing-content {
+    background: white;
+    padding: 40px 60px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 600px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.landing-content h1 {
+    font-size: 32px;
+    color: #333;
+    margin-bottom: 20px;
+    line-height: 1.3;
+}
+
+.landing-description {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.landing-instructions {
+    font-size: 16px;
+    color: #888;
+    margin-bottom: 30px;
+}
+
+.btn-lg {
+    padding: 12px 30px;
+    font-size: 18px;
+}
+
+/* Info table styles */
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.info-table th,
+.info-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.info-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.info-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Info item styles */
+.info-item {
+    padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    color: #333;
+    margin-right: 8px;
 }
 
 /* Control Groups */
@@ -318,7 +521,8 @@ body {
 
 /* Map Container */
 .map-container {
-    flex: 1;
+    width: 100%;
+    height: 100%;
     position: relative;
     overflow: hidden;
 }
@@ -332,8 +536,8 @@ body {
 /* Map Overlays */
 .map-legend {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 80px;  /* Positioned below zoom controls with ample spacing */
+    right: 20px;
     background: rgba(255, 255, 255, 0.95);
     padding: 12px;
     border-radius: 8px;
