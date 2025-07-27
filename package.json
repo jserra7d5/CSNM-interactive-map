@@ -1,0 +1,28 @@
+{
+  "name": "csnm-soil-explorer",
+  "version": "1.0.0",
+  "description": "Cascade-Siskiyou National Monument Soil Explorer - Interactive web application for exploring soil properties and environmental data",
+  "scripts": {
+    "dev": "python3 serve.py",
+    "start": "python3 serve.py"
+  },
+  "keywords": [
+    "soil",
+    "gis",
+    "leaflet",
+    "csnm",
+    "cascade-siskiyou",
+    "ssurgo",
+    "web-mapping",
+    "geotiff"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
