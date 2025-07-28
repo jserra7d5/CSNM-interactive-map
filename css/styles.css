@@ -412,41 +412,21 @@ body {
     height: 20px;
     border-radius: 50%;
     background: #4A90E2;
-    color: transparent;
+    color: white;
     border: none;
     cursor: pointer;
     z-index: 2;
     transition: background-color 0.2s, transform 0.1s;
     padding: 0;
-    font-size: 0; /* Hide any text */
-    line-height: 0; /* Hide any text */
-}
-
-/* Create the "i" using CSS */
-.info-btn::before {
-    content: "";
-    position: absolute;
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 3px;
-    height: 8px;
-    background-color: white;
-    border-radius: 1px;
-    text-indent: 0; /* Reset text-indent for pseudo-element */
-}
-
-.info-btn::after {
-    content: "";
-    position: absolute;
-    top: 4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 3px;
-    height: 3px;
-    background-color: white;
-    border-radius: 50%;
-    text-indent: 0; /* Reset text-indent for pseudo-element */
+    font-size: 11px;
+    font-weight: 700;
+    font-family: Georgia, serif;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    text-transform: lowercase;
 }
 
 .info-btn:hover {
