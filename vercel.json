@@ -138,6 +138,14 @@
   ],
   "rewrites": [
     {
+      "source": "/data/CSNM_Polygons_with_Data.geojson",
+      "destination": "/data/CSNM_Polygons_WGS84.geojson"
+    },
+    {
+      "source": "/data/CSNM_Polygons_with_Data.geojson.gz",
+      "destination": "/data/CSNM_Polygons_WGS84.geojson.gz"
+    },
+    {
       "source": "/data/(.*).geojson",
       "destination": "/data/$1.geojson.gz"
     }

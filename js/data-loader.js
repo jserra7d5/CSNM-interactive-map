@@ -39,10 +39,16 @@ class DataLoader {
     // Private method to fetch GeoJSON
     async _fetchGeoJSON(url) {
         try {
-            // TEMPORARY FIX: Force correct file
-            if (url.includes('CSNM_Polygons') && !url.includes('WGS84')) {
-                console.warn('REDIRECTING: Attempted to load non-WGS84 polygons, forcing WGS84 version');
-                url = url.replace('CSNM_Polygons_with_Data', 'CSNM_Polygons_WGS84');
+            // FORCE CORRECT FILE: Always use WGS84 polygons
+            if (url.includes('CSNM_Polygons')) {
+                if (!url.includes('WGS84')) {
+                    console.warn('REDIRECTING: Forcing WGS84 polygon file');
+                    url = url.replace(/CSNM_Polygons[^\/]*/, 'CSNM_Polygons_WGS84');
+                }
+                // Add cache buster to force fresh load
+                if (!url.includes('?')) {
+                    url += '?v=' + Date.now();
+                }
             }
             console.log(`Loading GeoJSON from: ${url}`);
             
