@@ -423,6 +423,10 @@ body {
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s, transform 0.1s;
+    font-family: Arial, sans-serif;
+    line-height: 1;
+    padding: 0;
+    text-transform: none;
 }
 
 .info-btn:hover {

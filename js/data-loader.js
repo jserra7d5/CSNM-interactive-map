@@ -62,7 +62,8 @@ class DataLoader {
                 actualUrl: response.url,
                 contentType,
                 contentEncoding,
-                contentLength: contentLength ? `${(parseInt(contentLength) / 1024).toFixed(2)} KB` : 'unknown'
+                contentLength: contentLength ? `${(parseInt(contentLength) / 1024).toFixed(2)} KB` : 'unknown',
+                finalUrl: response.url.split('?')[0] // Show URL without timestamp
             });
             
             // Parse JSON - browser will automatically handle decompression if Content-Encoding is set
@@ -149,6 +150,7 @@ class DataLoader {
         
         try {
             // Load soil polygons
+            console.log('Loading soil polygons from CONFIG path:', CONFIG.dataPaths.soilPolygons);
             dataPromises.soilPolygons = this.loadGeoJSON(
                 CONFIG.dataPaths.soilPolygons, 
                 'soilPolygons'

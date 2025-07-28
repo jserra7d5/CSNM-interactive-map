@@ -2,7 +2,7 @@
 // Cascade-Siskiyou National Monument Soil Explorer Configuration
 
 // Application Version
-const APP_VERSION = '0.1.1';
+const APP_VERSION = '0.1.2';  // Updated to force cache refresh
 
 // Map Settings
 const CONFIG = {
