@@ -412,24 +412,41 @@ body {
     height: 20px;
     border-radius: 50%;
     background: #4A90E2;
-    color: white;
+    color: transparent;
     border: none;
-    font-size: 12px;
-    font-weight: bold;
-    font-style: normal;
     cursor: pointer;
     z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     transition: background-color 0.2s, transform 0.1s;
-    font-family: Arial, Helvetica, sans-serif;
-    line-height: 1;
     padding: 0;
-    text-transform: none;
-    text-decoration: none;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-size: 0; /* Hide any text */
+    line-height: 0; /* Hide any text */
+}
+
+/* Create the "i" using CSS */
+.info-btn::before {
+    content: "";
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 8px;
+    background-color: white;
+    border-radius: 1px;
+    text-indent: 0; /* Reset text-indent for pseudo-element */
+}
+
+.info-btn::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 3px;
+    background-color: white;
+    border-radius: 50%;
+    text-indent: 0; /* Reset text-indent for pseudo-element */
 }
 
 .info-btn:hover {
@@ -439,14 +456,6 @@ body {
 
 .info-btn:active {
     transform: scale(0.95);
-}
-
-/* Ensure Font Awesome icon displays correctly in info buttons */
-.info-btn i {
-    font-size: 10px;
-    display: block;
-    line-height: 1;
-    color: inherit;
 }
 
 /* Overlay Color Preview */
