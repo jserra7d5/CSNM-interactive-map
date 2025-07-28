@@ -321,18 +321,7 @@ class MapManager {
     
     // Get style for soil-filled polygons
     getSoilFillStyle(feature) {
-        // Only show colors for major components in soil orders view
-        const isMajor = feature.properties._isMajorComponent;
-        if (!isMajor) {
-            // Non-major components are invisible in soil orders view
-            return {
-                fillColor: 'transparent',
-                weight: 0,
-                opacity: 0,
-                fillOpacity: 0
-            };
-        }
-        
+        // For soil orders view, show ALL components with their soil order colors
         const soilOrder = this.extractSoilOrder(feature.properties);
         const color = ConfigUtils.getSoilOrderColor(soilOrder);
         
@@ -350,21 +339,21 @@ class MapManager {
             fillColor: 'transparent',
             fillOpacity: 0,
             color: '#333333',
-            weight: 1,
+            weight: 0.65,
             opacity: 0.4,
             dashArray: '1, 1'
         };
     }
     
-    // Get style for SSURGO view boundaries (more visible than permanent)
+    // Get style for SSURGO view boundaries (yellow like toggleable boundaries)
     getSsurgoBoundaryStyle(feature) {
         return {
             fillColor: 'transparent',
             fillOpacity: 0,
-            color: '#ff6600',  // Orange color for better visibility
-            weight: 2.5,
-            opacity: 0.9,
-            dashArray: '4, 4'
+            color: '#FFD700',  // Yellow color matching toggleable boundaries
+            weight: 1.5,       // Thinner for better performance
+            opacity: 0.8,
+            dashArray: null    // Solid line instead of dashed
         };
     }
     
@@ -374,7 +363,7 @@ class MapManager {
             fillColor: 'transparent',
             fillOpacity: 0,
             color: '#FFD700',
-            weight: 2,
+            weight: 0.65,
             opacity: 0.8,
             dashArray: '3, 3'
         };
@@ -431,14 +420,11 @@ class MapManager {
         layer.polygonId = feature.id || feature.properties.OBJECTID;
         layer.componentKey = feature.properties.cokey;
         
-        // Popup content
-        const popupContent = this.createPopupContent(feature.properties);
-        layer.bindPopup(popupContent);
+        // Store popup content but don't bind it yet
+        layer._popupContent = this.createPopupContent(feature.properties);
         
-        // Hover effects
+        // Only add click handler, no hover effects
         layer.on({
-            mouseover: (e) => this.highlightFeature(e),
-            mouseout: (e) => this.resetHighlight(e),
             click: (e) => this.selectFeature(e)
         });
     }
@@ -537,13 +523,9 @@ class MapManager {
         const layer = e.target;
         const feature = layer.feature;
         
-        // Clear previous selection highlighting
-        if (this.selectedFeature && this.currentPolygonLayer) {
-            this.currentPolygonLayer.eachLayer((polygonLayer) => {
-                if (polygonLayer.polygonId === this.selectedFeature.polygonId) {
-                    this.currentPolygonLayer.resetStyle(polygonLayer);
-                }
-            });
+        // Prevent popup from opening in SSURGO view
+        if (this.currentMapType === 'ssurgo') {
+            L.DomEvent.stopPropagation(e);
         }
         
         // Store selected feature with unique identifiers
@@ -552,10 +534,6 @@ class MapManager {
             polygonId: layer.polygonId,
             componentKey: layer.componentKey
         };
-        
-        // Keep this polygon highlighted
-        layer.setStyle(CONFIG.polygonStyle.highlighted);
-        layer.bringToFront();
         
         // Log selection info for debugging
         console.log(`Selected polygon - ID: ${layer.polygonId}, Component: ${layer.componentKey}, Map Unit: ${feature.properties.MUSYM}, Component Name: ${feature.properties.compname}`);
@@ -571,6 +549,12 @@ class MapManager {
             }
         });
         document.dispatchEvent(event);
+        
+        // Open popup only if not in SSURGO view
+        if (this.currentMapType !== 'ssurgo' && layer._popupContent) {
+            layer.bindPopup(layer._popupContent);
+            layer.openPopup();
+        }
     }
     
     // Toggle map unit boundary visibility (yellow boundaries)
@@ -803,36 +787,26 @@ class MapManager {
             this.map.removeLayer(this.clickMarker);
         }
         
-        // Create red circle marker
-        this.clickMarker = L.circleMarker(latlng, {
-            radius: 12,
-            fillColor: '#ff0000',
-            color: '#cc0000',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.8,
-            className: 'click-marker'
-        });
-        
-        // Add white X using a div icon
-        const xIcon = L.divIcon({
-            className: 'click-marker-x',
-            html: '<div class="x-mark">×</div>',
+        // Create a custom icon that combines the red circle and white X
+        const combinedIcon = L.divIcon({
+            className: 'combined-click-marker',
+            html: `
+                <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" fill="#ff0000" fill-opacity="0.8" stroke="#cc0000" stroke-width="2"/>
+                    <path d="M 7 7 L 17 17 M 17 7 L 7 17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            `,
             iconSize: [24, 24],
             iconAnchor: [12, 12]
         });
         
-        const xMarker = L.marker(latlng, {
-            icon: xIcon,
+        // Create a single marker with the combined icon
+        this.clickMarker = L.marker(latlng, {
+            icon: combinedIcon,
             interactive: false
         });
         
-        // Create a layer group for both markers
-        const markerGroup = L.layerGroup([this.clickMarker, xMarker]);
-        markerGroup.addTo(this.map);
-        
-        // Store reference to remove later
-        this.clickMarker = markerGroup;
+        this.clickMarker.addTo(this.map);
         
         return this.clickMarker;
     }
@@ -856,6 +830,9 @@ class MapManager {
     
     // Update legend and layer visibility based on current layer type
     async updateLayers(layerType, depth = 0) {
+        // Store current map type
+        this.currentMapType = layerType;
+        
         // If no layer type selected, hide all layers except monument boundary
         if (!layerType) {
             this.hideAllLayers();
@@ -925,46 +902,23 @@ class MapManager {
         }
         
         if (layerType === 'ssurgo') {
-            // SSURGO view - show polygons with transparent fill for click detection
+            // SSURGO view - show polygons with yellow boundaries for click detection
             if (soilLayer) {
                 if (!this.map.hasLayer(soilLayer)) {
                     soilLayer.addTo(this.map);
                 }
-                // Update all polygons to have transparent fill
+                // Update all polygons to have transparent fill with orange boundaries
                 soilLayer.eachLayer((layer) => {
                     if (layer.setStyle) {
                         layer.setStyle({
                             fillColor: 'transparent',
                             fillOpacity: 0,
-                            weight: 0,
-                            opacity: 0
+                            color: '#ff6600',  // Orange boundaries
+                            weight: 0.65,      // Thin lines
+                            opacity: 0.8
                         });
                     }
                 });
-            }
-            // Show SSURGO boundaries (more visible than permanent, less bright than toggleable)
-            const ssurgoBoundaryLayer = this.layers.polygons.get('ssurgo-boundaries');
-            if (ssurgoBoundaryLayer) {
-                console.log('SSURGO boundary layer found, adding to map');
-                if (!this.map.hasLayer(ssurgoBoundaryLayer)) {
-                    ssurgoBoundaryLayer.addTo(this.map);
-                    console.log('SSURGO boundaries added to map');
-                    // Check if layer actually has content
-                    let layerCount = 0;
-                    ssurgoBoundaryLayer.eachLayer(() => layerCount++);
-                    console.log(`SSURGO boundary layer contains ${layerCount} sublayers`);
-                } else {
-                    console.log('SSURGO boundaries already on map');
-                }
-            } else {
-                console.error('SSURGO boundary layer not found!');
-                console.log('Available polygon layers:', Array.from(this.layers.polygons.keys()));
-                // Try to show at least the toggleable boundaries as fallback
-                const fallbackBoundary = this.layers.polygons.get('toggleable-boundaries');
-                if (fallbackBoundary && !this.map.hasLayer(fallbackBoundary)) {
-                    fallbackBoundary.addTo(this.map);
-                    console.log('Using toggleable boundaries as fallback');
-                }
             }
             // Hide legend for SSURGO view
             if (legendElement) {

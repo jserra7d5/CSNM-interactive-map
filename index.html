@@ -13,6 +13,9 @@
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Plotly.js for soil profile charts -->
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
 </head>
 <body>
     <div id="app">
@@ -50,6 +53,7 @@
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="ssurgo">
                                 <span class="radio-label">SoilWeb View</span>
+                                <button class="info-btn" data-source="ssurgo" title="View source information">i</button>
                             </label>
                         </div>
                     </div>
@@ -64,14 +68,17 @@
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="soil">
                                 <span class="radio-label">Soil Orders</span>
+                                <button class="info-btn" data-source="soil" title="View source information">i</button>
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="oc">
                                 <span class="radio-label">Organic Carbon</span>
+                                <button class="info-btn" data-source="oc" title="View source information">i</button>
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="ph">
                                 <span class="radio-label">Soil pH</span>
+                                <button class="info-btn" data-source="ph" title="View source information">i</button>
                             </label>
                             <!-- Future: Family Particle Size will go here -->
                             
@@ -100,18 +107,22 @@
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="meanTemp">
                                 <span class="radio-label">Mean Temperature</span>
+                                <button class="info-btn" data-source="meanTemp" title="View source information">i</button>
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="landcover">
                                 <span class="radio-label">Land Cover</span>
+                                <button class="info-btn" data-source="landcover" title="View source information">i</button>
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="elevation">
                                 <span class="radio-label">Elevation</span>
+                                <button class="info-btn" data-source="elevation" title="View source information">i</button>
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="satellite" checked>
                                 <span class="radio-label">Satellite</span>
+                                <button class="info-btn" data-source="satellite" title="View source information">i</button>
                             </label>
                         </div>
                     </div>
@@ -126,6 +137,7 @@
                             <label class="checkbox-option">
                                 <input type="checkbox" id="show-boundaries">
                                 <span class="checkbox-label">Map Unit Boundaries</span>
+                                <button class="info-btn" data-source="boundaries" title="View source information">i</button>
                             </label>
                             <label class="checkbox-option">
                                 <input type="checkbox" id="show-highways">
@@ -265,6 +277,21 @@
             </main>
         </div>
 
+        <!-- Source Info Modal -->
+        <div id="source-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="source-modal-title">Data Source Information</h2>
+                    <button id="close-source-modal" class="modal-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="source-modal-body">
+                    <!-- Source information will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+
         <!-- Info Modal -->
         <div id="info-modal" class="modal" style="display: none;">
             <div class="modal-content">
@@ -277,9 +304,13 @@
                 <div class="modal-body">
                     <h3>Data Sources</h3>
                     <ul>
-                        <li>Soil Survey Geographic Database (SSURGO)</li>
-                        <li>SoilGrids 250m Resolution (ISRIC) - Multi-depth profiles</li>
-                        <li>USDA Soil Taxonomy Classification</li>
+                        <li><strong>SSURGO:</strong> USDA NRCS Soil Survey Geographic Database</li>
+                        <li><strong>Soil Properties:</strong> SoilGrids 250m Resolution (ISRIC)</li>
+                        <li><strong>Soil Orders:</strong> USDA Soil Taxonomy Classification</li>
+                        <li><strong>Temperature:</strong> WorldClim 2.1 Bioclimatic Variables</li>
+                        <li><strong>Land Cover:</strong> ESA WorldCover 2021 (10m)</li>
+                        <li><strong>Elevation:</strong> USGS 3D Elevation Program (10m DEM)</li>
+                        <li><strong>Satellite:</strong> Esri World Imagery Service</li>
                     </ul>
                     
                     <h3>Available Depths</h3>

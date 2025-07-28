@@ -596,6 +596,58 @@ class RasterManager {
         return null;
     }
     
+    // Extract raster values at specific coordinates for all depths
+    async extractValuesAtLocation(property, lat, lng) {
+        if (!this.isGeoTiffAvailable) {
+            console.warn('GeoTIFF.js not available');
+            return null;
+        }
+        
+        const values = {};
+        const depths = [0, 1, 2, 3, 4, 5]; // All depth indices
+        
+        for (const depth of depths) {
+            try {
+                const filename = this.getRasterFilename(property, depth);
+                const fallbackFilename = this.getFallbackFilename(property, depth);
+                
+                // Load TIFF if not already loaded
+                let tiff = this.loadedTiffs.get(filename);
+                if (!tiff) {
+                    tiff = await this.loadTiff(filename, fallbackFilename);
+                    if (!tiff) continue;
+                }
+                
+                // Get the first image/band
+                const image = await tiff.getImage(0);
+                const bbox = image.getBoundingBox();
+                const [width, height] = [image.getWidth(), image.getHeight()];
+                
+                // Convert lat/lng to pixel coordinates
+                const x = Math.floor((lng - bbox[0]) / (bbox[2] - bbox[0]) * width);
+                const y = Math.floor((bbox[3] - lat) / (bbox[3] - bbox[1]) * height);
+                
+                // Check if coordinates are within bounds
+                if (x >= 0 && x < width && y >= 0 && y < height) {
+                    // Read a single pixel value
+                    const window = [x, y, x + 1, y + 1];
+                    const rasters = await image.readRasters({ window });
+                    const value = rasters[0][0]; // First band, first pixel
+                    
+                    if (value !== null && !isNaN(value) && value !== -9999) {
+                        // Map depth index to depth range string
+                        const depthLabels = ['0-5cm', '5-15cm', '15-30cm', '30-60cm', '60-100cm', '100-200cm'];
+                        values[depthLabels[depth]] = value;
+                    }
+                }
+            } catch (error) {
+                console.error(`Error extracting ${property} value at depth ${depth}:`, error);
+            }
+        }
+        
+        return Object.keys(values).length > 0 ? values : null;
+    }
+    
     // Create a tile layer from a raster file (fallback method for tile servers)
     createTileLayer(property, depth, options = {}) {
         // This is kept for compatibility but not used when TIFF loading works

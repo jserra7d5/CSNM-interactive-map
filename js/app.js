@@ -311,77 +311,48 @@ class SoilExplorerApp {
         const mukey = feature.properties.MUKEY || feature.properties.mukey;
         const components = this.getMapUnitComponents(mukey);
         
-        // Prepare enhanced data with mock fields matching SoilWeb
+        // Prepare enhanced data with placeholder for missing fields
         const detailData = {
-            mapUnitName: feature.properties.muname || `${feature.properties.MUSYM || feature.properties.musym || 'Unknown'} - ${feature.properties.compname || 'Unknown soil'}`,
-            mapUnitSymbol: feature.properties.MUSYM || feature.properties.musym,
+            mapUnitName: feature.properties.muname || `${feature.properties.MUSYM || feature.properties.musym || 'placeholder'} - ${feature.properties.compname || 'placeholder'}`,
+            mapUnitSymbol: feature.properties.MUSYM || feature.properties.musym || 'placeholder',
             components: components.map(comp => {
-                // Add mock geomorphic positions and other data
-                const geomorphicPositions = this.getMockGeomorphicPositions(comp.compname);
                 return {
                     ...comp,
-                    geomorphicPosition: geomorphicPositions,
-                    horizonData: comp.comppct_r > 0 ? 'Available' : 'n/a'
+                    geomorphicPosition: comp.properties?.geomdesc || comp.geomdesc || 'placeholder',
+                    horizonData: comp.comppct_r > 0 ? 'Available' : 'placeholder'
                 };
             }),
             mapunitData: {
-                mukey: mukey,
-                musym: feature.properties.MUSYM || feature.properties.musym,
-                nationalSymbol: this.getMockNationalSymbol(feature.properties.MUSYM),
-                orderOfMapping: 1,
-                mapUnitType: 'Consociation',
-                farmlandClass: 'Prime farmland if irrigated',
-                waterStorage: Math.floor(Math.random() * 10 + 15) + ' cm',
-                floodFrequency: 'Rare',
-                floodFrequencyMax: 'Rare',
-                pondingFrequency: 0,
-                drainageClass: 'Somewhat poorly drained',
-                drainageClassWet: 'Somewhat poorly drained',
-                hydricSoilsProportion: Math.floor(Math.random() * 10) + '%',
-                waterTableDepthAnnual: Math.floor(Math.random() * 100 + 100) + ' cm',
-                waterTableDepthGrowing: 'n/a',
-                bedrockDepth: 'n/a'
+                mukey: mukey || 'placeholder',
+                musym: feature.properties.MUSYM || feature.properties.musym || 'placeholder',
+                nationalSymbol: 'placeholder',
+                orderOfMapping: 'placeholder',
+                mapUnitType: 'placeholder',
+                farmlandClass: 'placeholder',
+                waterStorage: 'placeholder',
+                floodFrequency: 'placeholder',
+                floodFrequencyMax: 'placeholder',
+                pondingFrequency: 'placeholder',
+                drainageClass: this.getDominantDrainageClass(components) || 'placeholder',
+                drainageClassWet: this.getWettestDrainageClass(components) || 'placeholder',
+                hydricSoilsProportion: this.getHydricSoilsProportion(components) || 'placeholder',
+                waterTableDepthAnnual: 'placeholder',
+                waterTableDepthGrowing: 'placeholder',
+                bedrockDepth: 'placeholder',
+                hydgrp: this.getDominantHydgrp(components) || 'placeholder'
             },
             surveyMetadata: {
-                areaSymbol: 'ca113',
-                scale: '1:20,000',
-                published: '1968',
-                lastExport: 'Aug 28 2024'
+                areaSymbol: 'placeholder',
+                scale: 'placeholder',
+                published: 'placeholder',
+                lastExport: 'placeholder'
             }
         };
         
-        // Pass to UI controller to display
-        this.uiController.openSsurgoDetailPanel(detailData);
+        // Pass to UI controller to display, including click location
+        this.uiController.openSsurgoDetailPanel(detailData, latlng);
     }
     
-    // Mock helper methods for missing data
-    getMockGeomorphicPositions(componentName) {
-        const positions = [
-            'flood-plain steps',
-            'alluvial fans / Toeslope',
-            'stream terraces',
-            'mountain slopes',
-            'hillslopes',
-            'fan remnants'
-        ];
-        // Return 1-2 random positions
-        const numPositions = Math.floor(Math.random() * 2) + 1;
-        const selected = [];
-        for (let i = 0; i < numPositions; i++) {
-            const pos = positions[Math.floor(Math.random() * positions.length)];
-            if (!selected.includes(pos)) {
-                selected.push(pos);
-            }
-        }
-        return selected.join(' / ');
-    }
-    
-    getMockNationalSymbol(musym) {
-        // Generate a mock national symbol based on musym
-        if (!musym) return '2xcbl';
-        const num = Math.floor(Math.random() * 9) + 1;
-        return num + musym.toLowerCase().substring(0, 4);
-    }
     
     // Get all components for a map unit
     getMapUnitComponents(mukey) {
@@ -398,10 +369,42 @@ class SoilExplorerApp {
                 if (!seen.has(compKey)) {
                     seen.add(compKey);
                     components.push({
-                        compname: props.compname || 'Unknown',
-                        comppct_r: props.comppct_r || 0,
-                        compkind: props.compkind || 'N/A',
-                        majcompflag: props.majcompflag || 'No'
+                        compname: props.compname || 'placeholder',
+                        comppct_r: props.comppct_r || 'placeholder',
+                        compkind: props.compkind || 'placeholder',
+                        majcompflag: props.majcompflag || 'placeholder',
+                        // Add taxonomy fields
+                        taxclname: props.taxclname,
+                        taxorder: props.taxorder,
+                        taxsuborder: props.taxsuborder,
+                        taxgrtgroup: props.taxgrtgroup,
+                        taxsubgrp: props.taxsubgrp,
+                        taxpartsize: props.taxpartsize,
+                        taxpartsizemod: props.taxpartsizemod,
+                        taxceactcl: props.taxceactcl,
+                        taxreaction: props.taxreaction,
+                        taxtempcl: props.taxtempcl,
+                        taxmoistscl: props.taxmoistscl,
+                        taxtempregime: props.taxtempregime,
+                        soiltaxedition: props.soiltaxedition,
+                        // Add land classification fields
+                        nirrcapcl: props.nirrcapcl,
+                        nirrcapscl: props.nirrcapscl,
+                        irrcapcl: props.irrcapcl,
+                        irrcapscl: props.irrcapscl,
+                        castorieindex: props.castorieindex,
+                        foragesuitgrpid: props.foragesuitgrpid,
+                        // Add map unit data fields
+                        drainagecl: props.drainagecl,
+                        hydricrating: props.hydricrating,
+                        hydgrp: props.hydgrp,
+                        // Add hydraulic and erosion fields
+                        wei: props.wei,
+                        weg: props.weg,
+                        tfact: props.tfact,
+                        runoff: props.runoff,
+                        // Store all properties for complete access
+                        properties: props
                     });
                 }
             }
@@ -411,6 +414,84 @@ class SoilExplorerApp {
         components.sort((a, b) => (b.comppct_r || 0) - (a.comppct_r || 0));
         
         return components;
+    }
+    
+    // Get dominant drainage class from components
+    getDominantDrainageClass(components) {
+        if (!components || components.length === 0) return null;
+        
+        // Find the component with highest percentage that has drainage class
+        for (const comp of components) {
+            if (comp.drainagecl) {
+                return comp.drainagecl;
+            }
+        }
+        return null;
+    }
+    
+    // Get wettest drainage class from components
+    getWettestDrainageClass(components) {
+        if (!components || components.length === 0) return null;
+        
+        // Drainage classes ordered from wettest to driest
+        const drainageOrder = [
+            'Very poorly drained',
+            'Poorly drained',
+            'Somewhat poorly drained',
+            'Moderately well drained',
+            'Well drained',
+            'Somewhat excessively drained',
+            'Excessively drained'
+        ];
+        
+        let wettestIndex = -1;
+        let wettestClass = null;
+        
+        for (const comp of components) {
+            if (comp.drainagecl) {
+                const index = drainageOrder.indexOf(comp.drainagecl);
+                if (index !== -1 && (wettestIndex === -1 || index < wettestIndex)) {
+                    wettestIndex = index;
+                    wettestClass = comp.drainagecl;
+                }
+            }
+        }
+        
+        return wettestClass;
+    }
+    
+    // Get proportion of hydric soils
+    getHydricSoilsProportion(components) {
+        if (!components || components.length === 0) return null;
+        
+        let hydricPercentage = 0;
+        let totalPercentage = 0;
+        
+        for (const comp of components) {
+            const pct = typeof comp.comppct_r === 'number' ? comp.comppct_r : 0;
+            totalPercentage += pct;
+            
+            if (comp.hydricrating === 'Yes') {
+                hydricPercentage += pct;
+            }
+        }
+        
+        if (totalPercentage === 0) return '0%';
+        
+        return Math.round((hydricPercentage / totalPercentage) * 100) + '%';
+    }
+    
+    // Get dominant hydrologic group
+    getDominantHydgrp(components) {
+        if (!components || components.length === 0) return null;
+        
+        // Find the component with highest percentage that has hydgrp
+        for (const comp of components) {
+            if (comp.hydgrp) {
+                return comp.hydgrp;
+            }
+        }
+        return null;
     }
     
     // Extract soil profile data

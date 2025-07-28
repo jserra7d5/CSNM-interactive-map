@@ -88,10 +88,11 @@ body {
 .dropdown-arrow {
     transition: transform 0.3s;
     font-size: 12px;
+    transform: rotate(0deg); /* Arrow points down by default */
 }
 
-.dropdown-menu.collapsed .dropdown-arrow {
-    transform: rotate(-90deg);
+.dropdown-menu:not(.collapsed) .dropdown-arrow {
+    transform: rotate(180deg); /* Arrow points up when menu is open */
 }
 
 .dropdown-content {
@@ -201,10 +202,11 @@ body {
 .section-arrow {
     transition: transform 0.3s;
     font-size: 12px;
+    transform: rotate(0deg); /* Arrow points down by default */
 }
 
-.info-section.collapsed .section-arrow {
-    transform: rotate(-90deg);
+.info-section:not(.collapsed) .section-arrow {
+    transform: rotate(180deg); /* Arrow points up when section is open */
 }
 
 .section-content {
@@ -333,6 +335,7 @@ body {
     padding: 8px 12px;
     border-radius: 6px;
     transition: background-color 0.2s;
+    position: relative;
 }
 
 .radio-option:hover {
@@ -373,6 +376,36 @@ body {
     font-size: 14px;
     color: #333;
     flex: 1;
+}
+
+/* Info Button Styles */
+.info-btn {
+    position: absolute;
+    right: 12px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #4A90E2;
+    color: white;
+    border: none;
+    font-size: 12px;
+    font-weight: bold;
+    font-style: normal;
+    cursor: pointer;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.info-btn:hover {
+    background: #357ABD;
+    transform: scale(1.1);
+}
+
+.info-btn:active {
+    transform: scale(0.95);
 }
 
 /* Overlay Color Preview */
@@ -753,6 +786,62 @@ body {
     color: #555;
 }
 
+/* Source Modal Styling */
+.source-info {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.source-description {
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #4A90E2;
+}
+
+.source-details {
+    margin-bottom: 20px;
+}
+
+.source-details p {
+    margin: 8px 0;
+}
+
+.source-links {
+    margin-bottom: 20px;
+}
+
+.source-links ul {
+    margin-left: 20px;
+    margin-top: 8px;
+}
+
+.source-links a {
+    color: #4A90E2;
+    text-decoration: none;
+}
+
+.source-links a:hover {
+    text-decoration: underline;
+}
+
+.source-citation {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f0f0f0;
+    border-radius: 6px;
+}
+
+.citation-text {
+    font-style: italic;
+    font-size: 13px;
+    color: #555;
+    margin-top: 8px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .sidebar {
@@ -944,27 +1033,15 @@ body {
 .soil-unknown { background-color: #808080; }
 
 /* Click marker styles */
-.click-marker {
-    cursor: pointer;
-}
-.click-marker-x {
+.combined-click-marker {
     background: transparent;
     border: none;
-    pointer-events: none;
-}
-.x-mark {
-    color: white;
-    font-size: 28px;
-    font-weight: bold;
-    text-align: center;
-    line-height: 24px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
 /* SSURGO Detail Panel (SoilWeb style) */
 .ssurgo-detail-panel {
     position: absolute;
-    right: 20px;
+    right: 60px;  /* Moved left to avoid zoom button */
     top: 20px;
     width: 400px;
     max-height: 85vh;
@@ -1027,10 +1104,11 @@ body {
 .detail-section-header .section-arrow {
     font-size: 12px;
     transition: transform 0.2s;
+    transform: rotate(0deg); /* Arrow points down by default */
 }
 
-.detail-section-header.collapsed .section-arrow {
-    transform: rotate(-90deg);
+.detail-section-header.active .section-arrow {
+    transform: rotate(180deg); /* Arrow points up when section is active/open */
 }
 
 .detail-section-content {
@@ -1064,9 +1142,117 @@ body {
 
 .component-name {
     font-size: 14px;
-    font-weight: bold;
-    color: #0066cc;
     margin-bottom: 5px;
+}
+.soil-series-link {
+    color: #0066cc;
+    text-decoration: none;
+    display: inline;
+}
+.soil-series-link:hover {
+    text-decoration: underline;
+}
+.soil-series-link strong {
+    font-weight: bold;
+}
+.series-links {
+    padding: 15px 20px;
+    text-align: center;
+    font-size: 14px;
+    border-bottom: 1px solid #ddd;
+}
+.series-link {
+    color: #0066cc;
+    text-decoration: none;
+    margin: 0 5px;
+}
+.series-link:hover {
+    text-decoration: underline;
+}
+.series-back-link {
+    padding: 15px 20px;
+    border-top: 1px solid #ddd;
+    text-align: center;
+}
+.series-back-link a {
+    color: #0066cc;
+    text-decoration: none;
+    font-size: 14px;
+}
+.series-back-link a:hover {
+    text-decoration: underline;
+}
+
+/* Soil Profile Visualization Styles */
+.soil-profile-container {
+    padding: 15px;
+}
+
+.profile-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.profile-btn {
+    padding: 8px 12px;
+    background: #f0f8ff;
+    border: 2px solid #4169e1;
+    border-radius: 4px;
+    color: #4169e1;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-btn:hover {
+    background: #e6f3ff;
+}
+
+.profile-btn.active {
+    background: #4169e1;
+    color: white;
+}
+
+.profile-btn i {
+    margin-left: 4px;
+    font-size: 11px;
+}
+
+.profile-chart-container {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 400px;
+}
+
+#soil-profile-chart {
+    width: 100%;
+    height: 400px;
+}
+
+.chart-footer {
+    text-align: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.view-source-link {
+    color: #4169e1;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.view-source-link:hover {
+    text-decoration: underline;
 }
 
 .component-percentage {
@@ -1134,6 +1320,33 @@ body {
     font-weight: bold;
     cursor: help;
     margin-left: 5px;
+}
+
+/* Details section styling */
+.details-info {
+    padding: 0;
+}
+
+.details-info p {
+    margin: 10px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.details-info strong {
+    color: #333;
+    margin-right: 5px;
+}
+
+.detail-data-link {
+    color: #0066cc;
+    text-decoration: underline;
+    font-size: 14px;
+}
+
+.detail-data-link:hover {
+    color: #0052a3;
+    text-decoration: none;
 }
 
 /* Survey Metadata styling */

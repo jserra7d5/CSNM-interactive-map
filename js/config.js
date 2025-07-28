@@ -85,6 +85,104 @@ const CONFIG = {
         peakColor: "#ffffff"     // White for peaks
     },
     
+    // Data source information
+    dataSources: {
+        ssurgo: {
+            name: "SSURGO Data - SoilWeb View",
+            description: "Soil Survey Geographic Database - Detailed soil survey data including map unit delineations, soil properties, and interpretations",
+            agency: "USDA Natural Resources Conservation Service (NRCS)",
+            url: "https://websoilsurvey.nrcs.usda.gov/",
+            dataUrl: "https://sdmdataaccess.nrcs.usda.gov/",
+            citation: "Soil Survey Staff, Natural Resources Conservation Service, United States Department of Agriculture. Web Soil Survey. Available online. Accessed [date].",
+            resolution: "Variable (1:12,000 to 1:63,360 scale)",
+            lastUpdate: "Continuously updated"
+        },
+        soil: {
+            name: "Soil Orders",
+            description: "USDA Soil Taxonomy classification system at the order level - highest hierarchical level of soil classification",
+            agency: "USDA Natural Resources Conservation Service",
+            url: "https://www.nrcs.usda.gov/wps/portal/nrcs/main/soils/survey/class/taxonomy/",
+            citation: "Soil Survey Staff. 2014. Keys to Soil Taxonomy, 12th ed. USDA-Natural Resources Conservation Service, Washington, DC.",
+            resolution: "Derived from SSURGO polygons",
+            lastUpdate: "2014 (12th Edition)"
+        },
+        oc: {
+            name: "Soil Organic Carbon",
+            description: "Soil organic carbon content predictions at six standard depth intervals from machine learning models",
+            agency: "ISRIC - World Soil Information",
+            url: "https://soilgrids.org/",
+            dataUrl: "https://maps.isric.org/",
+            citation: "Poggio, L., de Sousa, L. M., Batjes, N. H., Heuvelink, G. B. M., Kempen, B., Ribeiro, E., and Rossiter, D.: SoilGrids 2.0: producing soil information for the globe with quantified spatial uncertainty, SOIL, 7, 217–240, 2021.",
+            resolution: "250 meters",
+            units: "g/kg",
+            lastUpdate: "2020"
+        },
+        ph: {
+            name: "Soil pH",
+            description: "Soil pH (H2O) predictions at six standard depth intervals from machine learning models",
+            agency: "ISRIC - World Soil Information",
+            url: "https://soilgrids.org/",
+            dataUrl: "https://maps.isric.org/",
+            citation: "Poggio, L., de Sousa, L. M., Batjes, N. H., Heuvelink, G. B. M., Kempen, B., Ribeiro, E., and Rossiter, D.: SoilGrids 2.0: producing soil information for the globe with quantified spatial uncertainty, SOIL, 7, 217–240, 2021.",
+            resolution: "250 meters",
+            units: "pH units (0-14 scale)",
+            lastUpdate: "2020"
+        },
+        meanTemp: {
+            name: "Mean Annual Temperature",
+            description: "WorldClim Version 2.1 climate data - Bio1: Annual Mean Temperature averaged for 1970-2000",
+            agency: "WorldClim",
+            url: "https://worldclim.org/",
+            dataUrl: "https://worldclim.org/data/worldclim21.html",
+            citation: "Fick, S.E. and Hijmans, R.J., 2017. WorldClim 2: new 1-km spatial resolution climate surfaces for global land areas. International Journal of Climatology, 37(12), pp.4302-4315.",
+            resolution: "30 arc-seconds (~1 km)",
+            units: "°C × 10",
+            lastUpdate: "2020 (v2.1)"
+        },
+        landcover: {
+            name: "Land Cover Classification",
+            description: "ESA WorldCover 10m v200 - Global land cover map based on Sentinel-1 and Sentinel-2 data",
+            agency: "European Space Agency (ESA)",
+            url: "https://esa-worldcover.org/",
+            dataUrl: "https://viewer.esa-worldcover.org/worldcover/",
+            citation: "Zanaga, D., Van De Kerchove, R., Daems, D., De Keersmaecker, W., Brockmann, C., Kirches, G., Wevers, J., Cartus, O., Santoro, M., Fritz, S., Lesiv, M., Herold, M., Tsendbazar, N.E., Xu, P., Ramoino, F., Arino, O., 2022. ESA WorldCover 10 m 2021 v200.",
+            resolution: "10 meters",
+            lastUpdate: "2021",
+            classes: "11 land cover classes"
+        },
+        elevation: {
+            name: "Digital Elevation Model",
+            description: "USGS 3D Elevation Program (3DEP) - Seamless DEM providing elevation data",
+            agency: "U.S. Geological Survey",
+            url: "https://www.usgs.gov/3d-elevation-program",
+            dataUrl: "https://apps.nationalmap.gov/downloader/",
+            citation: "U.S. Geological Survey, 2023, USGS 3D Elevation Program Digital Elevation Model: U.S. Geological Survey.",
+            resolution: "10 meters (1/3 arc-second)",
+            units: "meters above sea level",
+            lastUpdate: "Continuously updated",
+            verticalAccuracy: "±3.04 meters RMSE"
+        },
+        satellite: {
+            name: "Satellite Imagery",
+            description: "High-resolution satellite and aerial imagery from various sources",
+            agency: "Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+            url: "https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9",
+            citation: "Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+            resolution: "Variable (0.3m to 1m typical)",
+            lastUpdate: "Continuously updated",
+            coverage: "Global"
+        },
+        boundaries: {
+            name: "Map Unit Boundaries",
+            description: "SSURGO soil map unit polygon boundaries delineating areas of similar soils",
+            agency: "USDA Natural Resources Conservation Service",
+            url: "https://websoilsurvey.nrcs.usda.gov/",
+            citation: "Soil Survey Staff, Natural Resources Conservation Service, United States Department of Agriculture. Soil Survey Geographic (SSURGO) Database. Available online. Accessed [date].",
+            resolution: "1:12,000 to 1:63,360 scale",
+            lastUpdate: "Continuously updated"
+        }
+    },
+
     // Data file paths (for local development, copy files to data directory)
     dataPaths: {
         ocRaster: "CSNM_OC_AllDepths.tif",
