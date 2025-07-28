@@ -543,6 +543,7 @@ class UIController {
     // Show loading overlay
     showLoading(message = 'Loading...') {
         if (this.elements.loading) {
+            console.log('showLoading called with message:', message);
             const loadingText = this.elements.loading.querySelector('span');
             if (loadingText) {
                 loadingText.textContent = message;
@@ -551,6 +552,10 @@ class UIController {
             this.elements.loading.style.display = 'flex';
             this.elements.loading.style.visibility = 'visible';
             this.elements.loading.style.zIndex = '2000';
+            
+            // Force browser to repaint
+            this.elements.loading.offsetHeight;
+            console.log('Loading screen should now be visible');
         }
     }
     

@@ -71,6 +71,11 @@
                                 <button class="info-btn" data-source="soil" title="View source information">i</button>
                             </label>
                             <label class="radio-option">
+                                <input type="radio" name="map_type" value="particleSize">
+                                <span class="radio-label">Family Particle Size Class</span>
+                                <button class="info-btn" data-source="particleSize" title="View source information">i</button>
+                            </label>
+                            <label class="radio-option">
                                 <input type="radio" name="map_type" value="oc">
                                 <span class="radio-label">Organic Carbon</span>
                                 <button class="info-btn" data-source="oc" title="View source information">i</button>
@@ -110,9 +115,14 @@
                                 <button class="info-btn" data-source="meanTemp" title="View source information">i</button>
                             </label>
                             <label class="radio-option">
-                                <input type="radio" name="map_type" value="landcover">
+                                <input type="radio" name="map_type" value="nlcd">
                                 <span class="radio-label">Land Cover</span>
-                                <button class="info-btn" data-source="landcover" title="View source information">i</button>
+                                <button class="info-btn" data-source="nlcd" title="View source information">i</button>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="lithology">
+                                <span class="radio-label">Lithology</span>
+                                <button class="info-btn" data-source="lithology" title="View source information">i</button>
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="elevation">
@@ -262,7 +272,7 @@
                 </div>
 
                 <!-- Loading Indicator -->
-                <div id="loading" class="loading-overlay" style="display: flex;">
+                <div id="loading" class="loading-overlay" style="display: none;">
                     <div class="loading-content">
                         <i class="fas fa-spinner fa-spin"></i>
                         <span>Loading soil data...</span>
@@ -308,7 +318,8 @@
                         <li><strong>Soil Properties:</strong> SoilGrids 250m Resolution (ISRIC)</li>
                         <li><strong>Soil Orders:</strong> USDA Soil Taxonomy Classification</li>
                         <li><strong>Temperature:</strong> WorldClim 2.1 Bioclimatic Variables</li>
-                        <li><strong>Land Cover:</strong> ESA WorldCover 2021 (10m)</li>
+                        <li><strong>Land Cover:</strong> NLCD 2024 (30m)</li>
+                        <li><strong>Lithology:</strong> USGS State Geologic Map</li>
                         <li><strong>Elevation:</strong> USGS 3D Elevation Program (10m DEM)</li>
                         <li><strong>Satellite:</strong> Esri World Imagery Service</li>
                     </ul>

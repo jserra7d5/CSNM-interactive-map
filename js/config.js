@@ -7,6 +7,10 @@ const CONFIG = {
     mapCenter: [42.1, -122.466],
     mapZoom: 11,
     
+    // Tile loading bounds (restrict to monument area for performance)
+    // Approximate bounds for Cascade-Siskiyou National Monument
+    tileBounds: [[41.9, -122.7], [42.3, -122.2]],
+    
     // Projection
     crs: L.CRS.EPSG3857,
     
@@ -59,19 +63,81 @@ const CONFIG = {
         "Unknown": "#808080"
     },
     
-    // WorldCover 2021 Land Cover Classification Colors
-    landCoverColors: {
-        10: { color: "#006400", name: "Tree cover" },
-        20: { color: "#ffbb22", name: "Shrubland" },
-        30: { color: "#ffff4c", name: "Grassland" },
-        40: { color: "#f096ff", name: "Cropland" },
-        50: { color: "#fa0000", name: "Built-up" },
-        60: { color: "#b4b4b4", name: "Bare / sparse vegetation" },
-        70: { color: "#f0f0f0", name: "Snow and ice" },
-        80: { color: "#0064c8", name: "Permanent water bodies" },
-        90: { color: "#0096a0", name: "Herbaceous wetland" },
-        95: { color: "#00cf75", name: "Mangroves" },
-        100: { color: "#fae6a0", name: "Moss and lichen" }
+    // Family Particle Size Class colors
+    // Colors chosen to reflect texture: coarser (sandy) = warmer/lighter, finer (clayey) = cooler/darker
+    particleSizeColors: {
+        // Fine textures (high clay content)
+        "fine": "#2C3E50",           // Dark blue-gray
+        "very-fine": "#1A252F",      // Very dark blue-gray
+        "fine-silty": "#34495E",     // Medium blue-gray
+        "fine-loamy": "#5D6D7E",     // Light blue-gray
+        
+        // Medium textures
+        "loamy": "#7B8D9F",          // Light gray-blue
+        "coarse-loamy": "#95A5A6",   // Light gray
+        
+        // Coarse textures (sandy)
+        "sandy": "#D4B896",          // Sandy brown
+        "sandy-skeletal": "#E8D5B8", // Light sandy
+        
+        // Skeletal classes (rocky)
+        "loamy-skeletal": "#8B7355", // Brown
+        "clayey-skeletal": "#654321", // Dark brown
+        "medial-skeletal": "#A0522D", // Sienna brown
+        
+        // Special classes
+        "clayey": "#4A5568",         // Gray-blue
+        "medial": "#CD853F",         // Peru (volcanic)
+        "fine-loamy over clayey": "#6B7280", // Mixed gray
+        "not used": "#CCCCCC",       // Light gray
+        "Unknown": "#808080"         // Gray
+    },
+    
+    // NLCD Land Cover Classification Colors
+    nlcdColors: {
+        11: { color: "#466b9f", name: "Open Water" },
+        12: { color: "#d1def8", name: "Perennial Ice/Snow" },
+        21: { color: "#dec5c5", name: "Developed, Open Space" },
+        22: { color: "#d99282", name: "Developed, Low Intensity" },
+        23: { color: "#eb0000", name: "Developed, Medium Intensity" },
+        24: { color: "#ab0000", name: "Developed, High Intensity" },
+        31: { color: "#b3ac9f", name: "Barren Land" },
+        41: { color: "#68ab5f", name: "Deciduous Forest" },
+        42: { color: "#1c5f2c", name: "Evergreen Forest" },
+        43: { color: "#b5c58f", name: "Mixed Forest" },
+        52: { color: "#ccb879", name: "Shrub/Scrub" },
+        71: { color: "#dfdfc2", name: "Grassland/Herbaceous" },
+        81: { color: "#dcd939", name: "Pasture/Hay" },
+        82: { color: "#ab6c28", name: "Cultivated Crops" },
+        90: { color: "#b8d9eb", name: "Woody Wetlands" },
+        95: { color: "#6c9fb8", name: "Emergent Herbaceous Wetlands" }
+    },
+    
+    // Lithology colors (geological rock types)
+    lithologyColors: {
+        // Igneous rocks
+        1: { color: "#FF1493", name: "Granite" },
+        2: { color: "#DC143C", name: "Basalt" },
+        3: { color: "#8B0000", name: "Andesite" },
+        4: { color: "#FF69B4", name: "Rhyolite" },
+        5: { color: "#C71585", name: "Diorite" },
+        // Sedimentary rocks
+        10: { color: "#F4A460", name: "Sandstone" },
+        11: { color: "#D2691E", name: "Limestone" },
+        12: { color: "#8B4513", name: "Shale" },
+        13: { color: "#BC8F8F", name: "Conglomerate" },
+        14: { color: "#F5DEB3", name: "Siltstone" },
+        // Metamorphic rocks
+        20: { color: "#708090", name: "Schist" },
+        21: { color: "#696969", name: "Gneiss" },
+        22: { color: "#2F4F4F", name: "Quartzite" },
+        23: { color: "#778899", name: "Marble" },
+        // Unconsolidated
+        30: { color: "#FFE4B5", name: "Alluvium" },
+        31: { color: "#FFDEAD", name: "Colluvium" },
+        32: { color: "#F0E68C", name: "Glacial deposits" },
+        // Other
+        99: { color: "#808080", name: "Unknown" }
     },
     
     // Elevation color scheme (terrain colors)
@@ -106,6 +172,16 @@ const CONFIG = {
             resolution: "Derived from SSURGO polygons",
             lastUpdate: "2014 (12th Edition)"
         },
+        particleSize: {
+            name: "Family Particle Size Class",
+            description: "Soil texture classification at the family level based on particle size distribution - indicates relative proportions of sand, silt, and clay, including coarse fragments",
+            agency: "USDA Natural Resources Conservation Service",
+            url: "https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/class/taxonomy/",
+            citation: "Soil Survey Staff. 2014. Keys to Soil Taxonomy, 12th ed. USDA-Natural Resources Conservation Service, Washington, DC.",
+            resolution: "Derived from SSURGO component data",
+            lastUpdate: "Continuously updated",
+            classes: "Fine, coarse-loamy, loamy-skeletal, medial, and others based on texture and rock fragment content"
+        },
         oc: {
             name: "Soil Organic Carbon",
             description: "Soil organic carbon content predictions at six standard depth intervals from machine learning models",
@@ -139,16 +215,27 @@ const CONFIG = {
             units: "°C × 10",
             lastUpdate: "2020 (v2.1)"
         },
-        landcover: {
-            name: "Land Cover Classification",
-            description: "ESA WorldCover 10m v200 - Global land cover map based on Sentinel-1 and Sentinel-2 data",
-            agency: "European Space Agency (ESA)",
-            url: "https://esa-worldcover.org/",
-            dataUrl: "https://viewer.esa-worldcover.org/worldcover/",
-            citation: "Zanaga, D., Van De Kerchove, R., Daems, D., De Keersmaecker, W., Brockmann, C., Kirches, G., Wevers, J., Cartus, O., Santoro, M., Fritz, S., Lesiv, M., Herold, M., Tsendbazar, N.E., Xu, P., Ramoino, F., Arino, O., 2022. ESA WorldCover 10 m 2021 v200.",
-            resolution: "10 meters",
-            lastUpdate: "2021",
-            classes: "11 land cover classes"
+        nlcd: {
+            name: "NLCD Land Cover",
+            description: "National Land Cover Database 2024 - Multi-resolution land cover classification for the United States",
+            agency: "U.S. Geological Survey (USGS)",
+            url: "https://www.mrlc.gov/",
+            dataUrl: "https://www.mrlc.gov/data",
+            citation: "Dewitz, J., and U.S. Geological Survey, 2024, National Land Cover Database (NLCD) 2024 Products: U.S. Geological Survey data release.",
+            resolution: "30 meters",
+            lastUpdate: "2024",
+            classes: "16 land cover classes including developed, forest, agriculture, and wetlands"
+        },
+        lithology: {
+            name: "Lithology",
+            description: "Geological lithology (rock type) classification showing the composition and origin of surface and near-surface rocks",
+            agency: "U.S. Geological Survey (USGS)",
+            url: "https://www.usgs.gov/centers/geology-energy-and-minerals-science-center",
+            dataUrl: "https://ngmdb.usgs.gov/Prodesc/proddesc_9215.htm",
+            citation: "U.S. Geological Survey, State Geologic Map Compilation (SGMC), accessed 2024.",
+            resolution: "Variable",
+            lastUpdate: "2024",
+            classes: "Igneous, sedimentary, metamorphic, and unconsolidated deposits"
         },
         elevation: {
             name: "Digital Elevation Model",
@@ -193,9 +280,10 @@ const CONFIG = {
         boundaryPolygon: "data/CSNM_boundary_WGS84.geojson",
         highways: "data/CSNM_Highways.geojson",
         serviceRoads: "data/CSNM_ServiceRoads.geojson",
-        landCover: "data/CSNM_LandCover_WorldCover2021.tif",
         elevation: "data/rasters/CSNM_Elevation_10m.tif",
-        hillshade: "data/rasters/CSNM_Hillshade_10m.tif"
+        hillshade: "data/rasters/CSNM_Hillshade_10m.tif",
+        nlcd: "data/rasters/NLCD_2024_CSNM.tif",
+        lithology: "data/rasters/Lithology_CSNM.tif"
     },
     
     // Points of Interest
@@ -278,16 +366,33 @@ const ConfigUtils = {
         return CONFIG.soilOrderColors[soilOrder] || CONFIG.soilOrderColors["Unknown"];
     },
     
-    // Get land cover color by value
-    getLandCoverColor: function(value) {
-        const landCover = CONFIG.landCoverColors[value];
-        return landCover ? landCover.color : "#808080";
+    // Get particle size color by name
+    getParticleSizeColor: function(particleSize) {
+        return CONFIG.particleSizeColors[particleSize] || CONFIG.particleSizeColors["Unknown"];
     },
     
-    // Get land cover name by value
-    getLandCoverName: function(value) {
-        const landCover = CONFIG.landCoverColors[value];
-        return landCover ? landCover.name : "Unknown";
+    // Get NLCD color by value
+    getNLCDColor: function(value) {
+        const nlcd = CONFIG.nlcdColors[value];
+        return nlcd ? nlcd.color : "#808080";
+    },
+    
+    // Get NLCD name by value
+    getNLCDName: function(value) {
+        const nlcd = CONFIG.nlcdColors[value];
+        return nlcd ? nlcd.name : "Unknown";
+    },
+    
+    // Get lithology color by value
+    getLithologyColor: function(value) {
+        const lithology = CONFIG.lithologyColors[value];
+        return lithology ? lithology.color : "#808080";
+    },
+    
+    // Get lithology name by value
+    getLithologyName: function(value) {
+        const lithology = CONFIG.lithologyColors[value];
+        return lithology ? lithology.name : "Unknown";
     },
     
     // Get elevation color by normalized value (0-1)

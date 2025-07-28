@@ -279,8 +279,14 @@ class DataLoader {
             // Extract soil order from taxorder field (this is the main field in the data)
             let soilOrder = props.taxorder || props.soilorder || 'Unknown';
             
+            // Handle null values
+            if (soilOrder === null || soilOrder === undefined || soilOrder === '') {
+                soilOrder = 'Unknown';
+            }
+            
             // Ensure soil order is properly classified
             if (soilOrder && !CONFIG.soilOrderColors[soilOrder]) {
+                console.log(`Unrecognized soil order: ${soilOrder}, mapping to Unknown`);
                 soilOrder = 'Unknown';
             }
             
@@ -288,9 +294,22 @@ class DataLoader {
             props.color = ConfigUtils.getSoilOrderColor(soilOrder);
             props.soilOrder = soilOrder;
             
+            // Extract and process particle size
+            let particleSize = props.taxpartsize || 'Unknown';
+            
+            // Handle null/empty values
+            if (particleSize === null || particleSize === undefined || particleSize === '') {
+                particleSize = 'Unknown';
+            }
+            
+            // Add particle size properties
+            props.particleSize = particleSize;
+            props.particleSizeColor = ConfigUtils.getParticleSizeColor(particleSize);
+            
             // Add formatted display properties
             props.displayName = props.MUSYM || props.musym || 'Unknown Map Unit';
             props.soilOrderDisplay = soilOrder;
+            props.particleSizeDisplay = particleSize;
         });
         
         return geoJsonData;

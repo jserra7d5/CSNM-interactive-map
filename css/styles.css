@@ -926,6 +926,19 @@ body {
     min-width: 180px;
 }
 
+/* Simple popup styles */
+.simple-popup {
+    padding: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+    min-width: 150px;
+}
+
+.simple-popup strong {
+    color: #333;
+    font-weight: 600;
+}
+
 .raster-cell-popup h5 {
     margin: 0 0 8px 0;
     color: #333;

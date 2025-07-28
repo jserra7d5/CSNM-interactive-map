@@ -206,8 +206,8 @@ class RasterManager {
         const sampleRate = data.length > 1000000 ? Math.floor(data.length / 100000) : 1; // Sample ~100k points for large rasters
         const sampledData = sampleRate > 1 ? data.filter((_, i) => i % sampleRate === 0) : data;
         
-        if (property === 'landcover') {
-            // For land cover, filter out common no-data values including 0
+        if (property === 'nlcd' || property === 'lithology') {
+            // For classification rasters, filter out common no-data values including 0
             validValues = sampledData.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== 255 && val !== 0);
         } else if (property === 'elevation') {
             // For elevation, filter out no-data values (typically very low negative values or specific no-data codes)
@@ -258,6 +258,9 @@ class RasterManager {
         const totalPixels = data.length;
         let lastProgressReport = 0;
         
+        // Track unique values for classification rasters
+        const uniqueValues = new Set();
+        
         console.log(`Processing ${totalPixels.toLocaleString()} pixels for ${property}...`);
         
         // Emit start event
@@ -283,9 +286,8 @@ class RasterManager {
                 
                 // Check for no-data values (for land cover, 0 might be valid so be more careful)
                 let isNoData;
-                if (property === 'landcover') {
-                    // For WorldCover land cover, common no-data values are 0, 255, and sometimes 60 when used as background
-                    // Check the console output to see what values we're actually getting
+                if (property === 'nlcd' || property === 'lithology') {
+                    // For classification rasters, common no-data values are 0, 255, and -9999
                     isNoData = value === null || isNaN(value) || value === -9999 || value === 255 || value === 0;
                 } else if (property === 'elevation') {
                     // For elevation, check for various no-data representations
@@ -303,6 +305,11 @@ class RasterManager {
                     imageData.data[pixelIndex + 2] = 0; // Blue
                     imageData.data[pixelIndex + 3] = 0; // Alpha (fully transparent)
                 } else {
+                    // Track unique values for classification rasters
+                    if (property === 'nlcd' || property === 'lithology') {
+                        uniqueValues.add(value);
+                    }
+                    
                     const color = this.getColorForValue(property, value, min, max);
                     const rgb = this.hexToRgb(color);
                     
@@ -363,9 +370,6 @@ class RasterManager {
                         }
                     } else {
                         // Not elevation, or no hillshade data - use regular coloring
-                        if (property === 'landcover' && i < 5) {
-                            console.log(`Pixel ${i}: value=${value}, color=${color}, rgb=`, rgb);
-                        }
                         
                         const pixelIndex = i * 4;
                         imageData.data[pixelIndex] = rgb.r;     // Red
@@ -450,7 +454,8 @@ class RasterManager {
         // Return both the layer and data range information
         return {
             layer: overlay,
-            dataRange: { min, max, mean }
+            dataRange: { min, max, mean },
+            uniqueValues: uniqueValues // Include unique values for classification rasters
         };
     }
     
@@ -471,8 +476,11 @@ class RasterManager {
                 // Format the value appropriately
                 let displayValue = 'No Data';
                 if (value !== null && !isNaN(value)) {
-                    if (property === 'landcover') {
-                        const className = ConfigUtils.getLandCoverName(value);
+                    if (property === 'nlcd') {
+                        const className = ConfigUtils.getNLCDName(value);
+                        displayValue = `${className} (${value})`;
+                    } else if (property === 'lithology') {
+                        const className = ConfigUtils.getLithologyName(value);
                         displayValue = `${className} (${value})`;
                     } else if (property === 'elevation') {
                         displayValue = `${Math.round(value)} m`;
@@ -484,10 +492,11 @@ class RasterManager {
                     }
                 }
                 
-                const popupTitle = property === 'landcover' ? 'Land Cover' : 
+                const popupTitle = property === 'nlcd' ? 'Land Cover' :
+                                 property === 'lithology' ? 'Lithology' :
                                  property === 'elevation' ? 'Elevation' : 
                                  `${property.toUpperCase()} Value`;
-                const depthInfo = (property === 'landcover' || property === 'elevation') ? '' : `<p><strong>Depth:</strong> ${depthLabel}</p>`;
+                const depthInfo = (property === 'nlcd' || property === 'lithology' || property === 'elevation') ? '' : `<p><strong>Depth:</strong> ${depthLabel}</p>`;
                 
                 L.popup()
                     .setLatLng([lat, lng])
@@ -547,9 +556,12 @@ class RasterManager {
     
     // Get raster filename for a property and depth
     getRasterFilename(property, depth = 0) {
-        // Land cover and elevation don't have depth levels
-        if (property === 'landcover') {
-            return CONFIG.dataPaths.landCover;
+        // Classification rasters and elevation don't have depth levels
+        if (property === 'nlcd') {
+            return CONFIG.dataPaths.nlcd;
+        }
+        if (property === 'lithology') {
+            return CONFIG.dataPaths.lithology;
         }
         if (property === 'elevation') {
             return CONFIG.dataPaths.elevation;
@@ -731,9 +743,12 @@ class RasterManager {
     
     // Get color for a raster value using actual data ranges
     getColorForValue(property, value, min, max) {
-        if (property === 'landcover') {
-            // Land cover uses discrete classification values
-            return ConfigUtils.getLandCoverColor(value);
+        if (property === 'nlcd') {
+            // NLCD uses discrete classification values
+            return ConfigUtils.getNLCDColor(value);
+        } else if (property === 'lithology') {
+            // Lithology uses discrete classification values
+            return ConfigUtils.getLithologyColor(value);
         } else if (property === 'elevation') {
             // Elevation uses continuous color scale
             const normalized = Math.min(Math.max((value - min) / (max - min), 0), 1);
@@ -836,7 +851,7 @@ class RasterManager {
     
     // Check if raster data is available for a property
     isRasterAvailable(property) {
-        const availableRasters = ['oc', 'ph', 'meanTemp', 'landcover', 'elevation'];
+        const availableRasters = ['oc', 'ph', 'meanTemp', 'landcover', 'elevation', 'nlcd', 'lithology'];
         return availableRasters.includes(property);
     }
     
@@ -876,6 +891,20 @@ class RasterManager {
                 description: 'Digital Elevation Model with Hillshade',
                 units: 'meters',
                 source: 'USGS 10m DEM',
+                depths: null
+            },
+            'nlcd': {
+                name: 'NLCD Land Cover',
+                description: 'National Land Cover Database 2024',
+                units: 'class',
+                source: 'USGS NLCD 2024',
+                depths: null
+            },
+            'lithology': {
+                name: 'Lithology',
+                description: 'Geological rock type classification',
+                units: 'class',
+                source: 'USGS State Geologic Map',
                 depths: null
             }
         };
