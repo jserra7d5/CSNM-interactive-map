@@ -39,6 +39,11 @@ class DataLoader {
     // Private method to fetch GeoJSON
     async _fetchGeoJSON(url) {
         try {
+            // TEMPORARY FIX: Force correct file
+            if (url.includes('CSNM_Polygons') && !url.includes('WGS84')) {
+                console.warn('REDIRECTING: Attempted to load non-WGS84 polygons, forcing WGS84 version');
+                url = url.replace('CSNM_Polygons_with_Data', 'CSNM_Polygons_WGS84');
+            }
             console.log(`Loading GeoJSON from: ${url}`);
             
             // Add timestamp to help debug caching issues
@@ -57,14 +62,25 @@ class DataLoader {
             const contentLength = response.headers.get('content-length');
             const contentType = response.headers.get('content-type');
             
+            // Extract filename from URL for logging
+            const requestedFile = url.split('/').pop().split('?')[0];
+            const actualFile = response.url.split('/').pop().split('?')[0];
+            
             console.log(`GeoJSON response headers:`, {
                 requestedUrl: url,
+                requestedFile: requestedFile,
                 actualUrl: response.url,
+                actualFile: actualFile,
                 contentType,
                 contentEncoding,
-                contentLength: contentLength ? `${(parseInt(contentLength) / 1024).toFixed(2)} KB` : 'unknown',
-                finalUrl: response.url.split('?')[0] // Show URL without timestamp
+                contentLength: contentLength ? `${(parseInt(contentLength) / 1024).toFixed(2)} KB` : 'unknown'
             });
+            
+            // CRITICAL CHECK: Verify we're getting the right file
+            if (requestedFile.includes('WGS84') && actualFile.includes('with_Data')) {
+                console.error('ERROR: Requested WGS84 file but received with_Data file!');
+                throw new Error('Server returned wrong polygon file - deployment issue');
+            }
             
             // Parse JSON - browser will automatically handle decompression if Content-Encoding is set
             const data = await response.json();

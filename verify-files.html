@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Files</title>
+</head>
+<body>
+    <h1>File Verification</h1>
+    <div id="results"></div>
+    
+    <script>
+    async function checkFile(url) {
+        try {
+            const response = await fetch(url, { method: 'HEAD' });
+            return {
+                url: url,
+                exists: response.ok,
+                status: response.status,
+                size: response.headers.get('content-length'),
+                encoding: response.headers.get('content-encoding')
+            };
+        } catch (error) {
+            return { url: url, exists: false, error: error.message };
+        }
+    }
+    
+    async function verifyFiles() {
+        const files = [
+            'data/CSNM_Polygons_WGS84.geojson',
+            'data/CSNM_Polygons_WGS84.geojson.gz',
+            'data/CSNM_Polygons_with_Data.geojson',
+            'data/CSNM_Polygons_with_Data.geojson.gz'
+        ];
+        
+        const results = await Promise.all(files.map(checkFile));
+        
+        const html = results.map(r => `
+            <div style="margin: 10px; padding: 10px; background: ${r.exists ? '#e8f5e9' : '#ffebee'}">
+                <strong>${r.url}</strong><br>
+                Exists: ${r.exists}<br>
+                Status: ${r.status || 'N/A'}<br>
+                Size: ${r.size ? (parseInt(r.size) / 1024 / 1024).toFixed(2) + ' MB' : 'N/A'}<br>
+                Encoding: ${r.encoding || 'N/A'}
+            </div>
+        `).join('');
+        
+        document.getElementById('results').innerHTML = html;
+    }
+    
+    verifyFiles();
+    </script>
+</body>
+</html>
