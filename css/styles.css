@@ -47,6 +47,7 @@ body {
 .main-container {
     display: flex;
     height: calc(100vh - 60px);
+    width: 100%;
 }
 
 /* Dropdown Menu System */
@@ -58,7 +59,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    max-height: calc(100vh - 100px); /* Leave space for bottom controls */
+    max-height: calc(100vh - 180px); /* Leave more space for bottom controls */
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 5px; /* Space for scrollbar */
@@ -83,20 +84,6 @@ body {
     background: rgba(0, 0, 0, 0.5);
 }
 
-/* Scroll shadow effect */
-.dropdown-menu-container {
-    background:
-        /* Shadow covers */
-        linear-gradient(to bottom, white 10px, transparent 10px),
-        linear-gradient(to top, white 10px, transparent 10px),
-        /* Shadows */
-        linear-gradient(to bottom, rgba(0,0,0,0.1), transparent 20px),
-        linear-gradient(to top, rgba(0,0,0,0.1), transparent 20px);
-    background-attachment: local, local, scroll, scroll;
-    background-position: center top, center bottom, center top, center bottom;
-    background-repeat: no-repeat;
-    background-size: 100% 40px, 100% 40px, 100% 20px, 100% 20px;
-}
 
 .dropdown-menu {
     background: white;
@@ -802,6 +789,22 @@ body {
 
 .modal-body {
     padding: 24px;
+}
+
+/* App version display */
+.app-version {
+    background-color: #f0f0f0;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.app-version span {
+    color: #4A90E2;
+    font-weight: 600;
 }
 
 .modal-body h3 {

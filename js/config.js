@@ -1,15 +1,18 @@
 // Configuration and Constants
 // Cascade-Siskiyou National Monument Soil Explorer Configuration
 
+// Application Version
+const APP_VERSION = '0.1.1';
+
 // Map Settings
 const CONFIG = {
     // Map center and zoom
     mapCenter: [42.1, -122.466],
     mapZoom: 11,
     
-    // Tile loading bounds (restrict to monument area for performance)
-    // Approximate bounds for Cascade-Siskiyou National Monument
-    tileBounds: [[41.9, -122.7], [42.3, -122.2]],
+    // Tile loading bounds - expanded to allow full map viewing
+    // Set to null to load tiles everywhere, or expand bounds as needed
+    tileBounds: null,  // [[41.7, -123.0], [42.5, -122.0]] for wider area
     
     // Projection
     crs: L.CRS.EPSG3857,

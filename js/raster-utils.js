@@ -470,6 +470,10 @@ class RasterManager {
             dataRange: { min, max, mean },
             uniqueValues: uniqueValues // Include unique values for classification rasters
         };
+        } catch (error) {
+            console.error(`Error creating canvas overlay for ${property}:`, error);
+            return null;
+        }
     }
     
     // Handle click on raster to show value
@@ -926,12 +930,19 @@ class RasterManager {
     }
 }
 
-// Singleton instance
-const rasterManager = new RasterManager();
-
-// Make available globally for browser usage
+// Initialize RasterManager when the window loads to ensure GeoTIFF is available
 if (typeof window !== 'undefined') {
-    window.rasterManager = rasterManager;
+    // Check if GeoTIFF is already loaded
+    if (typeof GeoTIFF !== 'undefined' || typeof window.GeoTIFF !== 'undefined') {
+        window.rasterManager = new RasterManager();
+        console.log('RasterManager initialized immediately');
+    } else {
+        // Wait for window load to ensure all scripts are loaded
+        window.addEventListener('load', function() {
+            window.rasterManager = new RasterManager();
+            console.log('RasterManager initialized on window load');
+        });
+    }
 }
 
 // Export for use in other modules

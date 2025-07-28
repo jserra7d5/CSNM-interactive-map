@@ -13,7 +13,7 @@ class SoilExplorerApp {
     // Initialize the application
     async init() {
         try {
-            console.log('Initializing Cascade-Siskiyou Soil Explorer...');
+            console.log(`Initializing Cascade-Siskiyou Soil Explorer v${APP_VERSION}...`);
             
             // Validate configuration
             if (!ConfigUtils.validate()) {
@@ -574,15 +574,33 @@ class SoilExplorerApp {
 
 // Application initialization
 document.addEventListener('DOMContentLoaded', async () => {
-    // Create global app instance
-    window.soilExplorerApp = new SoilExplorerApp();
-    
-    // Initialize the application
-    try {
-        await window.soilExplorerApp.init();
-    } catch (error) {
-        console.error('Application failed to start:', error);
+    // Set app version in UI
+    const versionElement = document.getElementById('app-version');
+    if (versionElement && typeof APP_VERSION !== 'undefined') {
+        versionElement.textContent = APP_VERSION;
     }
+    
+    // Function to initialize app when rasterManager is ready
+    async function initializeApp() {
+        if (window.rasterManager) {
+            console.log('RasterManager is ready, initializing app');
+            // Create global app instance
+            window.soilExplorerApp = new SoilExplorerApp();
+            
+            // Initialize the application
+            try {
+                await window.soilExplorerApp.init();
+            } catch (error) {
+                console.error('Application failed to start:', error);
+            }
+        } else {
+            console.log('Waiting for RasterManager...');
+            setTimeout(initializeApp, 100);
+        }
+    }
+    
+    // Start initialization
+    initializeApp();
 });
 
 // Export for module systems

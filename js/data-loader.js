@@ -41,8 +41,12 @@ class DataLoader {
         try {
             console.log(`Loading GeoJSON from: ${url}`);
             
+            // Add timestamp to help debug caching issues
+            const timestamp = new Date().getTime();
+            const urlWithTimestamp = `${url}?t=${timestamp}`;
+            
             // Simply fetch the URL - let Vercel's rewrite rules handle serving compressed version
-            const response = await fetch(url);
+            const response = await fetch(urlWithTimestamp);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -54,7 +58,8 @@ class DataLoader {
             const contentType = response.headers.get('content-type');
             
             console.log(`GeoJSON response headers:`, {
-                url,
+                requestedUrl: url,
+                actualUrl: response.url,
                 contentType,
                 contentEncoding,
                 contentLength: contentLength ? `${(parseInt(contentLength) / 1024).toFixed(2)} KB` : 'unknown'
