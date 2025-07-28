@@ -145,23 +145,92 @@ class MapManager {
             return;
         }
         
-        // Create soil filled polygon layer (always visible)
-        const soilLayer = L.geoJSON(data.soilPolygons, {
-            style: (feature) => this.getSoilFillStyle(feature),
-            onEachFeature: (feature, layer) => this.onEachPolygon(feature, layer)
-        });
+        const features = data.soilPolygons.features;
+        const totalFeatures = features.length;
+        console.log(`Loading ${totalFeatures} soil polygon features...`);
         
-        // Create permanent boundary layer for soil orders (always visible when soil layer is shown)
-        const permanentBoundaryLayer = L.geoJSON(data.soilPolygons, {
-            style: (feature) => this.getPermanentBoundaryStyle(feature),
-            interactive: false
-        });
+        // Create empty layer groups for progressive loading
+        const soilLayer = L.layerGroup();
+        const permanentBoundaryLayer = L.layerGroup();
+        const toggleableBoundaryLayer = L.layerGroup();
         
-        // Create toggleable boundary layer (yellow boundaries)
-        const toggleableBoundaryLayer = L.geoJSON(data.soilPolygons, {
-            style: (feature) => this.getToggleableBoundaryStyle(feature),
-            interactive: false
-        });
+        // Function to load features in batches
+        const loadFeaturesProgressively = async () => {
+            const batchSize = totalFeatures > 5000 ? 1000 : 500;
+            let loaded = 0;
+            
+            const loadBatch = () => {
+                const batch = features.slice(loaded, loaded + batchSize);
+                const batchGeoJSON = {
+                    type: 'FeatureCollection',
+                    features: batch
+                };
+                
+                // Create layers for this batch
+                const batchSoilLayer = L.geoJSON(batchGeoJSON, {
+                    style: (feature) => this.getSoilFillStyle(feature),
+                    onEachFeature: (feature, layer) => this.onEachPolygon(feature, layer)
+                });
+                
+                const batchPermanentBoundary = L.geoJSON(batchGeoJSON, {
+                    style: (feature) => this.getPermanentBoundaryStyle(feature),
+                    interactive: false
+                });
+                
+                const batchToggleableBoundary = L.geoJSON(batchGeoJSON, {
+                    style: (feature) => this.getToggleableBoundaryStyle(feature),
+                    interactive: false
+                });
+                
+                // Add batches to main layers
+                soilLayer.addLayer(batchSoilLayer);
+                permanentBoundaryLayer.addLayer(batchPermanentBoundary);
+                toggleableBoundaryLayer.addLayer(batchToggleableBoundary);
+                
+                loaded += batch.length;
+                
+                // Update progress
+                const progress = Math.round((loaded / totalFeatures) * 100);
+                if (loaded % 1000 === 0 || loaded === totalFeatures) {
+                    console.log(`Loaded ${loaded}/${totalFeatures} features (${progress}%)`);
+                }
+                
+                // Continue loading if more features remain
+                if (loaded < totalFeatures) {
+                    requestAnimationFrame(loadBatch);
+                } else {
+                    console.log('All soil polygons loaded successfully');
+                }
+            };
+            
+            // Start loading
+            loadBatch();
+        };
+        
+        // Use progressive loading for large datasets
+        if (totalFeatures > 1000) {
+            loadFeaturesProgressively();
+        } else {
+            // Load all at once for smaller datasets
+            const allSoilLayer = L.geoJSON(data.soilPolygons, {
+                style: (feature) => this.getSoilFillStyle(feature),
+                onEachFeature: (feature, layer) => this.onEachPolygon(feature, layer)
+            });
+            
+            const allPermanentBoundary = L.geoJSON(data.soilPolygons, {
+                style: (feature) => this.getPermanentBoundaryStyle(feature),
+                interactive: false
+            });
+            
+            const allToggleableBoundary = L.geoJSON(data.soilPolygons, {
+                style: (feature) => this.getToggleableBoundaryStyle(feature),
+                interactive: false
+            });
+            
+            soilLayer.addLayer(allSoilLayer);
+            permanentBoundaryLayer.addLayer(allPermanentBoundary);
+            toggleableBoundaryLayer.addLayer(allToggleableBoundary);
+        }
         
         // Store layers
         this.layers.polygons.set('soil', soilLayer);
@@ -295,10 +364,10 @@ class MapManager {
         };
     }
     
-    // Get style for service roads (green, thinner)
+    // Get style for service roads (red, thinner)
     getServiceRoadStyle() {
         return {
-            color: '#228B22',        // Forest green
+            color: '#FF0000',        // Red
             weight: 2,              // Thinner than highways
             opacity: 0.7,
             lineCap: 'round',
@@ -579,9 +648,16 @@ class MapManager {
         
         try {
             console.log('Creating hillshade background layer...');
+            console.log('window.rasterManager available?', window.rasterManager);
+            
+            // Check if rasterManager is available
+            if (!window.rasterManager) {
+                console.error('rasterManager not available. Check if raster-utils.js loaded correctly.');
+                return;
+            }
             
             // Load hillshade TIFF
-            const hillshadeTiff = await rasterManager.loadTiff(CONFIG.dataPaths.hillshade);
+            const hillshadeTiff = await window.rasterManager.loadTiff(CONFIG.dataPaths.hillshade);
             if (!hillshadeTiff) {
                 console.warn('Could not load hillshade data for background');
                 return;
@@ -774,14 +850,27 @@ class MapManager {
         console.log(`Loading ${property} raster for depth level ${depth}`);
         
         // Show loading screen for elevation
-        if (property === 'elevation') {
+        if (property === 'elevation' || property === 'landcover') {
             // Find the UI controller through the global app instance
             const loadingElement = document.getElementById('loading');
             if (loadingElement) {
                 const loadingText = loadingElement.querySelector('span');
+                const progressContainer = loadingElement.querySelector('.loading-progress-container');
+                
                 if (loadingText) {
-                    loadingText.textContent = 'Loading elevation and hillshade data...';
+                    const mapType = property === 'elevation' ? 'elevation map' : 'land cover';
+                    loadingText.textContent = `Loading ${mapType}...`;
                 }
+                
+                // Show progress bar immediately
+                if (progressContainer) {
+                    progressContainer.style.display = 'block';
+                    const progressFill = loadingElement.querySelector('.loading-progress-fill');
+                    const progressText = loadingElement.querySelector('.loading-progress-text');
+                    if (progressFill) progressFill.style.width = '0%';
+                    if (progressText) progressText.textContent = '0%';
+                }
+                
                 loadingElement.style.display = 'flex';
             }
         }
@@ -794,13 +883,8 @@ class MapManager {
         // Create either a real TIFF layer or fall back to mock data
         const rasterInfo = await this.createRasterLayer(property, depth);
         
-        // Hide loading screen for elevation after raster is added
-        if (property === 'elevation') {
-            const loadingElement = document.getElementById('loading');
-            if (loadingElement) {
-                loadingElement.style.display = 'none';
-            }
-        }
+        // Don't hide loading screen for elevation here - let the progress completion event handle it
+        // This allows the processing percentage to be displayed
         
         // Show appropriate legend after raster is loaded
         if (rasterInfo && rasterInfo.dataRange) {
@@ -814,7 +898,7 @@ class MapManager {
         
         try {
             // Try to create a real TIFF layer first
-            let rasterResult = await rasterManager.createTiffLayer(property, depth);
+            let rasterResult = await window.rasterManager.createTiffLayer(property, depth);
             
             if (!rasterResult || !rasterResult.layer) {
                 console.log(`TIFF loading failed for ${property}, falling back to mock data`);
@@ -824,7 +908,7 @@ class MapManager {
                     [41.9, -122.7],  // Southwest corner
                     [42.3, -122.3]   // Northeast corner
                 ];
-                const rasterLayer = rasterManager.createMockRasterOverlay(property, depth, bounds);
+                const rasterLayer = window.rasterManager.createMockRasterOverlay(property, depth, bounds);
                 let dataRange;
                 if (property === 'oc') {
                     dataRange = { min: 0, max: 20 };

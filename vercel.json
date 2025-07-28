@@ -33,11 +33,62 @@
       ]
     },
     {
+      "source": "/(.*).tif.gz",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "image/tiff"
+        },
+        {
+          "key": "Content-Encoding",
+          "value": "gzip"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).tiff.gz",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "image/tiff"
+        },
+        {
+          "key": "Content-Encoding",
+          "value": "gzip"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
       "source": "/(.*).geojson",
       "headers": [
         {
           "key": "Content-Type",
           "value": "application/geo+json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).geojson.gz",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/geo+json"
+        },
+        {
+          "key": "Content-Encoding",
+          "value": "gzip"
         },
         {
           "key": "Cache-Control",
@@ -57,6 +108,38 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    },
+    {
+      "source": "/(.*)\\.js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.css",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/css"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/data/(.*).geojson",
+      "destination": "/data/$1.geojson.gz"
     }
   ]
 }

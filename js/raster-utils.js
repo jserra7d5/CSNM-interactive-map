@@ -89,7 +89,7 @@ class RasterManager {
         try {
             console.log(`Loading TIFF: ${filename}`);
             
-            // First, test if the file is accessible
+            // Test if the file is accessible
             const testResponse = await fetch(filename, { method: 'HEAD' });
             console.log(`File accessibility test for ${filename}:`, {
                 status: testResponse.status,
@@ -117,13 +117,26 @@ class RasterManager {
             let tiff = null;
             
             try {
-                const response = await fetch(filename);
+                // Add cache control and range support for better performance
+                const response = await fetch(filename, {
+                    headers: {
+                        'Cache-Control': 'max-age=31536000'
+                    }
+                });
+                
                 if (!response.ok) {
                     throw new Error(`Fetch failed: ${response.status}`);
                 }
                 
+                // Check if server supports range requests for future optimization
+                const acceptRanges = response.headers.get('Accept-Ranges');
+                if (acceptRanges === 'bytes') {
+                    console.log(`Server supports range requests for ${filename}`);
+                }
+                
                 const arrayBuffer = await response.arrayBuffer();
-                console.log(`Fetched TIFF file, size: ${arrayBuffer.byteLength} bytes`);
+                const sizeInMB = (arrayBuffer.byteLength / 1024 / 1024).toFixed(2);
+                console.log(`Fetched TIFF file, size: ${sizeInMB} MB`);
                 
                 tiff = await GeoTIFFLib.fromArrayBuffer(arrayBuffer);
                 console.log(`Successfully loaded TIFF with fromArrayBuffer: ${filename}`);
@@ -167,28 +180,20 @@ class RasterManager {
                     hillshadeData = hillshadeRasters[0];
                     console.log('Hillshade data loaded successfully');
                     
-                    // Debug: Check hillshade value range
-                    try {
-                        const hillshadeValues = hillshadeData.filter(val => val !== null && !isNaN(val));
-                        const uniqueValues = [...new Set(hillshadeValues)].sort((a, b) => a - b);
-                        console.log('Hillshade unique values (first 10):', uniqueValues.slice(0, 10));
-                        console.log('Hillshade unique values (last 10):', uniqueValues.slice(-10));
-                        console.log('Hillshade min:', Math.min(...hillshadeValues));
-                        console.log('Hillshade max:', Math.max(...hillshadeValues));
-                        
-                        // Count how many pixels have specific values that might be no-data
-                        const valueCounts = {};
-                        hillshadeData.forEach(val => {
-                            if (val !== null && !isNaN(val)) {
-                                valueCounts[val] = (valueCounts[val] || 0) + 1;
+                    // Debug: Check hillshade value range (simplified to avoid performance issues)
+                    if (hillshadeData.length < 100000) {  // Only debug small rasters
+                        try {
+                            const sampleSize = Math.min(1000, hillshadeData.length);
+                            const sampleValues = [];
+                            for (let j = 0; j < sampleSize; j += Math.floor(hillshadeData.length / sampleSize)) {
+                                if (hillshadeData[j] !== null && !isNaN(hillshadeData[j])) {
+                                    sampleValues.push(hillshadeData[j]);
+                                }
                             }
-                        });
-                        
-                        // Show most common values
-                        const sortedCounts = Object.entries(valueCounts).sort((a, b) => b[1] - a[1]);
-                        console.log('Most common hillshade values:', sortedCounts.slice(0, 10).map(([val, count]) => `${val}: ${count} pixels`));
-                    } catch (debugError) {
-                        console.error('Error in hillshade debugging:', debugError);
+                            console.log('Hillshade sample values:', sampleValues.slice(0, 10));
+                        } catch (debugError) {
+                            console.error('Error in hillshade debugging:', debugError);
+                        }
                     }
                 }
             } catch (error) {
@@ -196,17 +201,20 @@ class RasterManager {
             }
         }
         
-        // Analyze the data to understand value ranges
+        // Analyze the data to understand value ranges (use sampling for large datasets)
         let validValues;
+        const sampleRate = data.length > 1000000 ? Math.floor(data.length / 100000) : 1; // Sample ~100k points for large rasters
+        const sampledData = sampleRate > 1 ? data.filter((_, i) => i % sampleRate === 0) : data;
+        
         if (property === 'landcover') {
             // For land cover, filter out common no-data values including 0
-            validValues = data.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== 255 && val !== 0);
+            validValues = sampledData.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== 255 && val !== 0);
         } else if (property === 'elevation') {
             // For elevation, filter out no-data values (typically very low negative values or specific no-data codes)
-            validValues = data.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== -3.4028235e+38 && val > -1000);
+            validValues = sampledData.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== -3.4028235e+38 && val > -1000);
         } else {
             // For other rasters, 0 is typically no-data
-            validValues = data.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== 0);
+            validValues = sampledData.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== 0);
         }
         // Calculate min/max safely for large arrays
         let min, max, mean;
@@ -218,42 +226,16 @@ class RasterManager {
             min = max = mean = 0;
         }
         
-        // Debug data for land cover and elevation to understand no-data patterns
-        if (property === 'landcover' || property === 'elevation') {
-            const uniqueValues = [...new Set(validValues)].sort((a, b) => a - b);
-            const allUniqueValues = [...new Set(data)].sort((a, b) => a - b);
-            
-            // Count frequency of each value
-            const valueCounts = {};
-            data.forEach(val => {
-                valueCounts[val] = (valueCounts[val] || 0) + 1;
-            });
-            
-            console.log(`${property.toUpperCase()} data analysis:`, {
-                totalPixels: data.length,
-                validPixels: validValues.length,
-                min: min,
-                max: max,
-                mean: mean.toFixed(2),
-                sampleValues: validValues.slice(0, 10),
-                uniqueValidValues: uniqueValues.slice(0, 20), // Show first 20 unique values
-                allUniqueValues: allUniqueValues.slice(0, 20), // Show first 20 all values
-                valueCounts: Object.keys(valueCounts).length > 10 ? 
-                    'Too many unique values to display' : valueCounts,
-                uniqueCount: uniqueValues.length
-            });
-        } else {
-            console.log(`${property.toUpperCase()} data analysis:`, {
-                totalPixels: data.length,
-                validPixels: validValues.length,
-                min: min,
-                max: max,
-                mean: mean.toFixed(2),
-                sampleValues: validValues.slice(0, 10),
-                // Check if pH values might be scaled by 10
-                ...(property === 'ph' && min > 10 ? { note: 'pH values appear to be scaled by 10 (pH*10)' } : {})
-            });
-        }
+        // Debug data analysis (simplified for performance)
+        console.log(`${property.toUpperCase()} data analysis:`, {
+            totalPixels: data.length.toLocaleString(),
+            validPixels: validValues.length.toLocaleString(),
+            sampleRate: sampleRate > 1 ? `1:${sampleRate}` : 'full',
+            min: min?.toFixed(2),
+            max: max?.toFixed(2),
+            mean: mean?.toFixed(2),
+            ...(property === 'ph' && min > 10 ? { note: 'pH values appear to be scaled by 10 (pH*10)' } : {})
+        });
         
         // Create canvas with crisp pixel rendering
         const canvas = document.createElement('canvas');
@@ -273,104 +255,153 @@ class RasterManager {
         // Color the pixels based on values
         let hillshadeDebugCount = 0;
         let hillshadeStats = { processed: 0, noData: 0, clamped: 0, validRange: 0 };
-        for (let i = 0; i < data.length; i++) {
-            const value = data[i];
-            
-            // Check for no-data values (for land cover, 0 might be valid so be more careful)
-            let isNoData;
-            if (property === 'landcover') {
-                // For WorldCover land cover, common no-data values are 0, 255, and sometimes 60 when used as background
-                // Check the console output to see what values we're actually getting
-                isNoData = value === null || isNaN(value) || value === -9999 || value === 255 || value === 0;
-            } else if (property === 'elevation') {
-                // For elevation, check for various no-data representations
-                isNoData = value === null || isNaN(value) || value === -9999 || value === -3.4028235e+38 || value < -1000;
-            } else {
-                // For other rasters, 0 is typically no-data
-                isNoData = value === null || isNaN(value) || value === -9999 || value === 0;
+        const totalPixels = data.length;
+        let lastProgressReport = 0;
+        
+        console.log(`Processing ${totalPixels.toLocaleString()} pixels for ${property}...`);
+        
+        // Emit start event
+        const startEvent = new CustomEvent('rasterProcessingProgress', {
+            detail: {
+                property: property,
+                progress: 0,
+                message: `Starting to process ${property}...`
             }
+        });
+        document.dispatchEvent(startEvent);
+        
+        // Process in chunks to allow UI updates
+        const chunkSize = Math.floor(totalPixels / 20); // 5% chunks
+        
+        for (let chunk = 0; chunk < 20; chunk++) {
+            const startIdx = chunk * chunkSize;
+            const endIdx = Math.min((chunk + 1) * chunkSize, data.length);
             
-            if (isNoData) {
-                // Transparent for no-data
-                const pixelIndex = i * 4;
-                imageData.data[pixelIndex] = 0;     // Red
-                imageData.data[pixelIndex + 1] = 0; // Green
-                imageData.data[pixelIndex + 2] = 0; // Blue
-                imageData.data[pixelIndex + 3] = 0; // Alpha (fully transparent)
-            } else {
-                const color = this.getColorForValue(property, value, min, max);
-                const rgb = this.hexToRgb(color);
+            // Process this chunk
+            for (let i = startIdx; i < endIdx; i++) {
+                const value = data[i];
                 
-                // For elevation with hillshade, blend the colors
-                if (property === 'elevation' && hillshadeData && hillshadeData[i] !== undefined) {
-                    const hillshadeValue = hillshadeData[i];
+                // Check for no-data values (for land cover, 0 might be valid so be more careful)
+                let isNoData;
+                if (property === 'landcover') {
+                    // For WorldCover land cover, common no-data values are 0, 255, and sometimes 60 when used as background
+                    // Check the console output to see what values we're actually getting
+                    isNoData = value === null || isNaN(value) || value === -9999 || value === 255 || value === 0;
+                } else if (property === 'elevation') {
+                    // For elevation, check for various no-data representations
+                    isNoData = value === null || isNaN(value) || value === -9999 || value === -3.4028235e+38 || value < -1000;
+                } else {
+                    // For other rasters, 0 is typically no-data
+                    isNoData = value === null || isNaN(value) || value === -9999 || value === 0;
+                }
+                
+                if (isNoData) {
+                    // Transparent for no-data
+                    const pixelIndex = i * 4;
+                    imageData.data[pixelIndex] = 0;     // Red
+                    imageData.data[pixelIndex + 1] = 0; // Green
+                    imageData.data[pixelIndex + 2] = 0; // Blue
+                    imageData.data[pixelIndex + 3] = 0; // Alpha (fully transparent)
+                } else {
+                    const color = this.getColorForValue(property, value, min, max);
+                    const rgb = this.hexToRgb(color);
                     
-                    // More comprehensive no-data detection for hillshade based on research
-                    // Hillshade should be 0-255 grayscale, but edge artifacts can create extreme values
-                    // Common issues: values promoted to 16-bit (like 256), negative values, compression artifacts
-                    const hillshadeIsNoData = hillshadeValue === null || 
-                                            hillshadeValue === undefined || 
-                                            isNaN(hillshadeValue) || 
-                                            hillshadeValue === 0 ||          // Common NoData for hillshade
-                                            hillshadeValue === 255 ||        // Sometimes used as NoData
-                                            hillshadeValue === 256 ||        // 16-bit promoted NoData
-                                            hillshadeValue === -1 ||         // Negative NoData
-                                            hillshadeValue === -9999 ||      // Standard NoData
-                                            hillshadeValue === -3.4028235e+38 || // Float32 NoData
-                                            hillshadeValue < 0 ||            // Any negative value
-                                            hillshadeValue > 255;            // Any value above 8-bit range
-                    
-                    // Clamp valid hillshade values to 0-255 range to prevent display artifacts
-                    let clampedHillshade = hillshadeValue;
-                    if (!hillshadeIsNoData) {
-                        clampedHillshade = Math.max(0, Math.min(255, hillshadeValue));
-                    }
-                    
-                    // Track hillshade statistics
-                    hillshadeStats.processed++;
-                    if (hillshadeIsNoData) {
-                        hillshadeStats.noData++;
-                    } else if (clampedHillshade !== hillshadeValue) {
-                        hillshadeStats.clamped++;
+                    // For elevation with hillshade, blend the colors
+                    if (property === 'elevation' && hillshadeData && hillshadeData[i] !== undefined) {
+                        const hillshadeValue = hillshadeData[i];
+                        
+                        // More comprehensive no-data detection for hillshade based on research
+                        // Hillshade should be 0-255 grayscale, where 0=darkest and 255=brightest
+                        // Only truly invalid values should be considered no-data
+                        const hillshadeIsNoData = hillshadeValue === null || 
+                                                hillshadeValue === undefined || 
+                                                isNaN(hillshadeValue) || 
+                                                hillshadeValue === 256 ||        // 16-bit promoted NoData
+                                                hillshadeValue === -1 ||         // Negative NoData
+                                                hillshadeValue === -9999 ||      // Standard NoData
+                                                hillshadeValue === -3.4028235e+38 || // Float32 NoData
+                                                hillshadeValue < 0 ||            // Any negative value
+                                                hillshadeValue > 255;            // Any value above 8-bit range
+                        
+                        // Clamp valid hillshade values to 0-255 range to prevent display artifacts
+                        let clampedHillshade = hillshadeValue;
+                        if (!hillshadeIsNoData) {
+                            clampedHillshade = Math.max(0, Math.min(255, hillshadeValue));
+                        }
+                        
+                        // Track hillshade statistics
+                        hillshadeStats.processed++;
+                        if (hillshadeIsNoData) {
+                            hillshadeStats.noData++;
+                        } else if (clampedHillshade !== hillshadeValue) {
+                            hillshadeStats.clamped++;
+                        } else {
+                            hillshadeStats.validRange++;
+                        }
+                        
+                        // Debug: log only a few sample pixels to avoid performance issues
+                        if (hillshadeDebugCount < 5 && i % 1000000 === 0) {
+                            console.log(`Pixel ${i}: hillshade=${hillshadeValue}, isNoData=${hillshadeIsNoData}, clamped=${clampedHillshade}, elevation=${value}`);
+                            hillshadeDebugCount++;
+                        }
+                        
+                        if (!hillshadeIsNoData) {
+                            const blendedRgb = this.blendWithHillshade(rgb, clampedHillshade);
+                            
+                            const pixelIndex = i * 4;
+                            imageData.data[pixelIndex] = blendedRgb.r;     // Red
+                            imageData.data[pixelIndex + 1] = blendedRgb.g; // Green
+                            imageData.data[pixelIndex + 2] = blendedRgb.b; // Blue
+                            imageData.data[pixelIndex + 3] = 230;          // Higher opacity (0.9 * 255 = 230)
+                        } else {
+                            // If hillshade is no-data, make this pixel transparent even if elevation is valid
+                            const pixelIndex = i * 4;
+                            imageData.data[pixelIndex] = 0;     // Red
+                            imageData.data[pixelIndex + 1] = 0; // Green
+                            imageData.data[pixelIndex + 2] = 0; // Blue
+                            imageData.data[pixelIndex + 3] = 0; // Alpha (fully transparent)
+                        }
                     } else {
-                        hillshadeStats.validRange++;
-                    }
-                    
-                    // Debug: log first few problematic pixels and some random samples
-                    if (hillshadeDebugCount < 20 && (hillshadeIsNoData || clampedHillshade !== hillshadeValue || i % 100000 === 0)) {
-                        console.log(`Pixel ${i}: hillshade=${hillshadeValue}, isNoData=${hillshadeIsNoData}, clamped=${clampedHillshade}, elevation=${value}`);
-                        hillshadeDebugCount++;
-                    }
-                    
-                    if (!hillshadeIsNoData) {
-                        const blendedRgb = this.blendWithHillshade(rgb, clampedHillshade);
+                        // Not elevation, or no hillshade data - use regular coloring
+                        if (property === 'landcover' && i < 5) {
+                            console.log(`Pixel ${i}: value=${value}, color=${color}, rgb=`, rgb);
+                        }
                         
                         const pixelIndex = i * 4;
-                        imageData.data[pixelIndex] = blendedRgb.r;     // Red
-                        imageData.data[pixelIndex + 1] = blendedRgb.g; // Green
-                        imageData.data[pixelIndex + 2] = blendedRgb.b; // Blue
-                        imageData.data[pixelIndex + 3] = 230;          // Higher opacity (0.9 * 255 = 230)
-                    } else {
-                        // If hillshade is no-data, make this pixel transparent even if elevation is valid
-                        const pixelIndex = i * 4;
-                        imageData.data[pixelIndex] = 0;     // Red
-                        imageData.data[pixelIndex + 1] = 0; // Green
-                        imageData.data[pixelIndex + 2] = 0; // Blue
-                        imageData.data[pixelIndex + 3] = 0; // Alpha (fully transparent)
+                        imageData.data[pixelIndex] = rgb.r;     // Red
+                        imageData.data[pixelIndex + 1] = rgb.g; // Green
+                        imageData.data[pixelIndex + 2] = rgb.b; // Blue
+                        imageData.data[pixelIndex + 3] = 220;   // Alpha (higher opacity)
                     }
-                } else {
-                    // Debug first few pixels for land cover
-                    if (property === 'landcover' && i < 5) {
-                        console.log(`Pixel ${i}: value=${value}, color=${color}, rgb=`, rgb);
-                    }
-                    
-                    const pixelIndex = i * 4;
-                    imageData.data[pixelIndex] = rgb.r;     // Red
-                    imageData.data[pixelIndex + 1] = rgb.g; // Green
-                    imageData.data[pixelIndex + 2] = rgb.b; // Blue
-                    imageData.data[pixelIndex + 3] = 220;   // Alpha (higher opacity)
                 }
             }
+            
+            // After each chunk, update progress and yield to browser
+            const progress = Math.min(95, (chunk + 1) * 5); // Cap at 95%
+            console.log(`Processing ${property}: ${progress}% complete...`);
+            
+            // Emit progress event
+            const event = new CustomEvent('rasterProcessingProgress', {
+                detail: {
+                    property: property,
+                    progress: progress,
+                    message: `Processing ${property}: ${progress}% complete...`
+                }
+            });
+            document.dispatchEvent(event);
+            
+            // Update progress bar directly
+            const progressFill = document.querySelector('.loading-progress-fill');
+            const progressText = document.querySelector('.loading-progress-text');
+            if (progressFill) {
+                progressFill.style.width = `${progress}%`;
+            }
+            if (progressText) {
+                progressText.textContent = `${progress}%`;
+            }
+            
+            // Yield control to browser
+            await new Promise(resolve => setTimeout(resolve, 50));
         }
         
         // Put image data on canvas
@@ -380,6 +411,24 @@ class RasterManager {
         if (property === 'elevation' && hillshadeStats.processed > 0) {
             console.log('Hillshade processing summary:', hillshadeStats);
         }
+        
+        // Emit completion event with a small delay to ensure the 100% is visible
+        setTimeout(() => {
+            const completeEvent = new CustomEvent('rasterProcessingProgress', {
+                detail: {
+                    property: property,
+                    progress: 100,
+                    message: `${property} processing complete!`
+                }
+            });
+            document.dispatchEvent(completeEvent);
+            
+            // Force final UI update
+            const progressFill = document.querySelector('.loading-progress-fill');
+            const progressText = document.querySelector('.loading-progress-text');
+            if (progressFill) progressFill.style.width = '100%';
+            if (progressText) progressText.textContent = '100%';
+        }, 100); // Small delay to ensure 100% is visible before hiding
         
         // Create Leaflet canvas overlay
         const bounds = [
@@ -785,6 +834,11 @@ class RasterManager {
 
 // Singleton instance
 const rasterManager = new RasterManager();
+
+// Make available globally for browser usage
+if (typeof window !== 'undefined') {
+    window.rasterManager = rasterManager;
+}
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {

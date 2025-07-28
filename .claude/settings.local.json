@@ -4,7 +4,19 @@
       "WebFetch(domain:casoilresource.lawr.ucdavis.edu)",
       "Bash(mkdir:*)",
       "Bash(mv:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(chmod:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(sed:*)",
+      "Bash(grep:*)",
+      "Bash(awk:*)",
+      "Bash(claude mcp:*)",
+      "Bash(screencapture:*)",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "mcp__puppeteer__puppeteer_click",
+      "mcp__puppeteer__puppeteer_evaluate"
     ],
     "deny": []
   }

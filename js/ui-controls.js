@@ -191,6 +191,11 @@ class UIController {
         document.addEventListener('featureSelected', (e) => {
             this.handleFeatureSelected(e.detail);
         });
+        
+        // Raster processing progress event
+        document.addEventListener('rasterProcessingProgress', (e) => {
+            this.handleRasterProgress(e.detail);
+        });
     }
     
     // Toggle sidebar visibility
@@ -502,6 +507,70 @@ class UIController {
             // On mobile, always collapse sidebar initially
             if (!this.sidebarCollapsed) {
                 this.elements.sidebar.classList.add('collapsed');
+            }
+        }
+    }
+    
+    // Handle raster processing progress
+    handleRasterProgress(detail) {
+        const { property, progress, message } = detail;
+        
+        // Update loading message with progress
+        if (this.elements.loading) {
+            const loadingText = this.elements.loading.querySelector('span');
+            const progressContainer = this.elements.loading.querySelector('.loading-progress-container');
+            const progressFill = this.elements.loading.querySelector('.loading-progress-fill');
+            const progressText = this.elements.loading.querySelector('.loading-progress-text');
+            
+            if (property === 'elevation' || property === 'landcover') {
+                // Show progress bar for elevation and land cover
+                if (progressContainer) {
+                    progressContainer.style.display = 'block';
+                }
+                
+                // Update loading text
+                if (loadingText) {
+                    const mapType = property === 'elevation' ? 'elevation map' : 'land cover';
+                    loadingText.textContent = `Loading ${mapType}...`;
+                }
+                
+                // Update progress bar with forced repaint
+                if (progressFill) {
+                    progressFill.style.width = `${progress}%`;
+                    // Force browser to repaint
+                    progressFill.offsetHeight;
+                }
+                
+                // Update progress text with forced repaint
+                if (progressText) {
+                    progressText.textContent = `${progress}%`;
+                    // Force browser to repaint
+                    progressText.offsetHeight;
+                }
+            } else {
+                // For other properties, just show the message
+                if (loadingText) {
+                    loadingText.textContent = message;
+                }
+                if (progressContainer) {
+                    progressContainer.style.display = 'none';
+                }
+            }
+            
+            // Hide loading screen when processing is complete
+            if (progress === 100) {
+                setTimeout(() => {
+                    if (this.elements.loading) {
+                        this.elements.loading.style.display = 'none';
+                        // Reset progress bar for next time
+                        if (progressContainer) {
+                            progressContainer.style.display = 'none';
+                        }
+                        if (progressFill) {
+                            progressFill.style.width = '0%';
+                        }
+                    }
+                }, 500); // Brief delay before hiding
             }
         }
     }

@@ -607,10 +607,72 @@ body {
     gap: 10px;
     color: #367fa9;
     font-size: 16px;
+    text-align: center;
+}
+
+.loading-content span {
+    display: block;
+    min-width: 200px;
+    white-space: nowrap;
+    color: #367fa9;
+    font-weight: 500;
 }
 
 .loading-content i {
     font-size: 32px;
+}
+
+/* Loading Progress Bar */
+.loading-progress-container {
+    width: 250px;
+    margin-top: 15px;
+    display: none; /* Hidden by default, shown via JavaScript */
+}
+
+.loading-progress-bar {
+    width: 100%;
+    height: 24px;
+    background-color: #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.loading-progress-fill {
+    height: 100%;
+    background-color: #367fa9;
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 12px;
+    background-image: linear-gradient(
+        45deg,
+        rgba(255,255,255,0.2) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255,255,255,0.2) 50%,
+        rgba(255,255,255,0.2) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 30px 30px;
+    animation: progress-animation 1s linear infinite;
+}
+
+@keyframes progress-animation {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 30px 0;
+    }
+}
+
+.loading-progress-text {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #367fa9;
 }
 
 /* Modal */

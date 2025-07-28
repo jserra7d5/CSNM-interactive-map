@@ -4,7 +4,11 @@
   "description": "Cascade-Siskiyou National Monument Soil Explorer - Interactive web application for exploring soil properties and environmental data",
   "scripts": {
     "dev": "python3 serve.py",
-    "start": "python3 serve.py"
+    "start": "python3 serve.py",
+    "compress": "node compress-assets.js",
+    "build": "npm run compress",
+    "prebuild": "echo 'Compressing large GeoJSON files...'",
+    "postbuild": "echo 'Build complete! Deploy with: vercel --prod'"
   },
   "keywords": [
     "soil",
