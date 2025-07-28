@@ -46,9 +46,13 @@ class DataLoader {
             
             // For local development, skip compressed files as they need server-side decompression
             // In production (Vercel), the server handles this automatically
-            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                              window.location.hostname === '127.0.0.1' || 
+                              window.location.port === '8000' ||
+                              window.location.protocol === 'file:';
             
-            if (!isLocalhost) {
+            // Always try compressed first in production
+            if (!isLocalhost && window.location.hostname !== '') {
                 // Try compressed version in production
                 try {
                     response = await fetch(compressedUrl, { method: 'HEAD' });
@@ -67,6 +71,7 @@ class DataLoader {
                 }
             } else {
                 // In development, always use uncompressed
+                console.log(`Loading uncompressed GeoJSON in development: ${url}`);
                 response = await fetch(url);
             }
             
@@ -248,24 +253,17 @@ class DataLoader {
             return geoJsonData;
         }
         
-        // Filter to keep only major components (majcompflag = "Yes")
-        const majorComponents = geoJsonData.features.filter(feature => {
+        // For SSURGO view, we need ALL polygons, not just major components
+        // So we'll keep all features but mark which ones are major
+        geoJsonData.features.forEach(feature => {
             const isMajor = feature.properties.majcompflag && 
                            feature.properties.majcompflag.trim().toLowerCase() === 'yes';
-            
-            if (isMajor) {
-                console.log(`Major component: ${feature.properties.compname} (${feature.properties.comppct_r}%) in map unit ${feature.properties.MUSYM}`);
-            }
-            
-            return isMajor;
+            feature.properties._isMajorComponent = isMajor;
         });
         
-        console.log(`Filtered ${geoJsonData.features.length} features to ${majorComponents.length} major components`);
+        console.log(`Loaded ${geoJsonData.features.length} total soil polygon features`);
         
-        return {
-            ...geoJsonData,
-            features: majorComponents
-        };
+        return geoJsonData;
     }
     
     // Enhance soil polygons with additional properties

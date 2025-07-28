@@ -18,6 +18,7 @@ class MapManager {
         this.selectedFeature = null;
         this.data = null;
         this.informationCenterMarker = null;
+        this.clickMarker = null;
     }
     
     // Initialize the map
@@ -153,6 +154,7 @@ class MapManager {
         const soilLayer = L.layerGroup();
         const permanentBoundaryLayer = L.layerGroup();
         const toggleableBoundaryLayer = L.layerGroup();
+        const ssurgoBoundaryLayer = L.layerGroup();
         
         // Function to load features in batches
         const loadFeaturesProgressively = async () => {
@@ -182,10 +184,16 @@ class MapManager {
                     interactive: false
                 });
                 
+                const batchSsurgoBoundary = L.geoJSON(batchGeoJSON, {
+                    style: (feature) => this.getSsurgoBoundaryStyle(feature),
+                    interactive: false
+                });
+                
                 // Add batches to main layers
                 soilLayer.addLayer(batchSoilLayer);
                 permanentBoundaryLayer.addLayer(batchPermanentBoundary);
                 toggleableBoundaryLayer.addLayer(batchToggleableBoundary);
+                ssurgoBoundaryLayer.addLayer(batchSsurgoBoundary);
                 
                 loaded += batch.length;
                 
@@ -227,15 +235,22 @@ class MapManager {
                 interactive: false
             });
             
+            const allSsurgoBoundary = L.geoJSON(data.soilPolygons, {
+                style: (feature) => this.getSsurgoBoundaryStyle(feature),
+                interactive: false
+            });
+            
             soilLayer.addLayer(allSoilLayer);
             permanentBoundaryLayer.addLayer(allPermanentBoundary);
             toggleableBoundaryLayer.addLayer(allToggleableBoundary);
+            ssurgoBoundaryLayer.addLayer(allSsurgoBoundary);
         }
         
         // Store layers
         this.layers.polygons.set('soil', soilLayer);
         this.layers.polygons.set('permanent-boundaries', permanentBoundaryLayer);
         this.layers.polygons.set('toggleable-boundaries', toggleableBoundaryLayer);
+        this.layers.polygons.set('ssurgo-boundaries', ssurgoBoundaryLayer);
         
         // Don't add layers to map here - let updateLayers handle it when user selects a map type
         this.currentPolygonLayer = soilLayer;
@@ -306,6 +321,18 @@ class MapManager {
     
     // Get style for soil-filled polygons
     getSoilFillStyle(feature) {
+        // Only show colors for major components in soil orders view
+        const isMajor = feature.properties._isMajorComponent;
+        if (!isMajor) {
+            // Non-major components are invisible in soil orders view
+            return {
+                fillColor: 'transparent',
+                weight: 0,
+                opacity: 0,
+                fillOpacity: 0
+            };
+        }
+        
         const soilOrder = this.extractSoilOrder(feature.properties);
         const color = ConfigUtils.getSoilOrderColor(soilOrder);
         
@@ -326,6 +353,18 @@ class MapManager {
             weight: 1,
             opacity: 0.4,
             dashArray: '1, 1'
+        };
+    }
+    
+    // Get style for SSURGO view boundaries (more visible than permanent)
+    getSsurgoBoundaryStyle(feature) {
+        return {
+            fillColor: 'transparent',
+            fillOpacity: 0,
+            color: '#ff6600',  // Orange color for better visibility
+            weight: 2.5,
+            opacity: 0.9,
+            dashArray: '4, 4'
         };
     }
     
@@ -757,6 +796,55 @@ class MapManager {
         return marker;
     }
     
+    // Add click marker (red circle with white X)
+    addClickMarker(latlng) {
+        // Remove existing click marker if any
+        if (this.clickMarker && this.map.hasLayer(this.clickMarker)) {
+            this.map.removeLayer(this.clickMarker);
+        }
+        
+        // Create red circle marker
+        this.clickMarker = L.circleMarker(latlng, {
+            radius: 12,
+            fillColor: '#ff0000',
+            color: '#cc0000',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8,
+            className: 'click-marker'
+        });
+        
+        // Add white X using a div icon
+        const xIcon = L.divIcon({
+            className: 'click-marker-x',
+            html: '<div class="x-mark">×</div>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+        
+        const xMarker = L.marker(latlng, {
+            icon: xIcon,
+            interactive: false
+        });
+        
+        // Create a layer group for both markers
+        const markerGroup = L.layerGroup([this.clickMarker, xMarker]);
+        markerGroup.addTo(this.map);
+        
+        // Store reference to remove later
+        this.clickMarker = markerGroup;
+        
+        return this.clickMarker;
+    }
+    
+    // Remove click marker
+    removeClickMarker() {
+        if (this.clickMarker && this.map.hasLayer(this.clickMarker)) {
+            this.map.removeLayer(this.clickMarker);
+            this.clickMarker = null;
+        }
+    }
+    
     // Remove all markers
     clearMarkers() {
         this.map.eachLayer((layer) => {
@@ -774,10 +862,51 @@ class MapManager {
             return;
         }
         
+        // Show loading screen for all map type changes
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            const loadingText = loadingElement.querySelector('span');
+            const progressContainer = loadingElement.querySelector('.loading-progress-container');
+            
+            if (loadingText) {
+                let mapTypeName = '';
+                switch(layerType) {
+                    case 'ssurgo': mapTypeName = 'SoilWeb view'; break;
+                    case 'soil': mapTypeName = 'soil orders'; break;
+                    case 'oc': mapTypeName = 'organic carbon'; break;
+                    case 'ph': mapTypeName = 'soil pH'; break;
+                    case 'meanTemp': mapTypeName = 'mean temperature'; break;
+                    case 'landcover': mapTypeName = 'land cover'; break;
+                    case 'elevation': mapTypeName = 'elevation map'; break;
+                    case 'satellite': mapTypeName = 'satellite imagery'; break;
+                    default: mapTypeName = 'map data';
+                }
+                loadingText.textContent = `Loading ${mapTypeName}...`;
+            }
+            
+            // Show progress bar for raster layers
+            if (progressContainer) {
+                if (['oc', 'ph', 'meanTemp', 'landcover', 'elevation'].includes(layerType)) {
+                    progressContainer.style.display = 'block';
+                    const progressFill = loadingElement.querySelector('.loading-progress-fill');
+                    const progressText = loadingElement.querySelector('.loading-progress-text');
+                    if (progressFill) progressFill.style.width = '0%';
+                    if (progressText) progressText.textContent = '0%';
+                } else {
+                    progressContainer.style.display = 'none';
+                }
+            }
+            
+            loadingElement.style.display = 'flex';
+        }
+        
         const legendElement = document.getElementById('soil-legend');
         const soilLayer = this.layers.polygons.get('soil');
         const permanentBoundaryLayer = this.layers.polygons.get('permanent-boundaries');
         const monumentBoundaryLayer = this.layers.overlays.get('monument-boundary');
+        
+        console.log(`Updating layers for type: ${layerType}`);
+        console.log('Available polygon layers:', Array.from(this.layers.polygons.keys()));
         
         // Remove current raster layer if it exists
         if (this.currentRasterLayer && this.map.hasLayer(this.currentRasterLayer)) {
@@ -796,23 +925,65 @@ class MapManager {
         }
         
         if (layerType === 'ssurgo') {
-            // SSURGO view - show only boundaries without fill colors
-            // Hide filled soil polygons
-            if (soilLayer && this.map.hasLayer(soilLayer)) {
-                this.map.removeLayer(soilLayer);
+            // SSURGO view - show polygons with transparent fill for click detection
+            if (soilLayer) {
+                if (!this.map.hasLayer(soilLayer)) {
+                    soilLayer.addTo(this.map);
+                }
+                // Update all polygons to have transparent fill
+                soilLayer.eachLayer((layer) => {
+                    if (layer.setStyle) {
+                        layer.setStyle({
+                            fillColor: 'transparent',
+                            fillOpacity: 0,
+                            weight: 0,
+                            opacity: 0
+                        });
+                    }
+                });
             }
-            // Show permanent boundaries
-            if (permanentBoundaryLayer && !this.map.hasLayer(permanentBoundaryLayer)) {
-                permanentBoundaryLayer.addTo(this.map);
+            // Show SSURGO boundaries (more visible than permanent, less bright than toggleable)
+            const ssurgoBoundaryLayer = this.layers.polygons.get('ssurgo-boundaries');
+            if (ssurgoBoundaryLayer) {
+                console.log('SSURGO boundary layer found, adding to map');
+                if (!this.map.hasLayer(ssurgoBoundaryLayer)) {
+                    ssurgoBoundaryLayer.addTo(this.map);
+                    console.log('SSURGO boundaries added to map');
+                    // Check if layer actually has content
+                    let layerCount = 0;
+                    ssurgoBoundaryLayer.eachLayer(() => layerCount++);
+                    console.log(`SSURGO boundary layer contains ${layerCount} sublayers`);
+                } else {
+                    console.log('SSURGO boundaries already on map');
+                }
+            } else {
+                console.error('SSURGO boundary layer not found!');
+                console.log('Available polygon layers:', Array.from(this.layers.polygons.keys()));
+                // Try to show at least the toggleable boundaries as fallback
+                const fallbackBoundary = this.layers.polygons.get('toggleable-boundaries');
+                if (fallbackBoundary && !this.map.hasLayer(fallbackBoundary)) {
+                    fallbackBoundary.addTo(this.map);
+                    console.log('Using toggleable boundaries as fallback');
+                }
             }
             // Hide legend for SSURGO view
             if (legendElement) {
                 legendElement.style.display = 'none';
             }
+            // Hide loading screen for non-raster layers
+            this.hideLoadingScreen();
         } else if (layerType === 'soil') {
             // Show soil polygons, permanent boundaries, and legend
             if (soilLayer && !this.map.hasLayer(soilLayer)) {
                 soilLayer.addTo(this.map);
+            }
+            // Restore original soil polygon colors
+            if (soilLayer) {
+                soilLayer.eachLayer((layer) => {
+                    if (layer.setStyle && layer.feature) {
+                        layer.setStyle(this.getSoilFillStyle(layer.feature));
+                    }
+                });
             }
             if (permanentBoundaryLayer && !this.map.hasLayer(permanentBoundaryLayer)) {
                 permanentBoundaryLayer.addTo(this.map);
@@ -820,6 +991,8 @@ class MapManager {
             if (legendElement) {
                 this.showSoilOrderLegend();
             }
+            // Hide loading screen for non-raster layers
+            this.hideLoadingScreen();
         } else if (layerType === 'oc' || layerType === 'ph' || layerType === 'meanTemp' || layerType === 'landcover' || layerType === 'elevation') {
             // Hide soil polygons and permanent boundaries for raster layers
             if (soilLayer && this.map.hasLayer(soilLayer)) {
@@ -828,9 +1001,15 @@ class MapManager {
             if (permanentBoundaryLayer && this.map.hasLayer(permanentBoundaryLayer)) {
                 this.map.removeLayer(permanentBoundaryLayer);
             }
+            // Also remove SSURGO boundaries if they were shown
+            const ssurgoBoundaryLayer = this.layers.polygons.get('ssurgo-boundaries');
+            if (ssurgoBoundaryLayer && this.map.hasLayer(ssurgoBoundaryLayer)) {
+                this.map.removeLayer(ssurgoBoundaryLayer);
+            }
             
             // Load raster layer first, then show appropriate legend
             await this.loadRasterLayer(layerType, depth);
+            // Loading screen will be hidden by raster loading completion
         } else {
             // Hide soil-related layers for satellite/other, but keep monument boundary
             if (soilLayer && this.map.hasLayer(soilLayer)) {
@@ -839,9 +1018,24 @@ class MapManager {
             if (permanentBoundaryLayer && this.map.hasLayer(permanentBoundaryLayer)) {
                 this.map.removeLayer(permanentBoundaryLayer);
             }
+            // Also remove SSURGO boundaries if they were shown
+            const ssurgoBoundaryLayer = this.layers.polygons.get('ssurgo-boundaries');
+            if (ssurgoBoundaryLayer && this.map.hasLayer(ssurgoBoundaryLayer)) {
+                this.map.removeLayer(ssurgoBoundaryLayer);
+            }
             if (legendElement) {
                 legendElement.style.display = 'none';
             }
+            // Hide loading screen for non-raster layers
+            this.hideLoadingScreen();
+        }
+    }
+    
+    // Hide loading screen
+    hideLoadingScreen() {
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
         }
     }
     
@@ -849,35 +1043,34 @@ class MapManager {
     async loadRasterLayer(property, depth) {
         console.log(`Loading ${property} raster for depth level ${depth}`);
         
-        // Show loading screen for elevation
-        if (property === 'elevation' || property === 'landcover') {
-            // Find the UI controller through the global app instance
-            const loadingElement = document.getElementById('loading');
-            if (loadingElement) {
-                const loadingText = loadingElement.querySelector('span');
-                const progressContainer = loadingElement.querySelector('.loading-progress-container');
-                
-                if (loadingText) {
-                    const mapType = property === 'elevation' ? 'elevation map' : 'land cover';
-                    loadingText.textContent = `Loading ${mapType}...`;
-                }
-                
-                // Show progress bar immediately
-                if (progressContainer) {
-                    progressContainer.style.display = 'block';
-                    const progressFill = loadingElement.querySelector('.loading-progress-fill');
-                    const progressText = loadingElement.querySelector('.loading-progress-text');
-                    if (progressFill) progressFill.style.width = '0%';
-                    if (progressText) progressText.textContent = '0%';
-                }
-                
-                loadingElement.style.display = 'flex';
+        // Check if this raster layer is already loaded and cached
+        const cacheKey = `${property}_${depth}`;
+        const cachedLayer = this.layers.rasters.get(cacheKey);
+        
+        if (cachedLayer) {
+            if (!this.map.hasLayer(cachedLayer)) {
+                // Layer cached but not on map, add it
+                cachedLayer.addTo(this.map);
+                this.currentRasterLayer = cachedLayer;
             }
+            // Layer already loaded, just hide loading screen
+            console.log(`Using cached ${property} layer for depth ${depth}`);
+            this.hideLoadingScreen();
+            // Show appropriate legend
+            if (cachedLayer.dataRange) {
+                this.showRasterLegend(property, depth, cachedLayer.dataRange);
+            }
+            return;
         }
+        
+        // Loading screen is now handled in updateLayers method
         
         // For elevation, create hillshade background first
         if (property === 'elevation') {
-            await this.createHillshadeBackground();
+            // Only create hillshade if it doesn't exist
+            if (!this.hillshadeLayer || !this.map.hasLayer(this.hillshadeLayer)) {
+                await this.createHillshadeBackground();
+            }
         }
         
         // Create either a real TIFF layer or fall back to mock data
@@ -929,6 +1122,8 @@ class MapManager {
             if (rasterResult && rasterResult.layer) {
                 rasterResult.layer.addTo(this.map);
                 this.currentRasterLayer = rasterResult.layer;
+                // Store the layer with its dataRange for caching
+                rasterResult.layer.dataRange = rasterResult.dataRange;
                 this.layers.rasters.set(`${property}_${depth}`, rasterResult.layer);
                 
                 console.log(`${property.toUpperCase()} raster layer added for depth: ${depthLabel}`);

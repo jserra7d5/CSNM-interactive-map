@@ -942,3 +942,226 @@ body {
 .soil-ultisols { background-color: #FAAF19; }
 .soil-vertisols { background-color: #FFF100; }
 .soil-unknown { background-color: #808080; }
+
+/* Click marker styles */
+.click-marker {
+    cursor: pointer;
+}
+.click-marker-x {
+    background: transparent;
+    border: none;
+    pointer-events: none;
+}
+.x-mark {
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 24px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* SSURGO Detail Panel (SoilWeb style) */
+.ssurgo-detail-panel {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    width: 400px;
+    max-height: 85vh;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+}
+
+.detail-panel-header {
+    padding: 15px 20px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-panel-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    font-style: italic;
+    color: #333;
+}
+
+.detail-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    background: #fafafa;
+}
+
+.detail-section {
+    background: white;
+    margin: 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-section-header {
+    padding: 12px 15px;
+    background: #e8e8e8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #0066cc;
+    transition: background-color 0.2s;
+}
+
+.detail-section-header:hover {
+    background: #d8d8d8;
+}
+
+.detail-section-header .section-arrow {
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+
+.detail-section-header.collapsed .section-arrow {
+    transform: rotate(-90deg);
+}
+
+.detail-section-content {
+    padding: 15px;
+    background: white;
+    display: none;
+}
+
+.detail-section-header.active + .detail-section-content {
+    display: block;
+}
+
+/* Component list styling */
+.component-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.component-item {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.component-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.component-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #0066cc;
+    margin-bottom: 5px;
+}
+
+.component-percentage {
+    display: inline;
+    font-weight: normal;
+}
+
+.component-details {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.5;
+}
+
+.geomorphic-position {
+    font-style: italic;
+    color: #666;
+}
+
+.view-similar-link {
+    color: #0066cc;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* Map Unit Data styling */
+.mapunit-data-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mapunit-data-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 13px;
+}
+
+.mapunit-data-item:last-child {
+    border-bottom: none;
+}
+
+.mapunit-data-label {
+    font-weight: bold;
+    color: #333;
+}
+
+.mapunit-data-value {
+    color: #666;
+    font-style: italic;
+}
+
+.mapunit-data-help {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: #0066cc;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 16px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: help;
+    margin-left: 5px;
+}
+
+/* Survey Metadata styling */
+.survey-metadata-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.survey-metadata-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 13px;
+}
+
+.survey-metadata-item:last-child {
+    border-bottom: none;
+}
+
+.survey-metadata-label {
+    font-weight: bold;
+    color: #333;
+    margin-right: 10px;
+}
+
+.survey-metadata-value {
+    color: #666;
+    font-style: italic;
+}

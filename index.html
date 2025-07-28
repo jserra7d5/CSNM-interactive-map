@@ -176,6 +176,50 @@
                     </div>
                 </div>
 
+                <!-- SSURGO Detail Panel (SoilWeb style - appears when clicking in SoilWeb view) -->
+                <div id="ssurgo-detail-panel" class="ssurgo-detail-panel" style="display: none;">
+                    <div class="detail-panel-header">
+                        <h3 id="detail-panel-title">Map Unit Information</h3>
+                        <button class="panel-close" id="close-detail-panel">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="detail-panel-content">
+                        <!-- Map Unit Composition Section -->
+                        <div class="detail-section">
+                            <div class="detail-section-header active" data-section="detail-composition">
+                                <i class="fas fa-caret-down section-arrow"></i>
+                                <span>Map Unit Composition</span>
+                            </div>
+                            <div class="detail-section-content" id="detail-composition-content" style="display: block;">
+                                <!-- Content will be dynamically populated -->
+                            </div>
+                        </div>
+                        
+                        <!-- Map Unit Data Section -->
+                        <div class="detail-section">
+                            <div class="detail-section-header active" data-section="detail-mapunit">
+                                <i class="fas fa-caret-down section-arrow"></i>
+                                <span>Map Unit Data</span>
+                            </div>
+                            <div class="detail-section-content" id="detail-mapunit-content" style="display: block;">
+                                <!-- Content will be dynamically populated -->
+                            </div>
+                        </div>
+                        
+                        <!-- Survey Metadata Section -->
+                        <div class="detail-section">
+                            <div class="detail-section-header active" data-section="detail-metadata">
+                                <i class="fas fa-caret-down section-arrow"></i>
+                                <span>Survey Metadata</span>
+                            </div>
+                            <div class="detail-section-content" id="detail-metadata-content" style="display: block;">
+                                <!-- Content will be dynamically populated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Landing Page Welcome Overlay -->
                 <div id="landing-overlay" class="landing-overlay">
                     <div class="landing-content">

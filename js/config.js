@@ -91,7 +91,7 @@ const CONFIG = {
         phRaster: "CSNM_pH_AllDepths.tif",
         meanTempRaster: "data/rasters/CSNM_MeanTemperature_PRISM.tif",
         mapunitTable: "data/Mapunit_OR_table.csv",
-        soilPolygons: "data/CSNM_Polygons_with_Data.geojson", // Reprojected to WGS84 with data
+        soilPolygons: "data/CSNM_Polygons_WGS84.geojson", // WGS84 projected SSURGO data
         boundaryPolygon: "data/CSNM_boundary_WGS84.geojson",
         highways: "data/CSNM_Highways.geojson",
         serviceRoads: "data/CSNM_ServiceRoads.geojson",

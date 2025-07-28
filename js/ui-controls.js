@@ -59,6 +59,11 @@ class UIController {
             closeSsurgoPanel: document.getElementById('close-ssurgo-panel'),
             sectionHeaders: document.querySelectorAll('.section-header'),
             
+            // SSURGO detail panel (SoilWeb style)
+            ssurgoDetailPanel: document.getElementById('ssurgo-detail-panel'),
+            closeSsurgoDetailPanel: document.getElementById('close-detail-panel'),
+            detailSectionHeaders: document.querySelectorAll('.detail-section-header'),
+            
             // Other UI elements
             infoBtn: document.getElementById('info-btn'),
             infoModal: document.getElementById('info-modal'),
@@ -97,6 +102,21 @@ class UIController {
             header.addEventListener('click', (e) => {
                 const section = header.dataset.section;
                 this.toggleSection(section);
+            });
+        });
+        
+        // SSURGO detail panel close button
+        if (this.elements.closeSsurgoDetailPanel) {
+            this.elements.closeSsurgoDetailPanel.addEventListener('click', () => {
+                this.closeSsurgoDetailPanel();
+            });
+        }
+        
+        // SSURGO detail panel section headers
+        this.elements.detailSectionHeaders.forEach(header => {
+            header.addEventListener('click', (e) => {
+                const section = header.dataset.section;
+                this.toggleDetailSection(section);
             });
         });
         
@@ -685,6 +705,34 @@ class UIController {
         }
     }
     
+    // Open SSURGO detail panel (SoilWeb style)
+    openSsurgoDetailPanel(detailData) {
+        if (this.elements.ssurgoDetailPanel) {
+            this.elements.ssurgoDetailPanel.style.display = 'flex';
+            this.populateSsurgoDetailPanel(detailData);
+        }
+    }
+    
+    // Close SSURGO detail panel
+    closeSsurgoDetailPanel() {
+        if (this.elements.ssurgoDetailPanel) {
+            this.elements.ssurgoDetailPanel.style.display = 'none';
+        }
+    }
+    
+    // Toggle section in detail panel
+    toggleDetailSection(sectionName) {
+        const header = document.querySelector(`.detail-section-header[data-section="${sectionName}"]`);
+        if (header) {
+            header.classList.toggle('active');
+            header.classList.toggle('collapsed');
+            const content = header.nextElementSibling;
+            if (content) {
+                content.style.display = header.classList.contains('active') ? 'block' : 'none';
+            }
+        }
+    }
+    
     // Populate SSURGO panel with data
     populateSsurgoPanel(data) {
         // Map Unit Composition
@@ -757,6 +805,140 @@ class UIController {
                 }
             }
         });
+    }
+    
+    // Populate SSURGO detail panel with enhanced data (SoilWeb style)
+    populateSsurgoDetailPanel(data) {
+        // Update panel title
+        const titleElement = document.getElementById('detail-panel-title');
+        if (titleElement) {
+            titleElement.textContent = data.mapUnitName;
+        }
+        
+        // Populate Map Unit Composition
+        const compositionContent = document.getElementById('detail-composition-content');
+        if (compositionContent) {
+            let html = '<ul class="component-list">';
+            
+            data.components.forEach(comp => {
+                html += `
+                    <li class="component-item">
+                        <div class="component-name">
+                            ${comp.comppct_r}% - <strong>${comp.compname}</strong>
+                        </div>
+                        <div class="component-details">
+                            Geomorphic Position: <span class="geomorphic-position">${comp.geomorphicPosition}</span><br>
+                            Horizon data ${comp.horizonData} | <a href="#" class="view-similar-link">View Similar Data</a>
+                        </div>
+                    </li>
+                `;
+            });
+            
+            html += '</ul>';
+            compositionContent.innerHTML = html;
+        }
+        
+        // Populate Map Unit Data
+        const mapunitContent = document.getElementById('detail-mapunit-content');
+        if (mapunitContent) {
+            const muData = data.mapunitData;
+            let html = '<ul class="mapunit-data-list">';
+            
+            html += `
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Map Unit Key:</span>
+                    <span class="mapunit-data-value">${muData.mukey} [Graphical Summary]</span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">National Map Unit Symbol:</span>
+                    <span class="mapunit-data-value">${muData.nationalSymbol}</span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Order of Mapping:</span>
+                    <span class="mapunit-data-value">${muData.orderOfMapping} <span class="mapunit-data-help">?</span></span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Map Unit Type:</span>
+                    <span class="mapunit-data-value">${muData.mapUnitType} <span class="mapunit-data-help">?</span></span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Farmland Class:</span>
+                    <span class="mapunit-data-value">${muData.farmlandClass}</span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Available Water Storage (0-100cm):</span>
+                    <span class="mapunit-data-value">${muData.waterStorage}</span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Flood Frequency (Dominant Condition):</span>
+                    <span class="mapunit-data-value">${muData.floodFrequency}</span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Flood Frequency (Maximum):</span>
+                    <span class="mapunit-data-value">${muData.floodFrequencyMax}</span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Ponding Frequency:</span>
+                    <span class="mapunit-data-value">${muData.pondingFrequency}</span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Drainage Class (Dominant Condition):</span>
+                    <span class="mapunit-data-value">${muData.drainageClass} <span class="mapunit-data-help">?</span></span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Drainage Class (Wettest Component):</span>
+                    <span class="mapunit-data-value">${muData.drainageClassWet} <span class="mapunit-data-help">?</span></span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Proportion of Hydric Soils:</span>
+                    <span class="mapunit-data-value">${muData.hydricSoilsProportion} <span class="mapunit-data-help">?</span></span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Min. Water Table Depth (Annual):</span>
+                    <span class="mapunit-data-value">${muData.waterTableDepthAnnual}</span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Min. Water Table Depth (April-June):</span>
+                    <span class="mapunit-data-value">${muData.waterTableDepthGrowing}</span>
+                </li>
+                <li class="mapunit-data-item">
+                    <span class="mapunit-data-label">Min. Bedrock Depth:</span>
+                    <span class="mapunit-data-value">${muData.bedrockDepth}</span>
+                </li>
+            `;
+            
+            html += '</ul>';
+            mapunitContent.innerHTML = html;
+        }
+        
+        // Populate Survey Metadata
+        const metadataContent = document.getElementById('detail-metadata-content');
+        if (metadataContent) {
+            const surveyData = data.surveyMetadata;
+            let html = '<ul class="survey-metadata-list">';
+            
+            html += `
+                <li class="survey-metadata-item">
+                    <span class="survey-metadata-label">Soil Survey Area:</span>
+                    <span class="survey-metadata-value">${surveyData.areaSymbol} <span class="mapunit-data-help">?</span></span>
+                </li>
+                <li class="survey-metadata-item">
+                    <span class="survey-metadata-label">Scale:</span>
+                    <span class="survey-metadata-value">${surveyData.scale} <span class="mapunit-data-help">?</span></span>
+                </li>
+                <li class="survey-metadata-item">
+                    <span class="survey-metadata-label">Published:</span>
+                    <span class="survey-metadata-value">${surveyData.published} <span class="mapunit-data-help">?</span></span>
+                </li>
+                <li class="survey-metadata-item">
+                    <span class="survey-metadata-label">Last Export:</span>
+                    <span class="survey-metadata-value">${surveyData.lastExport} <span class="mapunit-data-help">?</span></span>
+                </li>
+            `;
+            
+            html += '</ul>';
+            metadataContent.innerHTML = html;
+        }
     }
 }
 

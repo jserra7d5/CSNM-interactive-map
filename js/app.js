@@ -270,8 +270,9 @@ class SoilExplorerApp {
         const currentMapType = this.uiController.getCurrentState().currentMapType;
         
         if (currentMapType === 'ssurgo') {
-            // In SSURGO mode, show the SSURGO info panel
-            this.showSsurgoInfo(feature);
+            // In SSURGO mode, add click marker and show the detailed SSURGO panel
+            this.mapManager.addClickMarker(latlng);
+            this.showSsurgoDetailPanel(feature, latlng);
         } else {
             // In other modes, show soil details and profile
             const soilDetails = this.getSoilDetails(feature.properties);
@@ -302,6 +303,84 @@ class SoilExplorerApp {
         
         // Open the SSURGO panel
         this.uiController.openSsurgoPanel(ssurgoData);
+    }
+    
+    // Show SSURGO detail panel (SoilWeb style)
+    showSsurgoDetailPanel(feature, latlng) {
+        // Get all components for this map unit
+        const mukey = feature.properties.MUKEY || feature.properties.mukey;
+        const components = this.getMapUnitComponents(mukey);
+        
+        // Prepare enhanced data with mock fields matching SoilWeb
+        const detailData = {
+            mapUnitName: feature.properties.muname || `${feature.properties.MUSYM || feature.properties.musym || 'Unknown'} - ${feature.properties.compname || 'Unknown soil'}`,
+            mapUnitSymbol: feature.properties.MUSYM || feature.properties.musym,
+            components: components.map(comp => {
+                // Add mock geomorphic positions and other data
+                const geomorphicPositions = this.getMockGeomorphicPositions(comp.compname);
+                return {
+                    ...comp,
+                    geomorphicPosition: geomorphicPositions,
+                    horizonData: comp.comppct_r > 0 ? 'Available' : 'n/a'
+                };
+            }),
+            mapunitData: {
+                mukey: mukey,
+                musym: feature.properties.MUSYM || feature.properties.musym,
+                nationalSymbol: this.getMockNationalSymbol(feature.properties.MUSYM),
+                orderOfMapping: 1,
+                mapUnitType: 'Consociation',
+                farmlandClass: 'Prime farmland if irrigated',
+                waterStorage: Math.floor(Math.random() * 10 + 15) + ' cm',
+                floodFrequency: 'Rare',
+                floodFrequencyMax: 'Rare',
+                pondingFrequency: 0,
+                drainageClass: 'Somewhat poorly drained',
+                drainageClassWet: 'Somewhat poorly drained',
+                hydricSoilsProportion: Math.floor(Math.random() * 10) + '%',
+                waterTableDepthAnnual: Math.floor(Math.random() * 100 + 100) + ' cm',
+                waterTableDepthGrowing: 'n/a',
+                bedrockDepth: 'n/a'
+            },
+            surveyMetadata: {
+                areaSymbol: 'ca113',
+                scale: '1:20,000',
+                published: '1968',
+                lastExport: 'Aug 28 2024'
+            }
+        };
+        
+        // Pass to UI controller to display
+        this.uiController.openSsurgoDetailPanel(detailData);
+    }
+    
+    // Mock helper methods for missing data
+    getMockGeomorphicPositions(componentName) {
+        const positions = [
+            'flood-plain steps',
+            'alluvial fans / Toeslope',
+            'stream terraces',
+            'mountain slopes',
+            'hillslopes',
+            'fan remnants'
+        ];
+        // Return 1-2 random positions
+        const numPositions = Math.floor(Math.random() * 2) + 1;
+        const selected = [];
+        for (let i = 0; i < numPositions; i++) {
+            const pos = positions[Math.floor(Math.random() * positions.length)];
+            if (!selected.includes(pos)) {
+                selected.push(pos);
+            }
+        }
+        return selected.join(' / ');
+    }
+    
+    getMockNationalSymbol(musym) {
+        // Generate a mock national symbol based on musym
+        if (!musym) return '2xcbl';
+        const num = Math.floor(Math.random() * 9) + 1;
+        return num + musym.toLowerCase().substring(0, 4);
     }
     
     // Get all components for a map unit
