@@ -26,6 +26,10 @@ class UIController {
         this.initializeElements();
         this.setupEventListeners();
         this.applyDropdownStates();
+        this.adjustDropdownContainerHeight();
+        
+        // Setup window resize listener
+        window.addEventListener('resize', () => this.adjustDropdownContainerHeight());
         
         // Ensure satellite radio is checked on init
         const satelliteRadio = document.querySelector('input[name="map_type"][value="satellite"]');
@@ -743,6 +747,30 @@ class UIController {
     // New dropdown menu methods
     
     // Toggle dropdown menu visibility
+    // Adjust dropdown container height dynamically
+    adjustDropdownContainerHeight() {
+        const dropdownContainer = document.querySelector('.dropdown-menu-container');
+        if (!dropdownContainer) return;
+        
+        // Get the mouse coordinates element position
+        const mouseCoords = document.querySelector('.mouse-coords');
+        const bottomOffset = mouseCoords ? mouseCoords.offsetHeight + 50 : 100; // Add buffer
+        
+        // Calculate available height
+        const viewportHeight = window.innerHeight;
+        const containerTop = dropdownContainer.offsetTop;
+        const maxHeight = viewportHeight - containerTop - bottomOffset;
+        
+        // Apply the calculated max height
+        dropdownContainer.style.maxHeight = `${maxHeight}px`;
+        
+        // Also adjust when dropdowns are toggled
+        setTimeout(() => {
+            const newMaxHeight = viewportHeight - containerTop - bottomOffset;
+            dropdownContainer.style.maxHeight = `${newMaxHeight}px`;
+        }, 300); // Wait for animation
+    }
+    
     toggleDropdown(menuType) {
         const menu = document.getElementById(`menu-${menuType}`);
         if (!menu) return;
@@ -760,6 +788,9 @@ class UIController {
         
         // Save the state to localStorage
         this.saveDropdownStates();
+        
+        // Adjust container height after toggling
+        this.adjustDropdownContainerHeight();
     }
     
     // Close landing page

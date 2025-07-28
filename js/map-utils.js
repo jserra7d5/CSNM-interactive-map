@@ -54,6 +54,9 @@ class MapManager {
         // Setup event listeners
         this.setupEventListeners();
         
+        // Setup raster processing progress listener
+        this.setupRasterProgressListener();
+        
         return this.map;
     }
     
@@ -114,6 +117,47 @@ class MapManager {
         // Map ready event
         this.map.whenReady(() => {
             this.onMapReady();
+        });
+    }
+    
+    // Setup raster processing progress listener
+    setupRasterProgressListener() {
+        document.addEventListener('rasterProcessingProgress', (e) => {
+            const { property, progress, message } = e.detail;
+            console.log(`Raster processing progress for ${property}: ${progress}% - ${message}`);
+            
+            // Update loading screen with progress
+            const loadingElement = document.getElementById('loading');
+            const progressFill = document.querySelector('.loading-progress-fill');
+            const progressText = document.querySelector('.loading-progress-text');
+            const loadingMessage = document.querySelector('.loading-overlay span');
+            
+            if (loadingElement) {
+                // Ensure loading screen is visible
+                loadingElement.style.display = 'flex';
+                loadingElement.style.visibility = 'visible';
+                loadingElement.style.opacity = '1';
+                loadingElement.style.zIndex = '2000';
+            }
+            
+            if (progressFill) {
+                progressFill.style.width = `${progress}%`;
+            }
+            
+            if (progressText) {
+                progressText.textContent = `${progress}%`;
+            }
+            
+            if (loadingMessage) {
+                loadingMessage.textContent = message || `Loading ${property} data...`;
+            }
+            
+            // Hide loading screen when complete
+            if (progress === 100) {
+                setTimeout(() => {
+                    this.hideLoadingScreen(300);
+                }, 500); // Small delay to show 100% completion
+            }
         });
     }
     
@@ -1419,7 +1463,7 @@ class MapManager {
         // Update legend title
         const legendTitle = legendElement.querySelector('h4');
         if (legendTitle) {
-            legendTitle.textContent = 'Family Particle Size Classes';
+            legendTitle.textContent = 'Family Particle Classes';
         }
         
         // Get available particle sizes from data

@@ -63,7 +63,7 @@ const CONFIG = {
         "Unknown": "#808080"
     },
     
-    // Family Particle Size Class colors
+    // Family Particle Class colors
     // Colors chosen to reflect texture: coarser (sandy) = warmer/lighter, finer (clayey) = cooler/darker
     particleSizeColors: {
         // Fine textures (high clay content)
@@ -173,7 +173,7 @@ const CONFIG = {
             lastUpdate: "2014 (12th Edition)"
         },
         particleSize: {
-            name: "Family Particle Size Class",
+            name: "Family Particle Class",
             description: "Soil texture classification at the family level based on particle size distribution - indicates relative proportions of sand, silt, and clay, including coarse fragments",
             agency: "USDA Natural Resources Conservation Service",
             url: "https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/class/taxonomy/",

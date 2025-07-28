@@ -93,7 +93,11 @@ class RasterManager {
             const testResponse = await fetch(filename, { method: 'HEAD' });
             console.log(`File accessibility test for ${filename}:`, {
                 status: testResponse.status,
-                statusText: testResponse.statusText
+                statusText: testResponse.statusText,
+                headers: {
+                    contentType: testResponse.headers.get('content-type'),
+                    contentLength: testResponse.headers.get('content-length')
+                }
             });
             
             if (!testResponse.ok) {
@@ -101,7 +105,7 @@ class RasterManager {
                     console.log(`Primary file failed, trying fallback: ${fallbackFilename}`);
                     return this.loadTiff(fallbackFilename);
                 }
-                throw new Error(`File not accessible: ${testResponse.status} ${testResponse.statusText}`);
+                throw new Error(`File not accessible: ${testResponse.status} ${testResponse.statusText} for ${filename}`);
             }
             
             // Get GeoTIFF from global scope
@@ -164,10 +168,19 @@ class RasterManager {
     
     // Create canvas overlay from GeoTIFF image
     async createCanvasOverlay(image, property, depth) {
-        const rasters = await image.readRasters();
-        const data = rasters[0]; // First band
-        const bbox = image.getBoundingBox();
-        const [width, height] = [image.getWidth(), image.getHeight()];
+        try {
+            const rasters = await image.readRasters();
+            const data = rasters[0]; // First band
+            const bbox = image.getBoundingBox();
+            const [width, height] = [image.getWidth(), image.getHeight()];
+            
+            console.log(`Creating canvas overlay for ${property}:`, {
+                width,
+                height,
+                bbox,
+                dataLength: data.length,
+                sampleValues: data.slice(0, 10)
+            });
         
         // For elevation, also load hillshade data if available
         let hillshadeData = null;

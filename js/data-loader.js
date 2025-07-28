@@ -39,53 +39,31 @@ class DataLoader {
     // Private method to fetch GeoJSON
     async _fetchGeoJSON(url) {
         try {
-            // Try to load compressed version first if available
-            const compressedUrl = url + '.gz';
-            let response;
-            let isCompressed = false;
+            console.log(`Loading GeoJSON from: ${url}`);
             
-            // For local development, skip compressed files as they need server-side decompression
-            // In production (Vercel), the server handles this automatically
-            const isLocalhost = window.location.hostname === 'localhost' || 
-                              window.location.hostname === '127.0.0.1' || 
-                              window.location.port === '8000' ||
-                              window.location.protocol === 'file:';
-            
-            // Always try compressed first in production
-            if (!isLocalhost && window.location.hostname !== '') {
-                // Try compressed version in production
-                try {
-                    response = await fetch(compressedUrl, { method: 'HEAD' });
-                    if (response.ok) {
-                        // Compressed version exists, use it
-                        console.log(`Loading compressed GeoJSON: ${compressedUrl}`);
-                        response = await fetch(compressedUrl);
-                        isCompressed = true;
-                    } else {
-                        // Fall back to uncompressed
-                        response = await fetch(url);
-                    }
-                } catch {
-                    // Fall back to uncompressed if HEAD request fails
-                    response = await fetch(url);
-                }
-            } else {
-                // In development, always use uncompressed
-                console.log(`Loading uncompressed GeoJSON in development: ${url}`);
-                response = await fetch(url);
-            }
+            // Simply fetch the URL - let Vercel's rewrite rules handle serving compressed version
+            const response = await fetch(url);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // For compressed files, the browser should automatically decompress
-            // if Content-Encoding header is set correctly
+            // Log response headers for debugging
+            const contentEncoding = response.headers.get('content-encoding');
+            const contentLength = response.headers.get('content-length');
+            const contentType = response.headers.get('content-type');
+            
+            console.log(`GeoJSON response headers:`, {
+                url,
+                contentType,
+                contentEncoding,
+                contentLength: contentLength ? `${(parseInt(contentLength) / 1024).toFixed(2)} KB` : 'unknown'
+            });
+            
+            // Parse JSON - browser will automatically handle decompression if Content-Encoding is set
             const data = await response.json();
             
-            if (isCompressed) {
-                console.log(`Successfully loaded compressed GeoJSON (${(JSON.stringify(data).length / 1024 / 1024).toFixed(2)} MB uncompressed)`);
-            }
+            console.log(`Successfully loaded GeoJSON (${data.features ? data.features.length : 0} features)`);
             
             // Check if coordinates look like they need reprojection
             this._checkProjection(data);
