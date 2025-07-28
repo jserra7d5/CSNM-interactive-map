@@ -871,7 +871,9 @@ class UIController {
     
     // Close SSURGO detail panel
     closeSsurgoDetailPanel() {
+        console.log('closeSsurgoDetailPanel called, panel exists:', !!this.elements.ssurgoDetailPanel);
         if (this.elements.ssurgoDetailPanel) {
+            console.log('Setting SSURGO detail panel display to none');
             this.elements.ssurgoDetailPanel.style.display = 'none';
             // Reset tracking state
             this.currentSeriesView = null;

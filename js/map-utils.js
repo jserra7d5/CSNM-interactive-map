@@ -964,8 +964,13 @@ class MapManager {
     
     // Remove click marker
     removeClickMarker() {
+        console.log('removeClickMarker called, marker exists:', !!this.clickMarker);
         if (this.clickMarker && this.map.hasLayer(this.clickMarker)) {
+            console.log('Removing click marker from map');
             this.map.removeLayer(this.clickMarker);
+            this.clickMarker = null;
+        } else if (this.clickMarker) {
+            console.log('Click marker exists but not on map');
             this.clickMarker = null;
         }
     }

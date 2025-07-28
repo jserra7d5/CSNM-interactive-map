@@ -192,6 +192,23 @@ class SoilExplorerApp {
         
         console.log(`Map type changed to: ${mapType}`);
         
+        // If switching away from SoilWeb view, hide the click marker and detail panel
+        if (mapType !== 'ssurgo') {
+            console.log('Switching away from SSURGO view - cleaning up...');
+            
+            // Remove click marker
+            if (this.mapManager) {
+                console.log('Removing click marker');
+                this.mapManager.removeClickMarker();
+            }
+            
+            // Close SSURGO detail panel
+            if (this.uiController) {
+                console.log('Closing SSURGO detail panel');
+                this.uiController.closeSsurgoDetailPanel();
+            }
+        }
+        
         // Update base layer based on map type
         if (mapType === 'satellite') {
             this.mapManager.setBaseLayer('satellite');
