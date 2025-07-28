@@ -423,10 +423,13 @@ body {
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s, transform 0.1s;
-    font-family: Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     line-height: 1;
     padding: 0;
     text-transform: none;
+    text-decoration: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .info-btn:hover {
@@ -436,6 +439,14 @@ body {
 
 .info-btn:active {
     transform: scale(0.95);
+}
+
+/* Ensure Font Awesome icon displays correctly in info buttons */
+.info-btn i {
+    font-size: 10px;
+    display: block;
+    line-height: 1;
+    color: inherit;
 }
 
 /* Overlay Color Preview */
