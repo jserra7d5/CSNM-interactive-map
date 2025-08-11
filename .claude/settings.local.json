@@ -18,7 +18,12 @@
       "mcp__puppeteer__puppeteer_click",
       "mcp__puppeteer__puppeteer_evaluate",
       "Bash(gunzip:*)",
-      "WebFetch(domain:leafletjs.com)"
+      "WebFetch(domain:leafletjs.com)",
+      "WebFetch(domain:developers.google.com)",
+      "Bash(for file in js/*.js)",
+      "Bash(do echo \"Checking $file...\")",
+      "Bash(echo:*)",
+      "Bash(done)"
     ],
     "deny": []
   }

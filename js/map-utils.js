@@ -62,9 +62,7 @@ class MapManager {
     
     // Create base map layers
     createBaseLayers() {
-        console.log('Creating base layers...');
         Object.entries(CONFIG.baseLayers).forEach(([key, config]) => {
-            console.log(`Creating layer: ${key} with URL: ${config.url}`);
             const layer = L.tileLayer(config.url, {
                 attribution: config.attribution,
                 maxZoom: 18,
@@ -78,12 +76,10 @@ class MapManager {
             });
             this.layers.base.set(key, layer);
         });
-        console.log('Base layers created:', Array.from(this.layers.base.keys()));
     }
     
     // Set base layer
     setBaseLayer(layerKey) {
-        console.log(`Setting base layer to: ${layerKey}`);
         
         // Remove current base layer
         if (this.currentBaseLayer) {
@@ -95,10 +91,7 @@ class MapManager {
         if (newLayer) {
             newLayer.addTo(this.map);
             this.currentBaseLayer = newLayer;
-            console.log(`Base layer ${layerKey} added successfully`);
         } else {
-            console.error(`Base layer ${layerKey} not found!`);
-            console.log('Available layers:', Array.from(this.layers.base.keys()));
         }
     }
     
@@ -124,7 +117,6 @@ class MapManager {
     setupRasterProgressListener() {
         document.addEventListener('rasterProcessingProgress', (e) => {
             const { property, progress, message } = e.detail;
-            console.log(`Raster processing progress for ${property}: ${progress}% - ${message}`);
             
             // Update loading screen with progress
             const loadingElement = document.getElementById('loading');
@@ -184,7 +176,6 @@ class MapManager {
     
     // Called when map is ready
     onMapReady() {
-        console.log('Map initialized successfully');
         
         // Emit map ready event
         const event = new CustomEvent('mapReady', {
@@ -198,13 +189,27 @@ class MapManager {
         this.data = data;
         
         if (!data.soilPolygons) {
-            console.warn('No soil polygon data available');
             return;
         }
         
-        const features = data.soilPolygons.features;
+        // Filter to only include dominant components per unique geographic area (MUKEY + Shape_Area + Geometry)
+        const allFeatures = data.soilPolygons.features;
+        const dominantFeaturesByArea = new Map();
+        
+        // Group features by geographic area and select the dominant component for each
+        allFeatures.forEach(feature => {
+            const areaKey = this.getGeographicAreaKey(feature);
+            if (!areaKey) return;
+            
+            const existing = dominantFeaturesByArea.get(areaKey);
+            if (!existing || this.isDominantComponent(feature, existing)) {
+                dominantFeaturesByArea.set(areaKey, feature);
+            }
+        });
+        
+        const features = Array.from(dominantFeaturesByArea.values());
         const totalFeatures = features.length;
-        console.log(`Loading ${totalFeatures} soil polygon features...`);
+        
         
         // Create empty layer groups for progressive loading
         const soilLayer = L.layerGroup();
@@ -260,14 +265,12 @@ class MapManager {
                 // Update progress
                 const progress = Math.round((loaded / totalFeatures) * 100);
                 if (loaded % 1000 === 0 || loaded === totalFeatures) {
-                    console.log(`Loaded ${loaded}/${totalFeatures} features (${progress}%)`);
                 }
                 
                 // Continue loading if more features remain
                 if (loaded < totalFeatures) {
                     requestAnimationFrame(loadBatch);
                 } else {
-                    console.log('All soil polygons loaded successfully');
                 }
             };
             
@@ -279,26 +282,32 @@ class MapManager {
         if (totalFeatures > 1000) {
             loadFeaturesProgressively();
         } else {
-            // Load all at once for smaller datasets with canvas renderer
-            const allSoilLayer = L.geoJSON(data.soilPolygons, {
+            // Load all at once for smaller datasets with canvas renderer - USE FILTERED FEATURES!
+            const filteredGeoJSON = {
+                type: 'FeatureCollection',
+                features: features  // Use filtered features, not original data.soilPolygons!
+            };
+            
+            
+            const allSoilLayer = L.geoJSON(filteredGeoJSON, {
                 style: (feature) => this.getSoilFillStyle(feature),
                 onEachFeature: (feature, layer) => this.onEachPolygon(feature, layer),
                 renderer: L.canvas({ padding: 0.5 })
             });
             
-            const allPermanentBoundary = L.geoJSON(data.soilPolygons, {
+            const allPermanentBoundary = L.geoJSON(filteredGeoJSON, {
                 style: (feature) => this.getPermanentBoundaryStyle(feature),
                 interactive: false,
                 renderer: L.canvas({ padding: 0.5 })
             });
             
-            const allToggleableBoundary = L.geoJSON(data.soilPolygons, {
+            const allToggleableBoundary = L.geoJSON(filteredGeoJSON, {
                 style: (feature) => this.getToggleableBoundaryStyle(feature),
                 interactive: false,
                 renderer: L.canvas({ padding: 0.5 })
             });
             
-            const allSsurgoBoundary = L.geoJSON(data.soilPolygons, {
+            const allSsurgoBoundary = L.geoJSON(filteredGeoJSON, {
                 style: (feature) => this.getSsurgoBoundaryStyle(feature),
                 interactive: false,
                 renderer: L.canvas({ padding: 0.5 })
@@ -317,11 +326,6 @@ class MapManager {
         this.layers.polygons.set('ssurgo-boundaries', ssurgoBoundaryLayer);
         
         // Debug log what we stored
-        console.log('=== SOIL POLYGON LAYERS STORED ===');
-        console.log('Soil layer size:', soilLayer.getLayers().length);
-        console.log('Permanent boundaries size:', permanentBoundaryLayer.getLayers().length);
-        console.log('Toggleable boundaries size:', toggleableBoundaryLayer.getLayers().length);
-        console.log('SSURGO boundaries size:', ssurgoBoundaryLayer.getLayers().length);
         
         // Don't add layers to map here - let updateLayers handle it when user selects a map type
         this.currentPolygonLayer = soilLayer;
@@ -333,7 +337,6 @@ class MapManager {
     // Load and display boundary polygon
     async loadBoundaryPolygon(data) {
         if (!data.boundaryPolygon) {
-            console.warn('No boundary polygon data available');
             return;
         }
         
@@ -349,13 +352,11 @@ class MapManager {
         // Add to map immediately (always visible)
         this.monumentBoundaryLayer.addTo(this.map);
         
-        console.log('Monument boundary loaded and displayed');
     }
     
     // Load and display highways
     async loadHighways(data) {
         if (!data.highways) {
-            console.warn('No highway data available');
             return;
         }
         
@@ -368,13 +369,11 @@ class MapManager {
         // Store layer
         this.layers.overlays.set('highways', this.highwayLayer);
         
-        console.log('Highways loaded and ready');
     }
     
     // Load and display service roads
     async loadServiceRoads(data) {
         if (!data.serviceRoads) {
-            console.warn('No service road data available');
             return;
         }
         
@@ -387,7 +386,6 @@ class MapManager {
         // Store layer
         this.layers.overlays.set('service-roads', this.serviceRoadLayer);
         
-        console.log('Service roads loaded and ready');
     }
     
     // Get style for soil-filled polygons
@@ -434,24 +432,24 @@ class MapManager {
         };
     }
     
-    // Get style for SSURGO view boundaries (yellow like toggleable boundaries)
+    // Get style for SSURGO view boundaries (purple like toggleable boundaries)
     getSsurgoBoundaryStyle(feature) {
         return {
             fillColor: 'transparent',
             fillOpacity: 0,
-            color: '#FFD700',  // Yellow color matching toggleable boundaries
+            color: '#9932CC',  // Purple color matching toggleable boundaries
             weight: 1.5,       // Thinner for better performance
             opacity: 0.8,
             dashArray: null    // Solid line instead of dashed
         };
     }
     
-    // Get style for toggleable boundaries (yellow, controlled by checkbox)
+    // Get style for toggleable boundaries (purple, controlled by checkbox)
     getToggleableBoundaryStyle(feature) {
         return {
             fillColor: 'transparent',
             fillOpacity: 0,
-            color: '#FFD700',
+            color: '#9932CC',
             weight: 0.65,
             opacity: 0.8,
             dashArray: '3, 3'
@@ -497,12 +495,185 @@ class MapManager {
         return this.getToggleableBoundaryStyle(feature);
     }
     
+    // Get dominant component for a map unit (MUKEY)
+    getDominantComponent(mukey) {
+        if (!this.data || !this.data.soilPolygons) return null;
+        
+        // Get all components for this MUKEY
+        const components = this.data.soilPolygons.features.filter(feature => 
+            feature.properties.MUKEY === mukey
+        );
+        
+        if (components.length === 0) return null;
+        if (components.length === 1) return components[0];
+        
+        // Find component with highest percentage
+        let dominant = components[0];
+        let maxPercentage = this.getComponentPercentage(dominant.properties);
+        
+        for (let i = 1; i < components.length; i++) {
+            const component = components[i];
+            const percentage = this.getComponentPercentage(component.properties);
+            
+            // Higher percentage wins
+            if (percentage > maxPercentage) {
+                dominant = component;
+                maxPercentage = percentage;
+            } 
+            // If tied, prefer major component flag
+            else if (percentage === maxPercentage && 
+                     component.properties.majcompflag === 'Yes' && 
+                     dominant.properties.majcompflag !== 'Yes') {
+                dominant = component;
+            }
+            // If still tied, use COKEY as tie-breaker (consistent ordering)
+            else if (percentage === maxPercentage && 
+                     component.properties.majcompflag === dominant.properties.majcompflag &&
+                     component.properties.cokey < dominant.properties.cokey) {
+                dominant = component;
+            }
+        }
+        
+        return dominant;
+    }
+    
+    // Get component percentage, handling various field names and missing values
+    getComponentPercentage(properties) {
+        const percentage = properties.comppct_r || properties.comppct_h || properties.comppct_l;
+        return percentage ? parseFloat(percentage) : 0;
+    }
+    
+    // Generate unique key for geographic area (MUKEY + Shape_Area + Geometry Hash)
+    getGeographicAreaKey(feature) {
+        if (!feature || !feature.properties) return null;
+        
+        const mukey = feature.properties.MUKEY;
+        const shapeArea = feature.properties.Shape_Area;
+        
+        // Round Shape_Area to handle floating-point precision issues
+        const roundedArea = Math.round(shapeArea * 1000000) / 1000000;
+        
+        // Add geometry-based uniqueness for cases where MUKEY + Shape_Area isn't unique enough
+        let geometryHash = '';
+        if (feature.geometry && feature.geometry.coordinates) {
+            // Create a simple hash from first few coordinates to distinguish different polygons
+            const coords = feature.geometry.coordinates;
+            let coordString = '';
+            
+            if (coords[0] && coords[0][0]) {
+                // Get first 3 coordinate pairs for hashing
+                const firstCoords = coords[0][0].slice(0, 3);
+                coordString = firstCoords.map(coord => 
+                    `${Math.round(coord[0] * 100000)},${Math.round(coord[1] * 100000)}`
+                ).join('_');
+            }
+            
+            // Simple hash function for coordinates
+            geometryHash = this.simpleHash(coordString);
+        }
+        
+        return `${mukey}_${roundedArea}_${geometryHash}`;
+    }
+    
+    // Simple hash function for creating geometry-based identifiers
+    simpleHash(str) {
+        if (!str) return '0';
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash).toString(16);
+    }
+    
+    // Compare two components to determine which is dominant for the same geographic area
+    isDominantComponent(newComponent, existingComponent) {
+        if (!newComponent || !newComponent.properties) return false;
+        if (!existingComponent || !existingComponent.properties) return true;
+        
+        const newProps = newComponent.properties;
+        const existingProps = existingComponent.properties;
+        
+        const newPct = this.getComponentPercentage(newProps);
+        const existingPct = this.getComponentPercentage(existingProps);
+        
+        // Higher percentage wins
+        if (newPct > existingPct) {
+            return true;
+        }
+        if (newPct < existingPct) {
+            return false;
+        }
+        
+        // If tied, prefer major component flag
+        const newMajor = newProps.majcompflag && newProps.majcompflag.trim() === 'Yes';
+        const existingMajor = existingProps.majcompflag && existingProps.majcompflag.trim() === 'Yes';
+        
+        if (newMajor && !existingMajor) {
+            return true;
+        }
+        if (!newMajor && existingMajor) {
+            return false;
+        }
+        
+        // If still tied, use COKEY for consistent ordering (lower COKEY wins)
+        const newCokey = parseInt(newProps.cokey) || 0;
+        const existingCokey = parseInt(existingProps.cokey) || 0;
+        const newWins = newCokey < existingCokey;
+        
+        return newWins;
+    }
+    
+    // Check if a single feature is the dominant component in its geographic area
+    isFeatureDominant(feature) {
+        if (!feature || !this.data || !this.data.soilPolygons) return false;
+        
+        const areaKey = this.getGeographicAreaKey(feature);
+        if (!areaKey) return false;
+        
+        // Find all features in the same geographic area
+        const areaFeatures = this.data.soilPolygons.features.filter(f => 
+            this.getGeographicAreaKey(f) === areaKey
+        );
+        
+        if (areaFeatures.length <= 1) return true;
+        
+        // Find the dominant feature for this area
+        let dominantFeature = areaFeatures[0];
+        for (let i = 1; i < areaFeatures.length; i++) {
+            if (this.isDominantComponent(areaFeatures[i], dominantFeature)) {
+                dominantFeature = areaFeatures[i];
+            }
+        }
+        
+        // Check if this feature is the dominant one
+        return dominantFeature.properties.cokey === feature.properties.cokey;
+    }
+
     // Extract soil order from feature properties
     extractSoilOrder(properties) {
-        // Try different possible fields for soil order
-        // First check the soilOrder property set by enhanceSoilPolygons
-        let order = properties.soilOrder || properties.taxorder || properties.soilorder || 'Unknown';
-        return order;
+        // Check for non-soil areas first, before looking at taxorder
+        if (properties.compkind === 'Miscellaneous area' && properties.compname) {
+            // Return the specific non-soil area name
+            return properties.compname;
+        }
+        
+        // Check for water features
+        if (properties.compname && properties.compname.toLowerCase().includes('water')) {
+            return 'Water';
+        }
+        
+        // Now check for actual soil orders
+        let order = properties.soilOrder || properties.taxorder || properties.soilorder;
+        
+        // If we have a valid soil order, return it
+        if (order && order !== null && order !== undefined && order !== '') {
+            return order;
+        }
+        
+        // Default fallback for areas with no taxonomic classification
+        return 'Non-soil area';
     }
     
     // Extract particle size from feature properties
@@ -530,7 +701,6 @@ class MapManager {
         // Only add click handler, no hover effects
         layer.on({
             click: (e) => {
-                console.log('Polygon clicked!');
                 // Stop the click from propagating to the map
                 L.DomEvent.stopPropagation(e);
                 this.selectFeature(e);
@@ -660,12 +830,9 @@ class MapManager {
         const feature = layer.feature;
         
         // Show simple popup for soil order and particle size views
-        console.log('selectFeature - currentMapType:', this.currentMapType);
         if (this.currentMapType === 'soil' || this.currentMapType === 'particleSize') {
-            console.log('Creating simple popup for', this.currentMapType);
             // Create and show simple popup
             const popupContent = this.createSimplePopupContent(feature.properties);
-            console.log('Popup content:', popupContent);
             const popup = L.popup()
                 .setLatLng(e.latlng)
                 .setContent(popupContent)
@@ -687,7 +854,6 @@ class MapManager {
         };
         
         // Log selection info for debugging
-        console.log(`Selected polygon - ID: ${layer.polygonId}, Component: ${layer.componentKey}, Map Unit: ${feature.properties.MUSYM}, Component Name: ${feature.properties.compname}`);
         
         // Emit selection event
         const event = new CustomEvent('featureSelected', {
@@ -712,16 +878,15 @@ class MapManager {
     toggleBoundaries(show) {
         const boundaryLayer = this.layers.polygons.get('toggleable-boundaries');
         if (!boundaryLayer) {
-            console.warn('Toggleable boundary layer not available');
             return;
         }
         
         if (show) {
             boundaryLayer.addTo(this.map);
-            console.log('Yellow map unit boundaries added to map');
+            // Ensure proper drawing order after adding overlay
+            this.ensureOverlayDrawingOrder();
         } else {
             this.map.removeLayer(boundaryLayer);
-            console.log('Yellow map unit boundaries removed from map');
         }
     }
     
@@ -729,16 +894,15 @@ class MapManager {
     toggleHighways(show) {
         const highwayLayer = this.layers.overlays.get('highways');
         if (!highwayLayer) {
-            console.warn('Highway layer not available');
             return;
         }
         
         if (show) {
             highwayLayer.addTo(this.map);
-            console.log('Highways added to map');
+            // Ensure proper drawing order after adding overlay
+            this.ensureOverlayDrawingOrder();
         } else {
             this.map.removeLayer(highwayLayer);
-            console.log('Highways removed from map');
         }
     }
     
@@ -746,16 +910,15 @@ class MapManager {
     toggleServiceRoads(show) {
         const serviceRoadLayer = this.layers.overlays.get('service-roads');
         if (!serviceRoadLayer) {
-            console.warn('Service road layer not available');
             return;
         }
         
         if (show) {
             serviceRoadLayer.addTo(this.map);
-            console.log('Service roads added to map');
+            // Ensure proper drawing order after adding overlay
+            this.ensureOverlayDrawingOrder();
         } else {
             this.map.removeLayer(serviceRoadLayer);
-            console.log('Service roads removed from map');
         }
     }
     
@@ -767,12 +930,77 @@ class MapManager {
             }
             if (this.informationCenterMarker) {
                 this.informationCenterMarker.addTo(this.map);
-                console.log('Information center marker added to map');
+                // Ensure proper drawing order after adding overlay
+                this.ensureOverlayDrawingOrder();
             }
         } else {
             if (this.informationCenterMarker && this.map.hasLayer(this.informationCenterMarker)) {
                 this.map.removeLayer(this.informationCenterMarker);
-                console.log('Information center marker removed from map');
+            }
+        }
+    }
+    
+    // Ensure overlays are drawn in the correct order on top of soil polygons
+    // Order: boundaries -> highways -> service roads -> information center (top)
+    ensureOverlayDrawingOrder() {
+        // Only apply overlay ordering for soil, particleSize, and ssurgo map types
+        if (this.currentMapType !== 'soil' && this.currentMapType !== 'particleSize' && this.currentMapType !== 'ssurgo') {
+            return;
+        }
+        
+        // Get overlay layers
+        const boundaryLayer = this.layers.polygons.get('toggleable-boundaries');
+        const highwayLayer = this.layers.overlays.get('highways');
+        const serviceRoadLayer = this.layers.overlays.get('service-roads');
+        const informationCenterMarker = this.layers.overlays.get('information-center');
+        
+        // Bring overlays to front in the specified order
+        // 1. Map unit boundaries (drawn first among overlays)
+        if (boundaryLayer && this.map.hasLayer(boundaryLayer)) {
+            if (boundaryLayer.bringToFront) {
+                boundaryLayer.bringToFront();
+            } else {
+                // For layer groups, bring each sub-layer to front
+                boundaryLayer.eachLayer((layer) => {
+                    if (layer.bringToFront) {
+                        layer.bringToFront();
+                    }
+                });
+            }
+        }
+        
+        // 2. Highways (drawn second)
+        if (highwayLayer && this.map.hasLayer(highwayLayer)) {
+            if (highwayLayer.bringToFront) {
+                highwayLayer.bringToFront();
+            } else {
+                // For layer groups, bring each sub-layer to front
+                highwayLayer.eachLayer((layer) => {
+                    if (layer.bringToFront) {
+                        layer.bringToFront();
+                    }
+                });
+            }
+        }
+        
+        // 3. Service roads (drawn third)
+        if (serviceRoadLayer && this.map.hasLayer(serviceRoadLayer)) {
+            if (serviceRoadLayer.bringToFront) {
+                serviceRoadLayer.bringToFront();
+            } else {
+                // For layer groups, bring each sub-layer to front
+                serviceRoadLayer.eachLayer((layer) => {
+                    if (layer.bringToFront) {
+                        layer.bringToFront();
+                    }
+                });
+            }
+        }
+        
+        // 4. Information center (drawn last/on top)
+        if (informationCenterMarker && this.map.hasLayer(informationCenterMarker)) {
+            if (informationCenterMarker.bringToFront) {
+                informationCenterMarker.bringToFront();
             }
         }
     }
@@ -821,19 +1049,15 @@ class MapManager {
         }
         
         try {
-            console.log('Creating hillshade background layer...');
-            console.log('window.rasterManager available?', window.rasterManager);
             
             // Check if rasterManager is available
             if (!window.rasterManager) {
-                console.error('rasterManager not available. Check if raster-utils.js loaded correctly.');
                 return;
             }
             
             // Load hillshade TIFF
             const hillshadeTiff = await window.rasterManager.loadTiff(CONFIG.dataPaths.hillshade);
             if (!hillshadeTiff) {
-                console.warn('Could not load hillshade data for background');
                 return;
             }
             
@@ -907,10 +1131,8 @@ class MapManager {
             this.hillshadeLayer.addTo(this.map);
             this.layers.rasters.set('hillshade', this.hillshadeLayer);
             
-            console.log('Hillshade background layer created successfully');
             
         } catch (error) {
-            console.error('Error creating hillshade background:', error);
         }
     }
     
@@ -964,13 +1186,10 @@ class MapManager {
     
     // Remove click marker
     removeClickMarker() {
-        console.log('removeClickMarker called, marker exists:', !!this.clickMarker);
         if (this.clickMarker && this.map.hasLayer(this.clickMarker)) {
-            console.log('Removing click marker from map');
             this.map.removeLayer(this.clickMarker);
             this.clickMarker = null;
         } else if (this.clickMarker) {
-            console.log('Click marker exists but not on map');
             this.clickMarker = null;
         }
     }
@@ -988,7 +1207,6 @@ class MapManager {
     async updateLayers(layerType, depth = 0) {
         // Store current map type
         this.currentMapType = layerType;
-        console.log('updateLayers - setting currentMapType to:', layerType);
         
         // If no layer type selected, hide all layers except monument boundary
         if (!layerType) {
@@ -1031,7 +1249,6 @@ class MapManager {
                 }
             }
             
-            console.log('Setting loading screen to visible in updateLayers');
             loadingElement.style.display = 'flex';
             loadingElement.style.visibility = 'visible';
             loadingElement.style.opacity = '1';
@@ -1043,8 +1260,6 @@ class MapManager {
         const permanentBoundaryLayer = this.layers.polygons.get('permanent-boundaries');
         const monumentBoundaryLayer = this.layers.overlays.get('monument-boundary');
         
-        console.log(`Updating layers for type: ${layerType}`);
-        console.log('Available polygon layers:', Array.from(this.layers.polygons.keys()));
         
         // Remove current raster layer if it exists
         if (this.currentRasterLayer && this.map.hasLayer(this.currentRasterLayer)) {
@@ -1078,6 +1293,10 @@ class MapManager {
                             weight: 0.65,      // Thin lines
                             opacity: 0.8
                         });
+                        
+                        // CRITICAL FIX: Ensure click handler is attached for SSURGO functionality
+                        layer.off('click'); // Remove any existing handlers to prevent duplicates
+                        layer.on('click', (e) => this.selectFeature(e)); // Reattach click handler
                     }
                 });
             }
@@ -1085,22 +1304,21 @@ class MapManager {
             if (legendElement) {
                 legendElement.style.display = 'none';
             }
+            
+            // Ensure overlays are drawn on top in the correct order
+            this.ensureOverlayDrawingOrder();
+            
             // Hide loading screen for non-raster layers with a small delay
             this.hideLoadingScreen(300);
         } else if (layerType === 'soil') {
-            console.log('=== ACTIVATING SOIL ORDER VIEW ===');
-            console.log('Soil layer exists:', !!soilLayer);
-            console.log('Soil layer already on map:', soilLayer ? this.map.hasLayer(soilLayer) : false);
             
             // Show soil polygons, permanent boundaries, and legend
             if (soilLayer && !this.map.hasLayer(soilLayer)) {
-                console.log('Adding soil layer to map');
                 soilLayer.addTo(this.map);
             }
             
             // Restore original soil polygon colors
             if (soilLayer) {
-                console.log('Updating soil layer styles for soil order view');
                 let colorCount = 0;
                 let totalLayers = 0;
                 
@@ -1114,19 +1332,16 @@ class MapManager {
                                 const style = this.getSoilFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
                                 if (colorCount < 5) { // Log first 5 for debugging
-                                    console.log(`Applied soil order style to layer ${colorCount}:`, style);
                                     colorCount++;
                                 }
                             }
                         });
                     }
                 });
-                console.log(`Total soil layers processed: ${totalLayers}`);
             }
             
             // Bring soil layer to front to ensure it's visible
             if (soilLayer) {
-                console.log('Bringing soil layer to front');
                 // LayerGroup doesn't have bringToFront, need to iterate through nested layers
                 soilLayer.eachLayer((geoJsonLayer) => {
                     if (geoJsonLayer.eachLayer) {
@@ -1144,30 +1359,25 @@ class MapManager {
                     if (!testLayer && layer.feature) {
                         testLayer = layer;
                         const bounds = layer.getBounds();
-                        console.log('Test layer bounds:', bounds);
-                        console.log('Test layer visible in viewport:', this.map.getBounds().intersects(bounds));
-                        console.log('Test layer options:', layer.options);
                         return false; // Stop after first layer
                     }
                 });
             }
             
             if (permanentBoundaryLayer && !this.map.hasLayer(permanentBoundaryLayer)) {
-                console.log('Adding permanent boundary layer');
                 permanentBoundaryLayer.addTo(this.map);
             }
             
             if (legendElement) {
-                console.log('Showing soil order legend');
                 this.showSoilOrderLegend();
             }
             
-            console.log('=== SOIL ORDER VIEW ACTIVATION COMPLETE ===');
+            // Ensure overlays are drawn on top in the correct order
+            this.ensureOverlayDrawingOrder();
             
             // Hide loading screen for non-raster layers with a small delay
             this.hideLoadingScreen(300);
         } else if (layerType === 'particleSize') {
-            console.log('=== ACTIVATING PARTICLE SIZE VIEW ===');
             
             // Show soil polygons with particle size colors
             if (soilLayer && !this.map.hasLayer(soilLayer)) {
@@ -1176,7 +1386,6 @@ class MapManager {
             
             // Update polygons with particle size colors
             if (soilLayer) {
-                console.log('Updating soil layer styles for particle size view');
                 let colorCount = 0;
                 let totalLayers = 0;
                 
@@ -1190,14 +1399,12 @@ class MapManager {
                                 const style = this.getParticleSizeFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
                                 if (colorCount < 5) { // Log first 5 for debugging
-                                    console.log(`Applied particle size style to layer ${colorCount}:`, style);
                                     colorCount++;
                                 }
                             }
                         });
                     }
                 });
-                console.log(`Total particle size layers processed: ${totalLayers}`);
                 
                 // Bring layers to front
                 soilLayer.eachLayer((geoJsonLayer) => {
@@ -1221,7 +1428,8 @@ class MapManager {
                 this.showParticleSizeLegend();
             }
             
-            console.log('=== PARTICLE SIZE VIEW ACTIVATION COMPLETE ===');
+            // Ensure overlays are drawn on top in the correct order
+            this.ensureOverlayDrawingOrder();
             
             // Hide loading screen for non-raster layers with a small delay
             this.hideLoadingScreen(300);
@@ -1265,16 +1473,13 @@ class MapManager {
     
     // Hide loading screen with optional delay
     hideLoadingScreen(delay = 0) {
-        console.log(`hideLoadingScreen called with delay: ${delay}ms`);
         const loadingElement = document.getElementById('loading');
         if (loadingElement) {
             if (delay > 0) {
-                console.log(`Hiding loading screen after ${delay}ms delay`);
                 setTimeout(() => {
                     loadingElement.style.display = 'none';
                 }, delay);
             } else {
-                console.log('Hiding loading screen immediately');
                 loadingElement.style.display = 'none';
             }
         }
@@ -1282,12 +1487,9 @@ class MapManager {
     
     // Load raster layer for OC or pH
     async loadRasterLayer(property, depth) {
-        console.log(`Loading ${property} raster for depth level ${depth}`);
-        
         // Ensure loading screen is visible for raster loading
         const loadingElement = document.getElementById('loading');
         if (loadingElement) {
-            console.log('Setting loading screen to visible in updateLayers');
             loadingElement.style.display = 'flex';
             loadingElement.style.visibility = 'visible';
             loadingElement.style.opacity = '1';
@@ -1305,7 +1507,6 @@ class MapManager {
                 this.currentRasterLayer = cachedLayer;
             }
             // Layer already loaded, hide loading screen with small delay
-            console.log(`Using cached ${property} layer for depth ${depth}`);
             this.hideLoadingScreen(300);
             // Show appropriate legend
             if (cachedLayer.dataRange) {
@@ -1347,11 +1548,9 @@ class MapManager {
             // Store unique values for classification rasters
             if (rasterResult && rasterResult.uniqueValues && (property === 'nlcd' || property === 'lithology')) {
                 this.rasterUniqueValues[property] = rasterResult.uniqueValues;
-                console.log(`Unique values for ${property}:`, Array.from(rasterResult.uniqueValues).sort((a, b) => a - b));
             }
             
             if (!rasterResult || !rasterResult.layer) {
-                console.log(`TIFF loading failed for ${property}, falling back to mock data`);
                 
                 // Fall back to mock raster overlay
                 const bounds = [
@@ -1383,16 +1582,13 @@ class MapManager {
                 rasterResult.layer.dataRange = rasterResult.dataRange;
                 this.layers.rasters.set(`${property}_${depth}`, rasterResult.layer);
                 
-                console.log(`${property.toUpperCase()} raster layer added for depth: ${depthLabel}`);
                 return rasterResult;
             } else {
-                console.error(`Failed to create raster layer for ${property}`);
                 // Hide loading screen on failure
                 this.hideLoadingScreen(300);
                 return null;
             }
         } catch (error) {
-            console.error(`Error creating raster layer for ${property}:`, error);
             // Hide loading screen on error
             this.hideLoadingScreen(300);
             return null;
@@ -1433,16 +1629,20 @@ class MapManager {
         legendElement.style.display = 'block';
     }
     
-    // Get available soil orders from loaded data
+    // Get available soil orders from loaded data (only from dominant components)
     getAvailableSoilOrders() {
         if (!this.data || !this.data.soilPolygons) {
             return Object.keys(CONFIG.soilOrderColors);
         }
         
         const orders = new Set();
+        
+        // Only process dominant components to match what's displayed on the map
         this.data.soilPolygons.features.forEach(feature => {
-            const order = this.extractSoilOrder(feature.properties);
-            orders.add(order);
+            if (this.isFeatureDominant(feature)) {
+                const order = this.extractSoilOrder(feature.properties);
+                orders.add(order);
+            }
         });
         
         // Sort orders alphabetically, putting Unknown at the end
@@ -1489,18 +1689,25 @@ class MapManager {
         legendElement.style.display = 'block';
     }
     
-    // Get available particle sizes from loaded data
+    // Get available particle sizes from loaded data (only from dominant components)
     getAvailableParticleSizes() {
         if (!this.data || !this.data.soilPolygons) {
             return [];
         }
         
         const sizes = new Set();
+        
+        // Only process dominant components to match what's displayed on the map
         this.data.soilPolygons.features.forEach(feature => {
-            const size = this.extractParticleSize(feature.properties);
-            // Only add sizes that have defined colors
-            if (size && CONFIG.particleSizeColors[size]) {
-                sizes.add(size);
+            if (this.isFeatureDominant(feature)) {
+                const size = this.extractParticleSize(feature.properties);
+                // Only add sizes that have defined colors and are not Unknown or "not used"
+                if (size && 
+                    CONFIG.particleSizeColors[size] && 
+                    size !== 'Unknown' && 
+                    size !== 'not used') {
+                    sizes.add(size);
+                }
             }
         });
         
@@ -1521,9 +1728,7 @@ class MapManager {
                 'medial-skeletal': 11,
                 'clayey': 12,
                 'medial': 13,
-                'fine-loamy over clayey': 14,
-                'not used': 15,
-                'Unknown': 16
+                'fine-loamy over clayey': 14
             };
             
             return (order[a] || 999) - (order[b] || 999);

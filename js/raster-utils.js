@@ -8,11 +8,6 @@ class RasterManager {
         
         // Check for GeoTIFF availability more thoroughly
         this.isGeoTiffAvailable = this.checkGeoTiffAvailability();
-        console.log('GeoTIFF availability check:', {
-            'typeof GeoTIFF': typeof GeoTIFF,
-            'window.GeoTIFF': typeof window.GeoTIFF,
-            'isAvailable': this.isGeoTiffAvailable
-        });
     }
     
     checkGeoTiffAvailability() {
@@ -22,14 +17,12 @@ class RasterManager {
     // Create a real raster layer from TIFF file
     async createTiffLayer(property, depth, options = {}) {
         if (!this.isGeoTiffAvailable) {
-            console.warn('GeoTIFF.js not available, falling back to mock data');
             return null;
         }
         
         // Check cache for this specific property-depth combination
         const cacheKey = `${property}_depth_${depth}`;
         if (this.rasterCache.has(cacheKey)) {
-            console.log(`Using cached raster for ${property} depth ${depth}`);
             const cached = this.rasterCache.get(cacheKey);
             // Return a copy of the cached layer since Leaflet layers can only be added to one map at a time
             return {
@@ -41,25 +34,20 @@ class RasterManager {
         try {
             const filename = this.getRasterFilename(property, depth);
             const fallbackFilename = this.getFallbackFilename(property, depth);
-            console.log(`Loading depth-specific TIFF: ${filename}`);
             const tiff = await this.loadTiff(filename, fallbackFilename);
             
             if (!tiff) {
-                console.warn(`Could not load TIFF for ${property}`);
                 return null;
             }
             
             // Check how many images/bands are available
             const imageCount = await tiff.getImageCount();
-            console.log(`Depth-specific TIFF loaded: ${imageCount} bands for depth ${depth} (${CONFIG.depthLevels.labels[depth]})`);
             
             // For depth-specific files, always use the first (and usually only) band
             const imageIndex = 0;
-            console.log(`Using band 1 from depth-specific file: ${filename}`);
             const image = await tiff.getImage(imageIndex);
             
             if (!image) {
-                console.warn(`Could not get image ${imageIndex} for ${property}`);
                 return null;
             }
             
@@ -69,13 +57,11 @@ class RasterManager {
             // Cache the result for this property-depth combination
             if (canvasResult && canvasResult.layer) {
                 this.rasterCache.set(cacheKey, canvasResult);
-                console.log(`Cached raster layer for ${property} depth ${depth}`);
             }
             
             return canvasResult;
             
         } catch (error) {
-            console.error(`Error creating TIFF layer for ${property}:`, error);
             return null;
         }
     }
@@ -87,22 +73,11 @@ class RasterManager {
         }
         
         try {
-            console.log(`Loading TIFF: ${filename}`);
-            
             // Test if the file is accessible
             const testResponse = await fetch(filename, { method: 'HEAD' });
-            console.log(`File accessibility test for ${filename}:`, {
-                status: testResponse.status,
-                statusText: testResponse.statusText,
-                headers: {
-                    contentType: testResponse.headers.get('content-type'),
-                    contentLength: testResponse.headers.get('content-length')
-                }
-            });
             
             if (!testResponse.ok) {
                 if (fallbackFilename) {
-                    console.log(`Primary file failed, trying fallback: ${fallbackFilename}`);
                     return this.loadTiff(fallbackFilename);
                 }
                 throw new Error(`File not accessible: ${testResponse.status} ${testResponse.statusText} for ${filename}`);
@@ -114,8 +89,6 @@ class RasterManager {
             if (!GeoTIFFLib) {
                 throw new Error('GeoTIFF library not found');
             }
-            
-            console.log(`Loading TIFF with fetch + fromArrayBuffer approach...`);
             
             // Use the reliable method: fetch then fromArrayBuffer
             let tiff = null;
@@ -135,17 +108,13 @@ class RasterManager {
                 // Check if server supports range requests for future optimization
                 const acceptRanges = response.headers.get('Accept-Ranges');
                 if (acceptRanges === 'bytes') {
-                    console.log(`Server supports range requests for ${filename}`);
                 }
                 
                 const arrayBuffer = await response.arrayBuffer();
                 const sizeInMB = (arrayBuffer.byteLength / 1024 / 1024).toFixed(2);
-                console.log(`Fetched TIFF file, size: ${sizeInMB} MB`);
                 
                 tiff = await GeoTIFFLib.fromArrayBuffer(arrayBuffer);
-                console.log(`Successfully loaded TIFF with fromArrayBuffer: ${filename}`);
             } catch (error) {
-                console.error(`Failed to load TIFF ${filename}:`, error.message);
                 throw error;
             }
             
@@ -154,14 +123,12 @@ class RasterManager {
                 
                 // Log some TIFF info for debugging
                 const imageCount = await tiff.getImageCount();
-                console.log(`TIFF loaded successfully: ${imageCount} images/bands`);
                 
                 return tiff;
             } else {
                 throw new Error('Failed to load TIFF with any method');
             }
         } catch (error) {
-            console.error(`Error loading TIFF ${filename}:`, error);
             return null;
         }
     }
@@ -173,14 +140,7 @@ class RasterManager {
             const data = rasters[0]; // First band
             const bbox = image.getBoundingBox();
             const [width, height] = [image.getWidth(), image.getHeight()];
-            
-            console.log(`Creating canvas overlay for ${property}:`, {
-                width,
-                height,
-                bbox,
-                dataLength: data.length,
-                sampleValues: data.slice(0, 10)
-            });
+            // Raster data loaded successfully
         
         // For elevation, also load hillshade data if available
         let hillshadeData = null;
@@ -191,7 +151,6 @@ class RasterManager {
                     const hillshadeImage = await hillshadeTiff.getImage(0);
                     const hillshadeRasters = await hillshadeImage.readRasters();
                     hillshadeData = hillshadeRasters[0];
-                    console.log('Hillshade data loaded successfully');
                     
                     // Debug: Check hillshade value range (simplified to avoid performance issues)
                     if (hillshadeData.length < 100000) {  // Only debug small rasters
@@ -203,14 +162,11 @@ class RasterManager {
                                     sampleValues.push(hillshadeData[j]);
                                 }
                             }
-                            console.log('Hillshade sample values:', sampleValues.slice(0, 10));
                         } catch (debugError) {
-                            console.error('Error in hillshade debugging:', debugError);
                         }
                     }
                 }
             } catch (error) {
-                console.warn('Could not load hillshade data:', error.message);
             }
         }
         
@@ -240,15 +196,6 @@ class RasterManager {
         }
         
         // Debug data analysis (simplified for performance)
-        console.log(`${property.toUpperCase()} data analysis:`, {
-            totalPixels: data.length.toLocaleString(),
-            validPixels: validValues.length.toLocaleString(),
-            sampleRate: sampleRate > 1 ? `1:${sampleRate}` : 'full',
-            min: min?.toFixed(2),
-            max: max?.toFixed(2),
-            mean: mean?.toFixed(2),
-            ...(property === 'ph' && min > 10 ? { note: 'pH values appear to be scaled by 10 (pH*10)' } : {})
-        });
         
         // Create canvas with crisp pixel rendering
         const canvas = document.createElement('canvas');
@@ -274,7 +221,6 @@ class RasterManager {
         // Track unique values for classification rasters
         const uniqueValues = new Set();
         
-        console.log(`Processing ${totalPixels.toLocaleString()} pixels for ${property}...`);
         
         // Emit start event
         const startEvent = new CustomEvent('rasterProcessingProgress', {
@@ -361,7 +307,6 @@ class RasterManager {
                         
                         // Debug: log only a few sample pixels to avoid performance issues
                         if (hillshadeDebugCount < 5 && i % 1000000 === 0) {
-                            console.log(`Pixel ${i}: hillshade=${hillshadeValue}, isNoData=${hillshadeIsNoData}, clamped=${clampedHillshade}, elevation=${value}`);
                             hillshadeDebugCount++;
                         }
                         
@@ -395,7 +340,6 @@ class RasterManager {
             
             // After each chunk, update progress and yield to browser
             const progress = Math.min(95, (chunk + 1) * 5); // Cap at 95%
-            console.log(`Processing ${property}: ${progress}% complete...`);
             
             // Emit progress event
             const event = new CustomEvent('rasterProcessingProgress', {
@@ -426,7 +370,6 @@ class RasterManager {
         
         // Log hillshade statistics if elevation was processed
         if (property === 'elevation' && hillshadeStats.processed > 0) {
-            console.log('Hillshade processing summary:', hillshadeStats);
         }
         
         // Emit completion event with a small delay to ensure the 100% is visible
@@ -471,7 +414,6 @@ class RasterManager {
             uniqueValues: uniqueValues // Include unique values for classification rasters
         };
         } catch (error) {
-            console.error(`Error creating canvas overlay for ${property}:`, error);
             return null;
         }
     }
@@ -528,7 +470,6 @@ class RasterManager {
                     .openOn(e.target._map);
             }
         } catch (error) {
-            console.error('Error getting raster value:', error);
         }
     }
     
@@ -605,15 +546,8 @@ class RasterManager {
             return CONFIG.dataPaths.meanTempRaster;
         }
         
-        // Fallback to original config paths
-        const filenames = {
-            'oc': CONFIG.dataPaths.ocRaster,
-            'ph': CONFIG.dataPaths.phRaster,
-            'meanTemp': CONFIG.dataPaths.meanTempRaster,
-            'landcover': CONFIG.dataPaths.landCover,
-            'elevation': CONFIG.dataPaths.elevation
-        };
-        return filenames[property];
+        // No valid fallback - properties should be handled above
+        return null;
     }
     
     // Get fallback filename for pH (handles dash vs underscore naming)
@@ -628,7 +562,6 @@ class RasterManager {
     // Extract raster values at specific coordinates for all depths
     async extractValuesAtLocation(property, lat, lng) {
         if (!this.isGeoTiffAvailable) {
-            console.warn('GeoTIFF.js not available');
             return null;
         }
         
@@ -670,7 +603,6 @@ class RasterManager {
                     }
                 }
             } catch (error) {
-                console.error(`Error extracting ${property} value at depth ${depth}:`, error);
             }
         }
         
@@ -680,7 +612,6 @@ class RasterManager {
     // Create a tile layer from a raster file (fallback method for tile servers)
     createTileLayer(property, depth, options = {}) {
         // This is kept for compatibility but not used when TIFF loading works
-        console.warn(`No tile service configured for ${property}`);
         return null;
     }
     
@@ -935,12 +866,10 @@ if (typeof window !== 'undefined') {
     // Check if GeoTIFF is already loaded
     if (typeof GeoTIFF !== 'undefined' || typeof window.GeoTIFF !== 'undefined') {
         window.rasterManager = new RasterManager();
-        console.log('RasterManager initialized immediately');
     } else {
         // Wait for window load to ensure all scripts are loaded
         window.addEventListener('load', function() {
             window.rasterManager = new RasterManager();
-            console.log('RasterManager initialized on window load');
         });
     }
 }

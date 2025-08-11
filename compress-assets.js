@@ -25,7 +25,6 @@ async function compressFile(filePath) {
             return null;
         }
         
-        console.log(`Compressing ${fileName} (${(fileSize / 1024 / 1024).toFixed(2)} MB)...`);
         
         const content = await readFile(filePath);
         const compressed = await gzip(content, {
@@ -38,7 +37,6 @@ async function compressFile(filePath) {
         const compressedStats = await stat(compressedPath);
         const compressionRatio = ((1 - compressedStats.size / fileSize) * 100).toFixed(1);
         
-        console.log(`  ✓ Compressed to ${(compressedStats.size / 1024 / 1024).toFixed(2)} MB (${compressionRatio}% reduction)`);
         
         return {
             original: filePath,
@@ -48,7 +46,6 @@ async function compressFile(filePath) {
             ratio: compressionRatio
         };
     } catch (error) {
-        console.error(`  ✗ Error compressing ${filePath}:`, error.message);
         return null;
     }
 }
@@ -79,7 +76,6 @@ async function processDirectory(dir) {
 }
 
 async function main() {
-    console.log('🔧 Starting asset compression...\n');
     
     try {
         // Check if data directory exists
@@ -89,11 +85,8 @@ async function main() {
         const results = await processDirectory(DATA_DIR);
         
         // Print summary
-        console.log('\n📊 Compression Summary:');
-        console.log('─'.repeat(50));
         
         if (results.length === 0) {
-            console.log('No files were compressed.');
         } else {
             let totalOriginal = 0;
             let totalCompressed = 0;
@@ -103,10 +96,6 @@ async function main() {
                 totalCompressed += result.compressedSize;
             });
             
-            console.log(`Files compressed: ${results.length}`);
-            console.log(`Total original size: ${(totalOriginal / 1024 / 1024).toFixed(2)} MB`);
-            console.log(`Total compressed size: ${(totalCompressed / 1024 / 1024).toFixed(2)} MB`);
-            console.log(`Overall compression ratio: ${((1 - totalCompressed / totalOriginal) * 100).toFixed(1)}%`);
             
             // List large files that benefit most from compression
             const significantFiles = results
@@ -114,26 +103,19 @@ async function main() {
                 .sort((a, b) => b.originalSize - a.originalSize);
             
             if (significantFiles.length > 0) {
-                console.log('\n🎯 Largest compressed files:');
                 significantFiles.slice(0, 5).forEach(result => {
                     const name = path.basename(result.original);
-                    console.log(`  • ${name}: ${(result.originalSize / 1024 / 1024).toFixed(1)} MB → ${(result.compressedSize / 1024 / 1024).toFixed(1)} MB`);
                 });
             }
         }
         
-        console.log('\n✅ Compression complete!');
-        console.log('\nNote: Update your application to load .gz files where available.');
         
     } catch (error) {
         if (error.code === 'ENOENT') {
-            console.error('❌ Error: Data directory not found at', DATA_DIR);
         } else {
-            console.error('❌ Error:', error.message);
         }
         process.exit(1);
     }
 }
 
 // Run the script
-main().catch(console.error);

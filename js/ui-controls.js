@@ -16,6 +16,7 @@ class UIController {
         this.activeChart = 'soil-sketch'; // Track active soil profile chart
         // Initialize dropdown states from localStorage or default to all closed
         this.dropdownStates = this.loadDropdownStates() || {
+            'general-maps': false,
             'ssurgo': false,
             'soil-properties': false,
             'forming-factors': false,
@@ -302,7 +303,6 @@ class UIController {
     handleBoundariesToggle(show) {
         this.showBoundaries = show;
         
-        console.log(`Map unit boundaries ${show ? 'enabled' : 'disabled'}`);
         
         // Show/hide color preview
         if (this.elements.boundariesColorPreview) {
@@ -320,7 +320,6 @@ class UIController {
     handleHighwaysToggle(show) {
         this.showHighways = show;
         
-        console.log(`Highways ${show ? 'enabled' : 'disabled'}`);
         
         // Show/hide color preview
         if (this.elements.highwaysColorPreview) {
@@ -338,7 +337,6 @@ class UIController {
     handleServiceRoadsToggle(show) {
         this.showServiceRoads = show;
         
-        console.log(`Service roads ${show ? 'enabled' : 'disabled'}`);
         
         // Show/hide color preview
         if (this.elements.serviceRoadsColorPreview) {
@@ -356,7 +354,6 @@ class UIController {
     handleInformationCenterToggle(show) {
         this.showInformationCenter = show;
         
-        console.log(`Information center ${show ? 'enabled' : 'disabled'}`);
         
         // Show/hide color preview
         if (this.elements.informationCenterColorPreview) {
@@ -496,7 +493,6 @@ class UIController {
         // Get source data from config
         const sourceData = CONFIG.dataSources[sourceType];
         if (!sourceData) {
-            console.error('No source data found for:', sourceType);
             return;
         }
         
@@ -547,7 +543,6 @@ class UIController {
     // Show loading overlay
     showLoading(message = 'Loading...') {
         if (this.elements.loading) {
-            console.log('showLoading called with message:', message);
             const loadingText = this.elements.loading.querySelector('span');
             if (loadingText) {
                 loadingText.textContent = message;
@@ -559,7 +554,6 @@ class UIController {
             
             // Force browser to repaint
             this.elements.loading.offsetHeight;
-            console.log('Loading screen should now be visible');
         }
     }
     
@@ -871,9 +865,7 @@ class UIController {
     
     // Close SSURGO detail panel
     closeSsurgoDetailPanel() {
-        console.log('closeSsurgoDetailPanel called, panel exists:', !!this.elements.ssurgoDetailPanel);
         if (this.elements.ssurgoDetailPanel) {
-            console.log('Setting SSURGO detail panel display to none');
             this.elements.ssurgoDetailPanel.style.display = 'none';
             // Reset tracking state
             this.currentSeriesView = null;
@@ -947,7 +939,6 @@ class UIController {
             const savedStates = localStorage.getItem('csnm-dropdown-states');
             return savedStates ? JSON.parse(savedStates) : null;
         } catch (error) {
-            console.error('Error loading dropdown states:', error);
             return null;
         }
     }
@@ -957,7 +948,6 @@ class UIController {
         try {
             localStorage.setItem('csnm-dropdown-states', JSON.stringify(this.dropdownStates));
         } catch (error) {
-            console.error('Error saving dropdown states:', error);
         }
     }
     
@@ -1799,7 +1789,6 @@ class UIController {
             
             // For pH and organic matter, try to get raster values if we have a click location
             if ((chartType === 'ph' || chartType === 'org-matter') && this.lastClickLocation) {
-                console.log('Getting raster data for:', chartType, 'at location:', this.lastClickLocation);
                 const rasterProperty = chartType === 'ph' ? 'ph' : 'oc';
                 
                 // Check if we need to fetch new raster data
@@ -1825,7 +1814,6 @@ class UIController {
                 }
                 
                 const rasterValues = rasterProperty === 'ph' ? this.lastRasterData.ph : this.lastRasterData.oc;
-                console.log('Raster values for', chartType, ':', rasterValues);
                 
                 if (rasterValues) {
                     // Convert raster values to property data format
@@ -1851,7 +1839,6 @@ class UIController {
                 }
             }
             
-            console.log('Property data for', chartType, ':', propertyData[chartType]);
             
             if (chartType === 'soil-sketch') {
                 this.createSoilSketch(horizons, container);
@@ -1862,7 +1849,6 @@ class UIController {
                 container.innerHTML = '<div style="text-align: center; padding: 50px; color: #666;">No data available for this property</div>';
             }
         } catch (error) {
-            console.error('Error generating soil profile chart:', error);
             container.innerHTML = '<div style="text-align: center; padding: 50px; color: #dc3545;">Error loading soil data</div>';
         }
     }
@@ -1896,10 +1882,8 @@ class UIController {
                 
                 if (wssResponse.ok) {
                     const wssData = await wssResponse.json();
-                    console.log('WSS response:', wssData);
                 }
             } catch (wssError) {
-                console.log('WSS API call failed:', wssError);
             }
             
             // Second try: SoilWeb API (may fail due to CORS)
@@ -1938,16 +1922,13 @@ class UIController {
                             data = JSON.parse(text);
                         } catch (e) {
                             // Try to parse as CSV if not JSON
-                            console.log('Response appears to be CSV, attempting to parse...');
                             if (text.includes('hzname,top,bottom')) {
                                 data = this.parseOSDCSV(text, seriesName);
                             } else {
-                                console.log('Response was not JSON or expected CSV:', text.substring(0, 200));
                             }
                         }
                     }
                 } catch (proxyError) {
-                    console.log('Proxy API call failed:', proxyError);
                 }
             }
             
@@ -1957,12 +1938,10 @@ class UIController {
                 this.osdDataCache[seriesName] = parsedData;
             } else {
                 // If we can't fetch real data, mark as failed
-                console.warn('Unable to fetch OSD data from API, marking as failed');
                 this.osdDataCache[seriesName] = null;
             }
             
         } catch (error) {
-            console.error('Error fetching OSD data:', error);
             // Store null to indicate failed fetch
             this.osdDataCache[seriesName] = null;
         }
@@ -2073,7 +2052,6 @@ class UIController {
     
     // Create soil horizon sketch
     createSoilSketch(horizons, container) {
-        console.log('Creating soil sketch with horizons:', horizons);
         
         // Create shapes for each horizon
         const shapes = horizons.map(h => ({

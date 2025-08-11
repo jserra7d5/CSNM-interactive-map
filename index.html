@@ -43,7 +43,22 @@
                 
                 <!-- Dropdown Menu System -->
                 <div class="dropdown-menu-container">
-                    <!-- Menu 1: SSURGO DATA -->
+                    <!-- Menu 1: GENERAL MAPS -->
+                    <div class="dropdown-menu" id="menu-general-maps">
+                        <div class="dropdown-header" data-menu="general-maps">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>GENERAL MAPS</span>
+                        </div>
+                        <div class="dropdown-content">
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="satellite" checked>
+                                <span class="radio-label">Satellite</span>
+                                <button class="info-btn" data-source="satellite" title="View source information">i</button>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Menu 2: SSURGO DATA -->
                     <div class="dropdown-menu" id="menu-ssurgo">
                         <div class="dropdown-header" data-menu="ssurgo">
                             <i class="fas fa-caret-down dropdown-arrow"></i>
@@ -128,11 +143,6 @@
                                 <input type="radio" name="map_type" value="elevation">
                                 <span class="radio-label">Elevation</span>
                                 <button class="info-btn" data-source="elevation" title="View source information">i</button>
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="map_type" value="satellite" checked>
-                                <span class="radio-label">Satellite</span>
-                                <button class="info-btn" data-source="satellite" title="View source information">i</button>
                             </label>
                         </div>
                     </div>
@@ -360,15 +370,13 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
-    <script src="https://unpkg.com/geotiff@2.1.3/dist-browser/geotiff.js" onload="console.log('GeoTIFF loaded:', typeof GeoTIFF)" onerror="console.error('Failed to load GeoTIFF')"></script>
+    <script src="https://unpkg.com/geotiff@2.1.3/dist-browser/geotiff.js"></script>
     <script>
-        // Additional check when page loads
+        // Ensure GeoTIFF library is available for raster processing
         window.addEventListener('load', function() {
-            console.log('Page loaded. GeoTIFF check:', {
-                'GeoTIFF': typeof GeoTIFF,
-                'window.GeoTIFF': typeof window.GeoTIFF,
-                'available': typeof GeoTIFF !== 'undefined' || typeof window.GeoTIFF !== 'undefined'
-            });
+            if (typeof GeoTIFF === 'undefined' && typeof window.GeoTIFF === 'undefined') {
+                console.error('GeoTIFF library failed to load - raster maps will not function');
+            }
         });
     </script>
     <script src="js/config.js"></script>

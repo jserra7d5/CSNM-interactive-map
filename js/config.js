@@ -63,7 +63,12 @@ const CONFIG = {
         "Spodosols": "#D4BEC4",
         "Ultisols": "#FAAF19",
         "Vertisols": "#FFF100",
-        "Unknown": "#808080"
+        // Non-soil areas
+        "Rock outcrop": "#696969",      // Dark gray for exposed bedrock
+        "Rubble land": "#A9A9A9",       // Light gray for rocky debris
+        "Water": "#1E90FF",             // Blue for water bodies
+        "Non-soil area": "#D3D3D3",     // Light gray for other non-soil areas
+        "Unknown": "#808080"            // Keep as fallback
     },
     
     // Family Particle Class colors
@@ -118,29 +123,24 @@ const CONFIG = {
     
     // Lithology colors (geological rock types)
     lithologyColors: {
-        // Igneous rocks
-        1: { color: "#FF1493", name: "Granite" },
-        2: { color: "#DC143C", name: "Basalt" },
-        3: { color: "#8B0000", name: "Andesite" },
-        4: { color: "#FF69B4", name: "Rhyolite" },
-        5: { color: "#C71585", name: "Diorite" },
-        // Sedimentary rocks
-        10: { color: "#F4A460", name: "Sandstone" },
-        11: { color: "#D2691E", name: "Limestone" },
-        12: { color: "#8B4513", name: "Shale" },
-        13: { color: "#BC8F8F", name: "Conglomerate" },
-        14: { color: "#F5DEB3", name: "Siltstone" },
-        // Metamorphic rocks
-        20: { color: "#708090", name: "Schist" },
-        21: { color: "#696969", name: "Gneiss" },
-        22: { color: "#2F4F4F", name: "Quartzite" },
-        23: { color: "#778899", name: "Marble" },
-        // Unconsolidated
-        30: { color: "#FFE4B5", name: "Alluvium" },
-        31: { color: "#FFDEAD", name: "Colluvium" },
-        32: { color: "#F0E68C", name: "Glacial deposits" },
-        // Other
-        99: { color: "#808080", name: "Unknown" }
+        0: { color: "#356eff", name: "Water" },
+        1: { color: "#acb6da", name: "Carbonate" },
+        3: { color: "#d6b879", name: "Non-carbonate" },
+        4: { color: "#313131", name: "Alkaline intrusive" },
+        5: { color: "#eda800", name: "Silicic residual" },
+        7: { color: "#616161", name: "Extrusive volcanic" },
+        8: { color: "#d6d6d6", name: "Colluvial sediment" },
+        9: { color: "#d0ddae", name: "Glacial till clay" },
+        10: { color: "#b8d279", name: "Glacial till loam" },
+        11: { color: "#d5d378", name: "Glacial till coarse" },
+        13: { color: "#141414", name: "Glacial lake sediment fine" },
+        14: { color: "#6db155", name: "Glacial outwash coarse" },
+        15: { color: "#9b6d55", name: "Hydric" },
+        16: { color: "#feeec9", name: "Eolian sediment coarse" },
+        17: { color: "#d6b879", name: "Eolian sediment fine" },
+        18: { color: "#00b7ec", name: "Saline lake sediment" },
+        19: { color: "#ffda90", name: "Alluvium and coastal sediment fine" },
+        20: { color: "#f8b28c", name: "Coastal sediment coarse" }
     },
     
     // Elevation color scheme (terrain colors)
@@ -230,24 +230,24 @@ const CONFIG = {
             classes: "16 land cover classes including developed, forest, agriculture, and wetlands"
         },
         lithology: {
-            name: "Lithology",
-            description: "Geological lithology (rock type) classification showing the composition and origin of surface and near-surface rocks",
-            agency: "U.S. Geological Survey (USGS)",
-            url: "https://www.usgs.gov/centers/geology-energy-and-minerals-science-center",
-            dataUrl: "https://ngmdb.usgs.gov/Prodesc/proddesc_9215.htm",
-            citation: "U.S. Geological Survey, State Geologic Map Compilation (SGMC), accessed 2024.",
-            resolution: "Variable",
-            lastUpdate: "2024",
-            classes: "Igneous, sedimentary, metamorphic, and unconsolidated deposits"
+            name: "US Lithology",
+            description: "Provides classes of the general types of parent material of soil on the surface - ecologically-relevant maps of landforms and physiographic diversity for climate adaptation planning",
+            agency: "Conservation Science Partners (CSP)",
+            url: "https://developers.google.com/earth-engine/datasets/catalog/CSP_ERGo_1_0_US_lithology",
+            dataUrl: "https://www.csp-inc.org/",
+            citation: "Theobald, D. M., et al. (2015). Ecologically-relevant maps of landforms and physiographic diversity for climate adaptation planning. PLoS ONE, 10(12): e0143619.",
+            resolution: "100 meters",
+            lastUpdate: "2011",
+            dateRange: "2006-2011",
+            license: "CC-BY-NC-SA-4.0",
+            classes: "20 classes including water, carbonate/non-carbonate rocks, volcanic materials, glacial deposits, and various sediment types"
         },
         elevation: {
             name: "Digital Elevation Model",
             description: "USGS 3D Elevation Program (3DEP) - Seamless DEM providing elevation data",
             agency: "U.S. Geological Survey",
-            url: "https://www.usgs.gov/3d-elevation-program",
-            dataUrl: "https://apps.nationalmap.gov/downloader/",
             citation: "U.S. Geological Survey, 2023, USGS 3D Elevation Program Digital Elevation Model: U.S. Geological Survey.",
-            resolution: "10 meters (1/3 arc-second)",
+            resolution: "30 meters (1 arc-second)",
             units: "meters above sea level",
             lastUpdate: "Continuously updated",
             verticalAccuracy: "±3.04 meters RMSE"
@@ -275,16 +275,14 @@ const CONFIG = {
 
     // Data file paths (for local development, copy files to data directory)
     dataPaths: {
-        ocRaster: "CSNM_OC_AllDepths.tif",
-        phRaster: "CSNM_pH_AllDepths.tif",
         meanTempRaster: "data/rasters/CSNM_MeanTemperature_PRISM.tif",
         mapunitTable: "data/Mapunit_OR_table.csv",
         soilPolygons: "data/CSNM_Polygons_WGS84.geojson?v=2", // WGS84 projected SSURGO data - v2 forces cache bypass
         boundaryPolygon: "data/CSNM_boundary_WGS84.geojson",
         highways: "data/CSNM_Highways.geojson",
         serviceRoads: "data/CSNM_ServiceRoads.geojson",
-        elevation: "data/rasters/CSNM_Elevation_10m.tif",
-        hillshade: "data/rasters/CSNM_Hillshade_10m.tif",
+        elevation: "data/rasters/CSNM_Elevation_30m.tif",
+        hillshade: "data/rasters/CSNM_Hillshade_30m.tif",
         nlcd: "data/rasters/NLCD_2024_CSNM.tif",
         lithology: "data/rasters/Lithology_CSNM.tif"
     },
@@ -481,7 +479,6 @@ const ConfigUtils = {
         }
         
         if (errors.length > 0) {
-            console.error("Configuration validation errors:", errors);
             return false;
         }
         

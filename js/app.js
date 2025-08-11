@@ -13,7 +13,6 @@ class SoilExplorerApp {
     // Initialize the application
     async init() {
         try {
-            console.log(`Initializing Cascade-Siskiyou Soil Explorer v${APP_VERSION}...`);
             
             // Validate configuration
             if (!ConfigUtils.validate()) {
@@ -39,10 +38,8 @@ class SoilExplorerApp {
             // Mark as initialized
             this.initialized = true;
             
-            console.log('Application initialized successfully');
             
         } catch (error) {
-            console.error('Failed to initialize application:', error);
             this.handleInitializationError(error);
         }
     }
@@ -52,20 +49,12 @@ class SoilExplorerApp {
         try {
             this.uiController.showLoading('Loading soil data...');
             
-            console.log('Loading application data...');
             this.appData = await this.dataLoader.loadAllData();
-            
-            console.log('Data loaded successfully:', {
-                soilPolygons: !!this.appData.soilPolygons,
-                boundaryPolygon: !!this.appData.boundaryPolygon,
-                mapunitTable: !!this.appData.mapunitTable
-            });
             
             // Don't hide loading yet - keep it for polygon loading
             this.uiController.updateUIForDataState(true);
             
         } catch (error) {
-            console.error('Failed to load data:', error);
             this.uiController.hideLoading();
             this.uiController.updateUIForDataState(false);
             throw error;
@@ -75,7 +64,6 @@ class SoilExplorerApp {
     // Initialize map layers with loaded data
     async initializeMapLayers() {
         if (!this.appData) {
-            console.warn('No data available for map layers');
             this.uiController.hideLoading();
             return;
         }
@@ -85,28 +73,24 @@ class SoilExplorerApp {
             if (this.appData.soilPolygons) {
                 this.uiController.updateLoadingMessage('Loading soil polygons...');
                 await this.mapManager.loadSoilPolygons(this.appData);
-                console.log('Soil polygons loaded to map');
             }
             
             // Load boundary polygon
             if (this.appData.boundaryPolygon) {
                 this.uiController.updateLoadingMessage('Loading boundaries...');
                 await this.mapManager.loadBoundaryPolygon(this.appData);
-                console.log('Boundary polygon loaded');
             }
             
             // Load highways
             if (this.appData.highways) {
                 this.uiController.updateLoadingMessage('Loading highways...');
                 await this.mapManager.loadHighways(this.appData);
-                console.log('Highways loaded');
             }
             
             // Load service roads
             if (this.appData.serviceRoads) {
                 this.uiController.updateLoadingMessage('Loading service roads...');
                 await this.mapManager.loadServiceRoads(this.appData);
-                console.log('Service roads loaded');
             }
             
             // Initialize with satellite view as default
@@ -118,7 +102,6 @@ class SoilExplorerApp {
             this.uiController.hideLoading();
             
         } catch (error) {
-            console.error('Failed to initialize map layers:', error);
             this.uiController.hideLoading();
         }
     }
@@ -127,7 +110,6 @@ class SoilExplorerApp {
     setupEventListeners() {
         // Map ready event
         document.addEventListener('mapReady', () => {
-            console.log('Map is ready');
         });
         
         // Sidebar toggle event
@@ -190,21 +172,17 @@ class SoilExplorerApp {
     async handleMapTypeChange(detail) {
         const { mapType, depth } = detail;
         
-        console.log(`Map type changed to: ${mapType}`);
         
         // If switching away from SoilWeb view, hide the click marker and detail panel
         if (mapType !== 'ssurgo') {
-            console.log('Switching away from SSURGO view - cleaning up...');
             
             // Remove click marker
             if (this.mapManager) {
-                console.log('Removing click marker');
                 this.mapManager.removeClickMarker();
             }
             
             // Close SSURGO detail panel
             if (this.uiController) {
-                console.log('Closing SSURGO detail panel');
                 this.uiController.closeSsurgoDetailPanel();
             }
         }
@@ -229,7 +207,6 @@ class SoilExplorerApp {
     handleDepthChange(detail) {
         const { mapType, depth } = detail;
         
-        console.log(`Depth changed to: ${depth} for ${mapType}`);
         
         // Update raster layer for depth changes
         this.mapManager.updateLayers(mapType, depth);
@@ -239,7 +216,6 @@ class SoilExplorerApp {
     handleBoundariesToggle(detail) {
         const { show } = detail;
         
-        console.log(`Boundaries visibility: ${show}`);
         this.mapManager.toggleBoundaries(show);
     }
     
@@ -247,7 +223,6 @@ class SoilExplorerApp {
     handleHighwaysToggle(detail) {
         const { show } = detail;
         
-        console.log(`Highways visibility: ${show}`);
         this.mapManager.toggleHighways(show);
     }
     
@@ -255,7 +230,6 @@ class SoilExplorerApp {
     handleServiceRoadsToggle(detail) {
         const { show } = detail;
         
-        console.log(`Service roads visibility: ${show}`);
         this.mapManager.toggleServiceRoads(show);
     }
     
@@ -263,7 +237,6 @@ class SoilExplorerApp {
     handleInformationCenterToggle(detail) {
         const { show } = detail;
         
-        console.log(`Information center visibility: ${show}`);
         this.mapManager.toggleInformationCenter(show);
     }
     
@@ -271,7 +244,6 @@ class SoilExplorerApp {
     handleMapClick(detail) {
         const { lat, lng } = detail;
         
-        console.log(`Map clicked at: ${lat}, ${lng}`);
         
         // Extract soil profile data (placeholder)
         this.extractSoilProfile(lat, lng);
@@ -281,7 +253,6 @@ class SoilExplorerApp {
     handleFeatureSelection(detail) {
         const { feature, latlng } = detail;
         
-        console.log('Feature selected:', feature.properties);
         
         // Check current map type
         const currentMapType = this.uiController.getCurrentState().currentMapType;
@@ -520,13 +491,11 @@ class SoilExplorerApp {
             
             const profileData = await this.dataLoader.extractSoilProfile(lat, lng, property);
             
-            console.log('Soil profile extracted:', profileData);
             
             // Update UI with profile data
             this.updateSoilProfileDisplay(profileData, featureProps);
             
         } catch (error) {
-            console.error('Failed to extract soil profile:', error);
         }
     }
     
@@ -545,7 +514,6 @@ class SoilExplorerApp {
     // Update soil profile display
     updateSoilProfileDisplay(profileData, featureProps) {
         // This would be enhanced with actual chart rendering
-        console.log('Updating soil profile display with:', profileData);
         
         // For now, just log the data
         // TODO: Implement Plotly chart rendering
@@ -577,7 +545,6 @@ class SoilExplorerApp {
     
     // Cleanup resources
     cleanup() {
-        console.log('Cleaning up application resources...');
         
         if (this.mapManager) {
             this.mapManager.destroy();
@@ -600,7 +567,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Function to initialize app when rasterManager is ready
     async function initializeApp() {
         if (window.rasterManager) {
-            console.log('RasterManager is ready, initializing app');
             // Create global app instance
             window.soilExplorerApp = new SoilExplorerApp();
             
@@ -608,10 +574,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 await window.soilExplorerApp.init();
             } catch (error) {
-                console.error('Application failed to start:', error);
             }
         } else {
-            console.log('Waiting for RasterManager...');
             setTimeout(initializeApp, 100);
         }
     }

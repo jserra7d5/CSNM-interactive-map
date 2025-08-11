@@ -42,7 +42,6 @@ class DataLoader {
             // FORCE CORRECT FILE: Always use WGS84 polygons
             if (url.includes('CSNM_Polygons')) {
                 if (!url.includes('WGS84')) {
-                    console.warn('REDIRECTING: Forcing WGS84 polygon file');
                     url = url.replace(/CSNM_Polygons[^\/]*/, 'CSNM_Polygons_WGS84');
                 }
                 // Add cache buster to force fresh load
@@ -50,7 +49,6 @@ class DataLoader {
                     url += '?v=' + Date.now();
                 }
             }
-            console.log(`Loading GeoJSON from: ${url}`);
             
             // Add timestamp to help debug caching issues
             const timestamp = new Date().getTime();
@@ -72,33 +70,20 @@ class DataLoader {
             const requestedFile = url.split('/').pop().split('?')[0];
             const actualFile = response.url.split('/').pop().split('?')[0];
             
-            console.log(`GeoJSON response headers:`, {
-                requestedUrl: url,
-                requestedFile: requestedFile,
-                actualUrl: response.url,
-                actualFile: actualFile,
-                contentType,
-                contentEncoding,
-                contentLength: contentLength ? `${(parseInt(contentLength) / 1024).toFixed(2)} KB` : 'unknown'
-            });
-            
             // CRITICAL CHECK: Verify we're getting the right file
             if (requestedFile.includes('WGS84') && actualFile.includes('with_Data')) {
-                console.error('ERROR: Requested WGS84 file but received with_Data file!');
                 throw new Error('Server returned wrong polygon file - deployment issue');
             }
             
             // Parse JSON - browser will automatically handle decompression if Content-Encoding is set
             const data = await response.json();
             
-            console.log(`Successfully loaded GeoJSON (${data.features ? data.features.length : 0} features)`);
             
             // Check if coordinates look like they need reprojection
             this._checkProjection(data);
             
             return data;
         } catch (error) {
-            console.error(`Error loading GeoJSON from ${url}:`, error);
             throw new Error(`Failed to load data from ${url}: ${error.message}`);
         }
     }
@@ -113,9 +98,6 @@ class DataLoader {
                     const [x, y] = coords;
                     // Check if coordinates are outside normal lat/lng bounds
                     if (Math.abs(x) > 180 || Math.abs(y) > 90) {
-                        console.warn('GeoJSON data appears to be in a projected coordinate system (not WGS84)');
-                        console.warn('Sample coordinates:', x, y);
-                        console.warn('This may cause display issues. Consider reprojecting to WGS84.');
                     }
                 }
             }
@@ -142,7 +124,6 @@ class DataLoader {
             this.cache.set(key, data);
             return data;
         } catch (error) {
-            console.error(`Error loading CSV from ${url}:`, error);
             throw new Error(`Failed to load CSV from ${url}: ${error.message}`);
         }
     }
@@ -172,7 +153,6 @@ class DataLoader {
         
         try {
             // Load soil polygons
-            console.log('Loading soil polygons from CONFIG path:', CONFIG.dataPaths.soilPolygons);
             dataPromises.soilPolygons = this.loadGeoJSON(
                 CONFIG.dataPaths.soilPolygons, 
                 'soilPolygons'
@@ -214,7 +194,6 @@ class DataLoader {
             // Check for failures
             const failures = results.filter(result => result.status === 'rejected');
             if (failures.length > 0) {
-                console.warn('Some data failed to load:', failures);
             }
             
             // Return successful results
@@ -230,7 +209,6 @@ class DataLoader {
             return this.processLoadedData(data);
             
         } catch (error) {
-            console.error('Error loading application data:', error);
             throw error;
         }
     }
@@ -268,7 +246,6 @@ class DataLoader {
             feature.properties._isMajorComponent = isMajor;
         });
         
-        console.log(`Loaded ${geoJsonData.features.length} total soil polygon features`);
         
         return geoJsonData;
     }
@@ -293,7 +270,6 @@ class DataLoader {
             
             // Ensure soil order is properly classified
             if (soilOrder && !CONFIG.soilOrderColors[soilOrder]) {
-                console.log(`Unrecognized soil order: ${soilOrder}, mapping to Unknown`);
                 soilOrder = 'Unknown';
             }
             
@@ -355,7 +331,6 @@ class DataLoader {
         // 2. Extract values at the given coordinates
         // 3. Return profile data for all depths
         
-        console.warn('Raster data extraction not yet implemented');
         
         // Return mock data for demonstration
         return this.generateMockProfileData(property);
