@@ -25,7 +25,8 @@
       "Bash(echo:*)",
       "Bash(done)",
       "WebFetch(domain:prism.oregonstate.edu)",
-      "WebSearch"
+      "WebSearch",
+      "Read(/mnt/c/Users/redst/Pictures/Screenshots/**)"
     ],
     "deny": []
   }

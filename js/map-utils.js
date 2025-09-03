@@ -456,6 +456,22 @@ class MapManager {
             fill: true
         };
     }
+
+    // Get style for parent material-filled polygons
+    getParentMaterialFillStyle(feature) {
+        // For parent material view, show ALL components with their parent material colors
+        const parentMaterial = this.extractParentMaterial(feature.properties);
+        const color = ConfigUtils.getParentMaterialColor(parentMaterial);
+        
+        return {
+            fillColor: color,
+            weight: 0.5,
+            color: '#333',
+            opacity: 0.8,
+            fillOpacity: 0.7,
+            fill: true
+        };
+    }
     
     // Get style for permanent boundaries (always visible with soil orders)
     getPermanentBoundaryStyle(feature) {
@@ -725,6 +741,53 @@ class MapManager {
         
         return size;
     }
+
+    // Extract parent material from feature properties
+    extractParentMaterial(properties) {
+        // Get the geomdesc field which contains parent material information
+        let geomdesc = properties.geomdesc || 'Unknown';
+        
+        // Handle null values
+        if (geomdesc === null || geomdesc === undefined || geomdesc === '') {
+            geomdesc = 'Unknown';
+        }
+        
+        // Categorize based on geomdesc content
+        const desc = geomdesc.toLowerCase();
+        
+        // Alluvial materials (water-deposited)
+        if (desc.includes('alluvial') || desc.includes('flood plain') || desc.includes('alluvial plain')) {
+            return 'Alluvial';
+        }
+        
+        // Fluvial materials (river deposits)
+        if (desc.includes('river') || desc.includes('stream terrace') || desc.includes('terrace')) {
+            return 'Fluvial';
+        }
+        
+        // Lacustrine materials (lake deposits)
+        if (desc.includes('lake') || desc.includes('basin floor') || desc.includes('basin')) {
+            return 'Lacustrine';
+        }
+        
+        // Volcanic materials
+        if (desc.includes('lava') || desc.includes('volcanic')) {
+            return 'Volcanic';
+        }
+        
+        // Colluvial materials (slope deposits)
+        if (desc.includes('hillslope') || desc.includes('hill') || desc.includes('slope')) {
+            return 'Colluvial';
+        }
+        
+        // Mountainous/residual materials
+        if (desc.includes('mountain') || desc.includes('plateau') || desc.includes('ridge') || desc.includes('knoll')) {
+            return 'Mountainous';
+        }
+        
+        // Default to Unknown
+        return 'Unknown';
+    }
     
     // Setup interactions for each polygon
     onEachPolygon(feature, layer) {
@@ -783,6 +846,7 @@ class MapManager {
     createPopupContent(properties) {
         const soilOrder = this.extractSoilOrder(properties);
         const particleSize = this.extractParticleSize(properties);
+        const parentMaterial = this.extractParentMaterial(properties);
         const mapUnit = properties.MUSYM || properties.musym || 'Unknown Map Unit';
         const compName = properties.compname || '';
         const compPct = properties.comppct_r;
@@ -795,6 +859,7 @@ class MapManager {
                 ${compName ? `<p><strong>Major Component:</strong> ${compName} <span style="color: #4CAF50; font-size: 11px;">(Major)</span></p>` : ''}
                 <p><strong>Soil Order:</strong> ${soilOrder}</p>
                 <p><strong>Particle Size:</strong> ${particleSize}</p>
+                <p><strong>Parent Material:</strong> ${parentMaterial}</p>
                 ${compPct ? `<p><strong>Component %:</strong> ${compPct}%</p>` : ''}
                 <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
                 <p style="font-size: 12px; color: #666;">
@@ -824,6 +889,14 @@ class MapManager {
                 <div class="simple-popup">
                     <strong>Map Unit:</strong> ${mapUnit}<br>
                     <strong>Particle Size:</strong> ${particleSize}
+                </div>
+            `;
+        } else if (this.currentMapType === 'parentMaterial') {
+            const parentMaterial = this.extractParentMaterial(properties);
+            return `
+                <div class="simple-popup">
+                    <strong>Map Unit:</strong> ${mapUnit}<br>
+                    <strong>Parent Material:</strong> ${parentMaterial}
                 </div>
             `;
         }
@@ -876,8 +949,8 @@ class MapManager {
             return;
         }
         
-        // Show simple popup for soil order and particle size views
-        if (this.currentMapType === 'soil' || this.currentMapType === 'particleSize') {
+        // Show simple popup for soil order, particle size, and parent material views
+        if (this.currentMapType === 'soil' || this.currentMapType === 'particleSize' || this.currentMapType === 'parentMaterial') {
             // Create and show simple popup
             const popupContent = this.createSimplePopupContent(feature.properties);
             const popup = L.popup()
@@ -990,8 +1063,8 @@ class MapManager {
     // Ensure overlays are drawn in the correct order on top of soil polygons
     // Order: boundaries -> highways -> service roads -> information center (top)
     ensureOverlayDrawingOrder() {
-        // Only apply overlay ordering for soil, particleSize, and ssurgo map types
-        if (this.currentMapType !== 'soil' && this.currentMapType !== 'particleSize' && this.currentMapType !== 'ssurgo') {
+        // Only apply overlay ordering for soil, particleSize, parentMaterial, and ssurgo map types
+        if (this.currentMapType !== 'soil' && this.currentMapType !== 'particleSize' && this.currentMapType !== 'parentMaterial' && this.currentMapType !== 'ssurgo') {
             return;
         }
         
@@ -1560,6 +1633,62 @@ class MapManager {
             
             // Hide loading screen for non-raster layers with a small delay
             this.hideLoadingScreen(300);
+        } else if (layerType === 'parentMaterial') {
+            
+            // Show soil polygons with parent material colors
+            if (soilLayer && !this.map.hasLayer(soilLayer)) {
+                soilLayer.addTo(this.map);
+            }
+            
+            // Update polygons with parent material colors
+            if (soilLayer) {
+                let colorCount = 0;
+                let totalLayers = 0;
+                
+                // Need to iterate through nested layers
+                soilLayer.eachLayer((geoJsonLayer) => {
+                    if (geoJsonLayer.eachLayer) {
+                        // This is a GeoJSON layer group, iterate through its features
+                        geoJsonLayer.eachLayer((featureLayer) => {
+                            totalLayers++;
+                            if (featureLayer.setStyle && featureLayer.feature) {
+                                const style = this.getParentMaterialFillStyle(featureLayer.feature);
+                                featureLayer.setStyle(style);
+                                if (colorCount < 5) { // Log first 5 for debugging
+                                    colorCount++;
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // Bring layers to front
+                soilLayer.eachLayer((geoJsonLayer) => {
+                    if (geoJsonLayer.eachLayer) {
+                        geoJsonLayer.eachLayer((featureLayer) => {
+                            if (featureLayer.bringToFront) {
+                                featureLayer.bringToFront();
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Show boundaries
+            if (permanentBoundaryLayer && !this.map.hasLayer(permanentBoundaryLayer)) {
+                permanentBoundaryLayer.addTo(this.map);
+            }
+            
+            // Show parent material legend
+            if (legendElement) {
+                this.showParentMaterialLegend();
+            }
+            
+            // Ensure overlays are drawn on top in the correct order
+            this.ensureOverlayDrawingOrder();
+            
+            // Hide loading screen for non-raster layers with a small delay
+            this.hideLoadingScreen(300);
         } else if (layerType === 'oc' || layerType === 'ph' || layerType === 'meanTemp' || layerType === 'elevation' || layerType === 'nlcd' || layerType === 'lithology' ||
                    layerType === 'precipitation' || layerType === 'temperatureMean' || layerType === 'temperatureMin' || layerType === 'temperatureMax' ||
                    layerType === 'vpdMin' || layerType === 'vpdMax' || layerType === 'solarTotal' || layerType === 'solarSloped' || layerType === 'solarClear') {
@@ -1880,6 +2009,71 @@ class MapManager {
         
         return sortedSizes;
     }
+
+    // Show parent material legend
+    showParentMaterialLegend() {
+        const legendElement = document.getElementById('soil-legend');
+        const legendItems = document.getElementById('legend-items');
+        
+        if (!legendElement || !legendItems) return;
+        
+        // Clear existing items
+        legendItems.innerHTML = '';
+        
+        // Update legend title
+        const legendTitle = legendElement.querySelector('h4');
+        if (legendTitle) {
+            legendTitle.textContent = 'Parent Material Classes';
+        }
+        
+        // Get available parent materials from data
+        const availableMaterials = this.getAvailableParentMaterials();
+        
+        // Create legend items
+        availableMaterials.forEach(material => {
+            const color = ConfigUtils.getParentMaterialColor(material);
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.innerHTML = `
+                <div class="legend-color" style="background-color: ${color};"></div>
+                <span>${material}</span>
+            `;
+            legendItems.appendChild(item);
+        });
+        
+        legendElement.style.display = 'block';
+    }
+    
+    // Get available parent materials from loaded data (only from dominant components)
+    getAvailableParentMaterials() {
+        if (!this.data || !this.data.soilPolygons) {
+            return [];
+        }
+        
+        const materials = new Set();
+        
+        // Only process dominant components to match what's displayed on the map
+        this.data.soilPolygons.features.forEach(feature => {
+            if (this.isFeatureDominant(feature)) {
+                const material = this.extractParentMaterial(feature.properties);
+                // Only add materials that have defined colors and are not Unknown
+                if (material && 
+                    CONFIG.parentMaterialColors[material] && 
+                    material !== 'Unknown') {
+                    materials.add(material);
+                }
+            }
+        });
+        
+        // Sort materials alphabetically, putting Unknown at the end
+        const sortedMaterials = Array.from(materials).sort((a, b) => {
+            if (a === 'Unknown') return 1;
+            if (b === 'Unknown') return -1;
+            return a.localeCompare(b);
+        });
+        
+        return sortedMaterials;
+    }
     
     // Show raster legend for OC, pH, and Land Cover
     showRasterLegend(property, depth, dataRange) {
@@ -2008,7 +2202,7 @@ class MapManager {
         // Set legend title
         const legendTitle = legendElement.querySelector('h4');
         if (legendTitle) {
-            legendTitle.textContent = 'Lithology Classification';
+            legendTitle.textContent = 'Parent Material Classification';
         }
         
         // Get unique values from the raster if available

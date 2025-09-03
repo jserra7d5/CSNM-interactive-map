@@ -100,6 +100,29 @@ const CONFIG = {
         "not used": "#CCCCCC",       // Light gray
         "Unknown": "#808080"         // Gray
     },
+
+    // Parent Material Classification Colors (based on geomdesc field)
+    parentMaterialColors: {
+        // Alluvial materials (deposited by flowing water)
+        "Alluvial": "#4A90E2",           // Blue for water-deposited
+        "Fluvial": "#357ABD",            // Darker blue for river deposits
+        
+        // Colluvial materials (gravity-deposited on slopes)
+        "Colluvial": "#8B7355",          // Brown for slope deposits
+        
+        // Residual materials (weathered in place)
+        "Residual": "#CD853F",           // Peru/tan for weathered bedrock
+        "Mountainous": "#654321",        // Dark brown for mountain materials
+        
+        // Lacustrine materials (lake deposits)
+        "Lacustrine": "#6BB6FF",         // Light blue for lake deposits
+        
+        // Volcanic materials
+        "Volcanic": "#D2691E",           // Orange for volcanic materials
+        
+        // Unknown/other
+        "Unknown": "#808080"             // Gray
+    },
     
     // NLCD Land Cover Classification Colors
     nlcdColors: {
@@ -181,7 +204,14 @@ const CONFIG = {
             // Following plant stress visualization standards
             colors: ["#006400", "#228B22", "#32CD32", "#7FFF00", "#FFFF00", "#FFD700", "#FFA500", "#FF6347", "#DC143C", "#8B0000"],
             min: 0,   // hPa
-            max: 30   // hPa
+            max: 30   // hPa - for vpdMax
+        },
+        vpdMin: {
+            // Specialized range for minimum VPD (nighttime/early morning values)
+            // Blue-green (very low deficit) to orange (moderate deficit) for min VPD
+            colors: ["#004d40", "#00695c", "#00796b", "#009688", "#26a69a", "#4db6ac", "#80cbc4", "#b2dfdb", "#66bb6a", "#9ccc65", "#d4e157", "#ffee58", "#ffca28", "#ffa726", "#ff7043"],
+            min: 0.7, // hPa - actual minimum value in CSNM data
+            max: 3.2  // hPa - actual maximum value in CSNM data
         },
         solar: {
             // Purple/blue (low) to yellow/orange (high) for solar radiation
@@ -222,6 +252,16 @@ const CONFIG = {
             resolution: "Derived from SSURGO component data",
             lastUpdate: "Continuously updated",
             classes: "Fine, coarse-loamy, loamy-skeletal, medial, and others based on texture and rock fragment content"
+        },
+        parentMaterial: {
+            name: "Parent Material (SSURGO)",
+            description: "Parent material classification based on geological setting and depositional environment - indicates the origin and nature of unconsolidated material from which soil forms",
+            agency: "USDA Natural Resources Conservation Service",
+            url: "https://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/edu/",
+            citation: "Soil Survey Staff. 2014. Keys to Soil Taxonomy, 12th ed. USDA-Natural Resources Conservation Service, Washington, DC.",
+            resolution: "Derived from SSURGO component geomdesc field",
+            lastUpdate: "Continuously updated",
+            classes: "Alluvial, colluvial, residual, lacustrine, fluvial, volcanic, mountainous materials based on depositional environment"
         },
         oc: {
             name: "Soil Organic Carbon",
@@ -268,7 +308,7 @@ const CONFIG = {
             classes: "16 land cover classes including developed, forest, agriculture, and wetlands"
         },
         lithology: {
-            name: "US Lithology",
+            name: "Parent Material",
             description: "Provides classes of the general types of parent material of soil on the surface - ecologically-relevant maps of landforms and physiographic diversity for climate adaptation planning",
             agency: "Conservation Science Partners (CSP)",
             url: "https://developers.google.com/earth-engine/datasets/catalog/CSP_ERGo_1_0_US_lithology",
@@ -424,7 +464,8 @@ const CONFIG = {
         hillshade: "data/rasters/CSNM_Hillshade_30m.tif",
         nlcd: "data/rasters/NLCD_2024_CSNM.tif",
         lithology: "data/rasters/Lithology_CSNM.tif",
-        climateNormals: "data/rasters/CSNM_climate_normals_stack.tif"
+        climateNormals: "data/rasters/CSNM_climate_normals_stack.tif",
+        precipitationAnnual: "data/rasters/CSNM_precipitation_annual.tif"
     },
     
     // Points of Interest
@@ -537,6 +578,11 @@ const ConfigUtils = {
     // Get particle size color by name
     getParticleSizeColor: function(particleSize) {
         return CONFIG.particleSizeColors[particleSize] || CONFIG.particleSizeColors["Unknown"];
+    },
+
+    // Get parent material color by name
+    getParentMaterialColor: function(parentMaterial) {
+        return CONFIG.parentMaterialColors[parentMaterial] || CONFIG.parentMaterialColors["Unknown"];
     },
     
     // Get NLCD color by value

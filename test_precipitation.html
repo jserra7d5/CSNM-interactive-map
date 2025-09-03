@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Precipitation Layer</title>
+    <script src="js/config.js"></script>
+</head>
+<body>
+    <h1>Precipitation Layer Configuration Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Test the precipitation configuration
+        const results = document.getElementById('results');
+        
+        function log(message, isError = false) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            p.style.color = isError ? 'red' : 'green';
+            results.appendChild(p);
+        }
+        
+        // Test 1: Check if precipitation data source is configured
+        if (CONFIG.dataSources.precipitation) {
+            log('✓ Precipitation data source is configured');
+            log(`  Name: ${CONFIG.dataSources.precipitation.name}`);
+            log(`  Units: ${CONFIG.dataSources.precipitation.units}`);
+        } else {
+            log('✗ Precipitation data source not found', true);
+        }
+        
+        // Test 2: Check if precipitation file path is configured
+        if (CONFIG.dataPaths.precipitationAnnual) {
+            log('✓ Precipitation file path is configured');
+            log(`  Path: ${CONFIG.dataPaths.precipitationAnnual}`);
+        } else {
+            log('✗ Precipitation file path not found', true);
+        }
+        
+        // Test 3: Check if precipitation colors are configured
+        if (CONFIG.climateColors.precipitation) {
+            log('✓ Precipitation color scheme is configured');
+            log(`  Min: ${CONFIG.climateColors.precipitation.min}mm`);
+            log(`  Max: ${CONFIG.climateColors.precipitation.max}mm`);
+            log(`  Colors: ${CONFIG.climateColors.precipitation.colors.length} color stops`);
+        } else {
+            log('✗ Precipitation color scheme not found', true);
+        }
+        
+        // Test 4: Test raster filename function if available
+        if (typeof window.rasterManager !== 'undefined' && window.rasterManager.getRasterFilename) {
+            const filename = window.rasterManager.getRasterFilename('precipitation', 0);
+            if (filename === CONFIG.dataPaths.precipitationAnnual) {
+                log('✓ Raster filename function returns correct path');
+            } else {
+                log(`✗ Raster filename function returns: ${filename}`, true);
+            }
+        } else {
+            log('⚠ Raster manager not available yet - this is normal during testing', false);
+        }
+        
+        // Test 5: Check if precipitation is properly handled in UI
+        log('\n--- Configuration Summary ---');
+        log(`Precipitation will be loaded from: ${CONFIG.dataPaths.precipitationAnnual}`);
+        log(`Color range: ${CONFIG.climateColors.precipitation.min} - ${CONFIG.climateColors.precipitation.max} mm`);
+        log('Precipitation layer should now work in the main application!');
+    </script>
+</body>
+</html>

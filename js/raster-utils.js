@@ -57,7 +57,7 @@ class RasterManager {
             // For climate variables, determine which band/sample to use
             let imageIndex = 0;
             let bandIndex = 0; // Band within the image
-            const climateVariables = ['precipitation', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+            const climateVariables = ['temperatureMean', 'temperatureMin', 'temperatureMax',
                                     'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
             
             if (climateVariables.includes(property)) {
@@ -515,7 +515,7 @@ class RasterManager {
                 }
                 
                 const popupTitle = property === 'nlcd' ? 'Land Cover' :
-                                 property === 'lithology' ? 'Lithology' :
+                                 property === 'lithology' ? 'Parent Material' :
                                  property === 'elevation' ? 'Elevation' : 
                                  `${property.toUpperCase()} Value`;
                 const depthInfo = (property === 'nlcd' || property === 'lithology' || property === 'elevation') ? '' : `<p><strong>Depth:</strong> ${depthLabel}</p>`;
@@ -588,8 +588,13 @@ class RasterManager {
             return CONFIG.dataPaths.elevation;
         }
         
-        // Climate normal variables - all in one multi-band file
-        const climateVariables = ['precipitation', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+        // Handle precipitation separately from other climate variables
+        if (property === 'precipitation') {
+            return CONFIG.dataPaths.precipitationAnnual;
+        }
+        
+        // Other climate normal variables - all in one multi-band file
+        const climateVariables = ['temperatureMean', 'temperatureMin', 'temperatureMax',
                                 'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
         if (climateVariables.includes(property)) {
             return CONFIG.dataPaths.climateNormals;
@@ -875,8 +880,34 @@ class RasterManager {
             const b = Math.round(lowerColor.b + (upperColor.b - lowerColor.b) * fraction);
             
             return `rgb(${r}, ${g}, ${b})`;
-        } else if (property === 'vpdMin' || property === 'vpdMax') {
-            // VPD uses blue (low deficit) to red (high deficit) color scheme
+        } else if (property === 'vpdMin') {
+            // Min VPD uses specialized low-range color scheme (0.7-3.2 hPa)
+            const vpdConfig = CONFIG.climateColors.vpdMin;
+            const configMin = vpdConfig.min;
+            const configMax = vpdConfig.max;
+            const normalizedValue = (value - configMin) / (configMax - configMin);
+            const clampedValue = Math.max(0, Math.min(1, normalizedValue));
+            
+            const colors = vpdConfig.colors;
+            const colorIndex = clampedValue * (colors.length - 1);
+            const lowerIndex = Math.floor(colorIndex);
+            const upperIndex = Math.ceil(colorIndex);
+            const fraction = colorIndex - lowerIndex;
+            
+            if (lowerIndex === upperIndex) {
+                return colors[lowerIndex];
+            }
+            
+            const lowerColor = this.hexToRgb(colors[lowerIndex]);
+            const upperColor = this.hexToRgb(colors[upperIndex]);
+            
+            const r = Math.round(lowerColor.r + (upperColor.r - lowerColor.r) * fraction);
+            const g = Math.round(lowerColor.g + (upperColor.g - lowerColor.g) * fraction);
+            const b = Math.round(lowerColor.b + (upperColor.b - lowerColor.b) * fraction);
+            
+            return `rgb(${r}, ${g}, ${b})`;
+        } else if (property === 'vpdMax') {
+            // Max VPD uses generic VPD color scheme (0-30 hPa)
             const vpdConfig = CONFIG.climateColors.vpd;
             const configMin = vpdConfig.min;
             const configMax = vpdConfig.max;
@@ -1225,8 +1256,8 @@ class RasterManager {
                 depths: null
             },
             'lithology': {
-                name: 'Lithology',
-                description: 'Geological rock type classification',
+                name: 'Parent Material',
+                description: 'Geological parent material classification',
                 units: 'class',
                 source: 'USGS State Geologic Map',
                 depths: null
