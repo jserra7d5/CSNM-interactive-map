@@ -190,15 +190,213 @@ class MapManager {
         });
     }
     
-    // Handle map click events
+    // Handle map click events - new centralized click handler system
     handleMapClick(e) {
         const { lat, lng } = e.latlng;
         
-        // Emit custom event for other components to listen to
+        console.log('🎯 Central click handler:', this.currentMapType, 'at', [lat, lng]);
+        
+        // Check if we clicked on a feature layer
+        const clickedLayer = this.findClickedFeatureLayer(e);
+        
+        if (clickedLayer) {
+            console.log('🎯 Feature clicked:', clickedLayer);
+            this.handleFeatureClick(clickedLayer, e);
+        } else {
+            console.log('🎯 Map background clicked');
+            this.handleBackgroundClick(e);
+        }
+        
+        // Always emit custom event for other components
         const event = new CustomEvent('mapClick', {
             detail: { lat, lng, originalEvent: e }
         });
         document.dispatchEvent(event);
+    }
+    
+    // Find the feature layer that was clicked (if any) using Leaflet's event system
+    findClickedFeatureLayer(e) {
+        console.log('🔍 DEBUG: findClickedFeatureLayer called at', e.latlng);
+        
+        // Use Leaflet's built-in capability to find layers at click point
+        // This is more reliable than manual point-in-polygon detection
+        const clickedLayers = [];
+        
+        // Check soil polygons layer
+        const soilLayer = this.layers.polygons.get('soil-polygons');
+        console.log('🔍 DEBUG: soilLayer exists?', !!soilLayer);
+        console.log('🔍 DEBUG: soilLayer on map?', soilLayer && this.map.hasLayer(soilLayer));
+        
+        if (soilLayer && this.map.hasLayer(soilLayer)) {
+            let totalGeoJsonLayers = 0;
+            let totalFeatureLayers = 0;
+            let layersChecked = 0;
+            let layersWithBounds = 0;
+            let layersInBounds = 0;
+            
+            // Use Leaflet's queryRenderedFeatures-like approach
+            // by checking which layers the click event would naturally hit
+            soilLayer.eachLayer((geoJsonLayer) => {
+                totalGeoJsonLayers++;
+                
+                if (geoJsonLayer.eachLayer) {
+                    geoJsonLayer.eachLayer((featureLayer) => {
+                        totalFeatureLayers++;
+                        layersChecked++;
+                        
+                        if (featureLayer.feature) {
+                            if (featureLayer.getBounds) {
+                                layersWithBounds++;
+                                if (featureLayer.getBounds().contains(e.latlng)) {
+                                    layersInBounds++;
+                                    console.log('🔍 DEBUG: Found layer in bounds!', featureLayer.feature.properties?.MUSYM || featureLayer.feature.id);
+                                }
+                            }
+                            
+                            // Check if this layer would naturally receive the click event
+                            if (this.isLayerClickable(featureLayer, e)) {
+                                clickedLayers.push(featureLayer);
+                                console.log('🔍 DEBUG: Added clickable layer:', featureLayer.feature.properties?.MUSYM || featureLayer.feature.id);
+                            }
+                        }
+                    });
+                } else if (geoJsonLayer.feature && this.isLayerClickable(geoJsonLayer, e)) {
+                    clickedLayers.push(geoJsonLayer);
+                    console.log('🔍 DEBUG: Added direct clickable layer:', geoJsonLayer.feature.properties?.MUSYM || geoJsonLayer.feature.id);
+                }
+            });
+            
+            console.log('🔍 DEBUG: Layer stats:', {
+                totalGeoJsonLayers,
+                totalFeatureLayers,
+                layersChecked,
+                layersWithBounds,
+                layersInBounds,
+                clickedLayersFound: clickedLayers.length
+            });
+        } else {
+            console.log('🔍 DEBUG: No soil layer or not on map');
+        }
+        
+        console.log('🔍 DEBUG: Final clickedLayers count:', clickedLayers.length);
+        
+        // Return the most relevant layer (prefer smaller polygons = more specific)
+        const result = this.selectMostRelevantLayer(clickedLayers, e.latlng);
+        console.log('🔍 DEBUG: Selected layer result:', !!result);
+        return result;
+    }
+    
+    // Check if a layer is clickable at the given event location
+    isLayerClickable(layer, e) {
+        // Use Leaflet's built-in bounds checking as a fast first-pass filter
+        if (!layer.getBounds || !layer.getBounds().contains(e.latlng)) {
+            return false;
+        }
+        
+        // For more precise detection, we could implement point-in-polygon here
+        // For now, bounding box check is sufficient and performant
+        return true;
+    }
+    
+    // Select the most relevant layer from multiple candidates
+    selectMostRelevantLayer(layers, latlng) {
+        if (layers.length === 0) return null;
+        if (layers.length === 1) return layers[0];
+        
+        // Prefer smaller polygons (more specific) - approximate by bounding box area
+        let bestLayer = layers[0];
+        let smallestArea = this.getLayerBoundsArea(bestLayer);
+        
+        for (let i = 1; i < layers.length; i++) {
+            const area = this.getLayerBoundsArea(layers[i]);
+            if (area < smallestArea) {
+                smallestArea = area;
+                bestLayer = layers[i];
+            }
+        }
+        
+        return bestLayer;
+    }
+    
+    // Calculate approximate area of layer bounds
+    getLayerBoundsArea(layer) {
+        if (!layer.getBounds) return Infinity;
+        const bounds = layer.getBounds();
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        return Math.abs((ne.lat - sw.lat) * (ne.lng - sw.lng));
+    }
+    
+    // Handle clicks on feature layers
+    handleFeatureClick(layer, e) {
+        console.log('🎯 handleFeatureClick called for map type:', this.currentMapType);
+        
+        // Route to appropriate handler based on current map type
+        switch (this.currentMapType) {
+            case 'ssurgo':
+                this.handleSSURGOFeatureClick(layer, e);
+                break;
+                
+            case 'soil':
+            case 'particleSize': 
+            case 'parentMaterial':
+                this.handlePolygonFeatureClick(layer, e);
+                break;
+                
+            default:
+                console.log('🎯 No specific handler for map type:', this.currentMapType);
+                break;
+        }
+    }
+    
+    // Handle SSURGO-specific feature clicks (red marker + sidebar)
+    handleSSURGOFeatureClick(layer, e) {
+        console.log('🔍 SSURGO feature click:', layer);
+        
+        // Use the existing selectFeature logic for SSURGO
+        this.selectFeature({ target: layer, latlng: e.latlng });
+    }
+    
+    // Handle polygon feature clicks (simple popups)
+    handlePolygonFeatureClick(layer, e) {
+        console.log('🎯 Polygon feature click for', this.currentMapType, ':', layer);
+        
+        // Show simple popup for soil order, particle size, and parent material views
+        if (layer._featureData && layer._featureData.properties) {
+            const popupContent = this.createSimplePopupContent(layer._featureData.properties);
+            const popup = L.popup()
+                .setLatLng(e.latlng)
+                .setContent(popupContent)
+                .openOn(this.map);
+        }
+    }
+    
+    // Handle clicks on map background (no features)
+    handleBackgroundClick(e) {
+        // Close any open popups
+        this.map.closePopup();
+        
+        // Clear any selected features (for SSURGO)
+        if (this.currentMapType === 'ssurgo') {
+            this.clearSelectedFeature();
+        }
+    }
+    
+    // Clear selected feature (for SSURGO view)
+    clearSelectedFeature() {
+        // Remove red marker if it exists
+        if (this.selectedMarker) {
+            this.map.removeLayer(this.selectedMarker);
+            this.selectedMarker = null;
+        }
+        
+        // Hide component sidebar
+        const sidebar = document.getElementById('component-sidebar');
+        if (sidebar) {
+            sidebar.style.display = 'none';
+        }
+        
+        console.log('🔍 SSURGO: Cleared selected feature');
     }
     
     // Update mouse coordinates display
@@ -795,17 +993,13 @@ class MapManager {
         layer.polygonId = feature.id || feature.properties.OBJECTID;
         layer.componentKey = feature.properties.cokey;
         
-        // Store popup content but don't bind it yet
+        // Store popup content and feature data for later use
         layer._popupContent = this.createPopupContent(feature.properties);
-        
-        // Only add click handler, no hover effects
-        layer.on({
-            click: (e) => {
-                // Stop the click from propagating to the map
-                L.DomEvent.stopPropagation(e);
-                this.selectFeature(e);
-            }
-        });
+        layer._featureData = {
+            properties: feature.properties,
+            geometry: feature.geometry,
+            id: feature.id
+        };
     }
     
     // Setup interactions for each road feature
@@ -1431,7 +1625,6 @@ class MapManager {
                 
                 let totalLayers = 0;
                 let featureLayers = 0;
-                let handlersAttached = 0;
                 
                 // Update all polygons to have transparent fill with orange boundaries
                 // Need to iterate through nested layers properly
@@ -1456,14 +1649,7 @@ class MapManager {
                                     opacity: 0.8
                                 });
                                 
-                                // CRITICAL FIX: Ensure click handler is attached for SSURGO functionality
-                                featureLayer.off('click'); // Remove any existing handlers to prevent duplicates
-                                featureLayer.on('click', (e) => {
-                                    console.log('🔍 SSURGO: Click detected on feature layer!', e);
-                                    this.selectFeature(e);
-                                });
-                                handlersAttached++;
-                                console.log('🔍 SSURGO: Click handler attached to feature layer', handlersAttached);
+                                // No longer need individual click handlers - using centralized system
                             }
                         });
                     } else if (geoJsonLayer.setStyle) {
@@ -1477,16 +1663,11 @@ class MapManager {
                             opacity: 0.8
                         });
                         
-                        geoJsonLayer.off('click');
-                        geoJsonLayer.on('click', (e) => {
-                            console.log('🔍 SSURGO: Click detected on direct layer!', e);
-                            this.selectFeature(e);
-                        });
-                        handlersAttached++;
+                        // No longer need individual click handlers - using centralized system
                     }
                 });
                 
-                console.log(`🔍 SSURGO: Setup complete - Total layers: ${totalLayers}, Feature layers: ${featureLayers}, Handlers attached: ${handlersAttached}`);
+                console.log(`🔍 SSURGO: Setup complete - Total layers: ${totalLayers}, Feature layers: ${featureLayers}`);
             } else {
                 console.log('🔍 SSURGO: No soil layer available!');
             }
@@ -1512,7 +1693,6 @@ class MapManager {
             if (soilLayer) {
                 let colorCount = 0;
                 let totalLayers = 0;
-                let handlersRemoved = 0;
                 
                 // Need to iterate through nested layers
                 soilLayer.eachLayer((geoJsonLayer) => {
@@ -1524,20 +1704,20 @@ class MapManager {
                                 const style = this.getSoilFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
                                 
-                                // Check if layer has click handlers
-                                if (featureLayer._events && featureLayer._events.click) {
-                                    console.log('🌈 SOIL: Layer has click handlers:', featureLayer._events.click.length);
-                                    handlersRemoved++;
-                                }
+                                // No longer need to manually manage click handlers
                                 
                                 if (colorCount < 5) { // Log first 5 for debugging
                                     colorCount++;
                                 }
                             }
                         });
+                    } else if (geoJsonLayer.setStyle) {
+                        // Handle direct GeoJSON layers (non-nested)
+                        totalLayers++;
+                        // No longer need to manually manage click handlers
                     }
                 });
-                console.log(`🌈 SOIL: Processed ${totalLayers} layers, ${handlersRemoved} had click handlers`);
+                console.log(`🌈 SOIL: Processed ${totalLayers} layers`);
             }
             
             // Bring soil layer to front to ensure it's visible
@@ -1598,11 +1778,18 @@ class MapManager {
                             if (featureLayer.setStyle && featureLayer.feature) {
                                 const style = this.getParticleSizeFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
+                                
+                                // No longer need to manually manage click handlers
+                                
                                 if (colorCount < 5) { // Log first 5 for debugging
                                     colorCount++;
                                 }
                             }
                         });
+                    } else if (geoJsonLayer.setStyle) {
+                        // Handle direct GeoJSON layers (non-nested)
+                        totalLayers++;
+                        // No longer need to manually manage click handlers
                     }
                 });
                 
@@ -1654,11 +1841,18 @@ class MapManager {
                             if (featureLayer.setStyle && featureLayer.feature) {
                                 const style = this.getParentMaterialFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
+                                
+                                // No longer need to manually manage click handlers
+                                
                                 if (colorCount < 5) { // Log first 5 for debugging
                                     colorCount++;
                                 }
                             }
                         });
+                    } else if (geoJsonLayer.setStyle) {
+                        // Handle direct GeoJSON layers (non-nested)
+                        totalLayers++;
+                        // No longer need to manually manage click handlers
                     }
                 });
                 

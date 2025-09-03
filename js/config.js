@@ -286,15 +286,15 @@ const CONFIG = {
             lastUpdate: "2020"
         },
         meanTemp: {
-            name: "Mean Annual Temperature",
-            description: "WorldClim Version 2.1 climate data - Bio1: Annual Mean Temperature averaged for 1970-2000",
-            agency: "WorldClim",
-            url: "https://worldclim.org/",
-            dataUrl: "https://worldclim.org/data/worldclim21.html",
-            citation: "Fick, S.E. and Hijmans, R.J., 2017. WorldClim 2: new 1-km spatial resolution climate surfaces for global land areas. International Journal of Climatology, 37(12), pp.4302-4315.",
-            resolution: "30 arc-seconds (~1 km)",
-            units: "°C × 10",
-            lastUpdate: "2020 (v2.1)"
+            name: "Mean Temperature",
+            description: "PRISM 30-year normal mean temperature (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters",
+            units: "°C",
+            lastUpdate: "2021",
+            band: 2
         },
         nlcd: {
             name: "NLCD Land Cover",
@@ -454,7 +454,6 @@ const CONFIG = {
 
     // Data file paths (for local development, copy files to data directory)
     dataPaths: {
-        meanTempRaster: "data/rasters/CSNM_MeanTemperature_PRISM.tif",
         mapunitTable: "data/Mapunit_OR_table.csv",
         soilPolygons: "data/CSNM_Polygons_WGS84.geojson?v=2", // WGS84 projected SSURGO data - v2 forces cache bypass
         boundaryPolygon: "data/CSNM_boundary_WGS84.geojson",

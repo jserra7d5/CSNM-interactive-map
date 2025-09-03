@@ -57,7 +57,7 @@ class RasterManager {
             // For climate variables, determine which band/sample to use
             let imageIndex = 0;
             let bandIndex = 0; // Band within the image
-            const climateVariables = ['temperatureMean', 'temperatureMin', 'temperatureMax',
+            const climateVariables = ['meanTemp', 'temperatureMean', 'temperatureMin', 'temperatureMax',
                                     'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
             
             if (climateVariables.includes(property)) {
@@ -227,7 +227,7 @@ class RasterManager {
         const sampledData = sampleRate > 1 ? data.filter((_, i) => i % sampleRate === 0) : data;
         
         // Climate variables where 0 can be a valid value
-        const climateVariables = ['precipitation', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+        const climateVariables = ['precipitation', 'meanTemp', 'temperatureMean', 'temperatureMin', 'temperatureMax',
                                 'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
         
         if (property === 'nlcd' || property === 'lithology') {
@@ -594,7 +594,7 @@ class RasterManager {
         }
         
         // Other climate normal variables - all in one multi-band file
-        const climateVariables = ['temperatureMean', 'temperatureMin', 'temperatureMax',
+        const climateVariables = ['meanTemp', 'temperatureMean', 'temperatureMin', 'temperatureMax',
                                 'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
         if (climateVariables.includes(property)) {
             return CONFIG.dataPaths.climateNormals;
@@ -617,8 +617,8 @@ class RasterManager {
         } else if (property === 'ph') {
             return `data/rasters/ph/CSNM_pH_${depthSuffix}.tif`;
         } else if (property === 'meanTemp') {
-            // Mean temperature uses a single file, not depth-specific files
-            return CONFIG.dataPaths.meanTempRaster;
+            // Mean temperature now uses the same climate normals file as temperatureMean
+            return CONFIG.dataPaths.climateNormals;
         }
         
         // No valid fallback - properties should be handled above
