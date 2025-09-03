@@ -216,16 +216,13 @@ class MapManager {
     
     // Find the feature layer that was clicked (if any) using Leaflet's event system
     findClickedFeatureLayer(e) {
-        console.log('🔍 DEBUG: findClickedFeatureLayer called at', e.latlng);
         
         // Use Leaflet's built-in capability to find layers at click point
         // This is more reliable than manual point-in-polygon detection
         const clickedLayers = [];
         
         // Check soil polygons layer
-        const soilLayer = this.layers.polygons.get('soil-polygons');
-        console.log('🔍 DEBUG: soilLayer exists?', !!soilLayer);
-        console.log('🔍 DEBUG: soilLayer on map?', soilLayer && this.map.hasLayer(soilLayer));
+        const soilLayer = this.layers.polygons.get('soil');
         
         if (soilLayer && this.map.hasLayer(soilLayer)) {
             let totalGeoJsonLayers = 0;
@@ -249,41 +246,23 @@ class MapManager {
                                 layersWithBounds++;
                                 if (featureLayer.getBounds().contains(e.latlng)) {
                                     layersInBounds++;
-                                    console.log('🔍 DEBUG: Found layer in bounds!', featureLayer.feature.properties?.MUSYM || featureLayer.feature.id);
                                 }
                             }
                             
                             // Check if this layer would naturally receive the click event
                             if (this.isLayerClickable(featureLayer, e)) {
                                 clickedLayers.push(featureLayer);
-                                console.log('🔍 DEBUG: Added clickable layer:', featureLayer.feature.properties?.MUSYM || featureLayer.feature.id);
                             }
                         }
                     });
                 } else if (geoJsonLayer.feature && this.isLayerClickable(geoJsonLayer, e)) {
                     clickedLayers.push(geoJsonLayer);
-                    console.log('🔍 DEBUG: Added direct clickable layer:', geoJsonLayer.feature.properties?.MUSYM || geoJsonLayer.feature.id);
                 }
             });
-            
-            console.log('🔍 DEBUG: Layer stats:', {
-                totalGeoJsonLayers,
-                totalFeatureLayers,
-                layersChecked,
-                layersWithBounds,
-                layersInBounds,
-                clickedLayersFound: clickedLayers.length
-            });
-        } else {
-            console.log('🔍 DEBUG: No soil layer or not on map');
         }
         
-        console.log('🔍 DEBUG: Final clickedLayers count:', clickedLayers.length);
-        
         // Return the most relevant layer (prefer smaller polygons = more specific)
-        const result = this.selectMostRelevantLayer(clickedLayers, e.latlng);
-        console.log('🔍 DEBUG: Selected layer result:', !!result);
-        return result;
+        return this.selectMostRelevantLayer(clickedLayers, e.latlng);
     }
     
     // Check if a layer is clickable at the given event location
