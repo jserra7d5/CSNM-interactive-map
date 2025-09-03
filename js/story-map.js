@@ -102,6 +102,9 @@ class StoryMap {
         // Depth selector interaction
         this.setupDepthSelector();
         
+        // Climate toggle interaction
+        this.setupClimateToggle();
+        
         // Restart button
         const restartBtn = document.getElementById('restart-story');
         if (restartBtn) {
@@ -114,6 +117,13 @@ class StoryMap {
     setupFactorCards() {
         const factorCards = document.querySelectorAll('.factor-card');
         const factorDetails = document.querySelectorAll('.factor-detail');
+        
+        // Initialize the first active factor (climate)
+        const activeCard = document.querySelector('.factor-card.active');
+        if (activeCard) {
+            const initialFactor = activeCard.getAttribute('data-factor');
+            this.updateFactorsMap(initialFactor);
+        }
         
         factorCards.forEach(card => {
             card.addEventListener('click', () => {
@@ -132,6 +142,33 @@ class StoryMap {
                 // Update map if available
                 this.updateFactorsMap(factor);
             });
+        });
+    }
+    
+    updateFactorsMap(factor) {
+        // Get all CLORPT map images
+        const allMaps = document.querySelectorAll('#clorpt-map-container img');
+        const targetMap = document.getElementById(`clorpt-${factor}-img`);
+        
+        // Remove active class from all maps
+        allMaps.forEach(img => {
+            img.classList.remove('active');
+        });
+        
+        // Add active class to the selected map
+        if (targetMap) {
+            targetMap.classList.add('active');
+            console.log(`Showing ${factor} map:`, targetMap.id);
+        } else {
+            console.warn(`Map not found for factor: ${factor}`);
+        }
+        
+        // Debug: Log current state
+        console.log('CLORPT Maps state:', {
+            factor: factor,
+            targetMapId: `clorpt-${factor}-img`,
+            targetMapFound: !!targetMap,
+            allMapsCount: allMaps.length
         });
     }
     
@@ -190,6 +227,38 @@ class StoryMap {
                 if (activeProperty) {
                     const property = activeProperty.getAttribute('data-property');
                     this.updatePropertiesMap(property, depth);
+                }
+            });
+        });
+    }
+    
+    setupClimateToggle() {
+        const climateBtns = document.querySelectorAll('.climate-btn');
+        const precipitationImg = document.getElementById('precipitation-screenshot');
+        const temperatureImg = document.getElementById('temperature-screenshot');
+        const climateCaption = document.getElementById('climate-caption');
+        
+        climateBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const climate = btn.getAttribute('data-climate');
+                
+                // Update active states
+                climateBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Toggle images
+                if (climate === 'precipitation') {
+                    if (precipitationImg) precipitationImg.style.display = 'block';
+                    if (temperatureImg) temperatureImg.style.display = 'none';
+                    if (climateCaption) {
+                        climateCaption.textContent = 'Annual precipitation varies from 20 inches in rain shadow valleys to over 60 inches on exposed ridges';
+                    }
+                } else if (climate === 'temperature') {
+                    if (precipitationImg) precipitationImg.style.display = 'none';
+                    if (temperatureImg) temperatureImg.style.display = 'block';
+                    if (climateCaption) {
+                        climateCaption.textContent = 'Mean annual temperature ranges from 35°F at high elevations to 55°F in low valleys';
+                    }
                 }
             });
         });

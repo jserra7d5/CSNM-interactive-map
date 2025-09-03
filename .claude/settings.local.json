@@ -26,7 +26,11 @@
       "Bash(done)",
       "WebFetch(domain:prism.oregonstate.edu)",
       "WebSearch",
-      "Read(/mnt/c/Users/redst/Pictures/Screenshots/**)"
+      "Read(/mnt/c/Users/redst/Pictures/Screenshots/**)",
+      "Bash(convert:*)",
+      "Bash(sips:*)",
+      "Bash(for file in *.png)",
+      "Bash(do)"
     ],
     "deny": []
   }
