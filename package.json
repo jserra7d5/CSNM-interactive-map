@@ -1,7 +1,7 @@
 {
-  "name": "csnm-soil-explorer",
+  "name": "soils-of-the-siskiyous",
   "version": "1.0.0",
-  "description": "Cascade-Siskiyou National Monument Soil Explorer - Interactive web application for exploring soil properties and environmental data",
+  "description": "Soils of the Siskiyous - Interactive web application for exploring soil properties and environmental data in the Cascade-Siskiyou National Monument",
   "scripts": {
     "dev": "python3 serve.py",
     "start": "python3 serve.py",

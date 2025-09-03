@@ -1,8 +1,8 @@
 // Configuration and Constants
-// Cascade-Siskiyou National Monument Soil Explorer Configuration
+// Soils of the Siskiyous Configuration
 
 // Application Version
-const APP_VERSION = '0.1.2';  // Updated to force cache refresh
+const APP_VERSION = '0.2.0';  // Updated with PRISM climate data integration
 
 // Map Settings
 const CONFIG = {
@@ -154,6 +154,44 @@ const CONFIG = {
         peakColor: "#ffffff"     // White for peaks
     },
     
+    // Climate variable color schemes - following scientific standards
+    climateColors: {
+        precipitation: {
+            // Brown (dry) to white to blue (wet) - standard meteorological gradient
+            // Following NOAA/NWS convention for precipitation maps
+            colors: ["#8B4513", "#A0522D", "#CD853F", "#DEB887", "#F5DEB3", "#FFFAF0", "#E0FFFF", "#87CEEB", "#4682B4", "#1E90FF", "#0000CD"],
+            min: 0,    // mm - adjusted to include full range
+            max: 2000  // mm - adjusted for western US precipitation patterns
+        },
+        temperature: {
+            // Blue (cold) to white to red (hot) - standard temperature gradient
+            // Following scientific convention with white at neutral
+            colors: ["#00008B", "#0000FF", "#4169E1", "#87CEEB", "#FFFFFF", "#FFE4B5", "#FFA500", "#FF6347", "#DC143C", "#8B0000"],
+            min: 0,   // °C
+            max: 20   // °C
+        },
+        temperatureExtreme: {
+            // For min/max temperatures with wider range
+            colors: ["#00008B", "#0000FF", "#4169E1", "#87CEEB", "#FFFFFF", "#FFE4B5", "#FFA500", "#FF6347", "#DC143C", "#8B0000"],
+            min: -5,  // °C
+            max: 30   // °C
+        },
+        vpd: {
+            // Green (low deficit/moist) to yellow to red (high deficit/dry) for water stress
+            // Following plant stress visualization standards
+            colors: ["#006400", "#228B22", "#32CD32", "#7FFF00", "#FFFF00", "#FFD700", "#FFA500", "#FF6347", "#DC143C", "#8B0000"],
+            min: 0,   // hPa
+            max: 30   // hPa
+        },
+        solar: {
+            // Purple/blue (low) to yellow/orange (high) for solar radiation
+            // Following energy visualization standards
+            colors: ["#4B0082", "#6A0DAD", "#8B008B", "#9370DB", "#87CEEB", "#FFFFE0", "#FFD700", "#FFA500", "#FF8C00", "#FF6347"],
+            min: 10,  // MJ/m²/day
+            max: 25   // MJ/m²/day
+        }
+    },
+    
     // Data source information
     dataSources: {
         ssurgo: {
@@ -270,6 +308,107 @@ const CONFIG = {
             citation: "Soil Survey Staff, Natural Resources Conservation Service, United States Department of Agriculture. Soil Survey Geographic (SSURGO) Database. Available online. Accessed [date].",
             resolution: "1:12,000 to 1:63,360 scale",
             lastUpdate: "Continuously updated"
+        },
+        // PRISM Climate Normals (30-year averages 1991-2020)
+        precipitation: {
+            name: "Annual Precipitation",
+            description: "PRISM 30-year normal annual precipitation (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            dataUrl: "https://prism.oregonstate.edu/normals/",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters (30 arc-seconds)",
+            units: "mm",
+            lastUpdate: "2021",
+            band: 1
+        },
+        temperatureMean: {
+            name: "Mean Temperature",
+            description: "PRISM 30-year normal mean temperature (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters",
+            units: "°C",
+            lastUpdate: "2021",
+            band: 2
+        },
+        temperatureMin: {
+            name: "Minimum Temperature",
+            description: "PRISM 30-year normal minimum temperature (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters",
+            units: "°C",
+            lastUpdate: "2021",
+            band: 3
+        },
+        temperatureMax: {
+            name: "Maximum Temperature",
+            description: "PRISM 30-year normal maximum temperature (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters",
+            units: "°C",
+            lastUpdate: "2021",
+            band: 4
+        },
+        vpdMin: {
+            name: "Min Vapor Pressure Deficit",
+            description: "PRISM 30-year normal minimum vapor pressure deficit (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters",
+            units: "hPa",
+            lastUpdate: "2021",
+            band: 5
+        },
+        vpdMax: {
+            name: "Max Vapor Pressure Deficit",
+            description: "PRISM 30-year normal maximum vapor pressure deficit (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters",
+            units: "hPa",
+            lastUpdate: "2021",
+            band: 6
+        },
+        solarTotal: {
+            name: "Solar Radiation (Total)",
+            description: "PRISM 30-year normal total solar radiation on horizontal surface (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters",
+            units: "MJ/m²/day",
+            lastUpdate: "2021",
+            band: 7
+        },
+        solarSloped: {
+            name: "Solar Radiation (Sloped)",
+            description: "PRISM 30-year normal solar radiation on sloped surfaces (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters",
+            units: "MJ/m²/day",
+            lastUpdate: "2021",
+            band: 8
+        },
+        solarClear: {
+            name: "Solar Radiation (Clear Sky)",
+            description: "PRISM 30-year normal clear sky solar radiation (1991-2020)",
+            agency: "PRISM Climate Group, Oregon State University",
+            url: "https://prism.oregonstate.edu",
+            citation: "PRISM Climate Group, Oregon State University, https://prism.oregonstate.edu, data created 4 Feb 2014, accessed Dec 2024",
+            resolution: "800 meters",
+            units: "MJ/m²/day",
+            lastUpdate: "2021",
+            band: 9
         }
     },
 
@@ -284,7 +423,8 @@ const CONFIG = {
         elevation: "data/rasters/CSNM_Elevation_30m.tif",
         hillshade: "data/rasters/CSNM_Hillshade_30m.tif",
         nlcd: "data/rasters/NLCD_2024_CSNM.tif",
-        lithology: "data/rasters/Lithology_CSNM.tif"
+        lithology: "data/rasters/Lithology_CSNM.tif",
+        climateNormals: "data/rasters/CSNM_climate_normals_stack.tif"
     },
     
     // Points of Interest
@@ -357,6 +497,33 @@ const CONFIG = {
         sidebarWidth: 350,
         animationDuration: 300,
         tooltipDelay: 500
+    },
+    
+    // PRISM Climate Data Configuration
+    prism: {
+        baseURL: 'https://data.prism.oregonstate.edu/',
+        variables: {
+            'ppt': { name: 'Precipitation', unit: 'mm' },
+            'tmean': { name: 'Mean Temperature', unit: '°C' },
+            'tmin': { name: 'Minimum Temperature', unit: '°C' },
+            'tmax': { name: 'Maximum Temperature', unit: '°C' }
+        },
+        updateDay: 15, // Check for updates on 15th of each month
+        cacheExpiry: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+        colorSchemes: {
+            temperature: {
+                colors: ['#0000FF', '#FFFFFF', '#FF0000'], // Blue-White-Red
+                range: [-10, 40] // °C
+            },
+            precipitation: {
+                colors: ['#8B4513', '#FFFFFF', '#0000FF'], // Brown-White-Blue
+                range: [0, 500] // mm
+            }
+        },
+        monthNames: [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ]
     }
 };
 

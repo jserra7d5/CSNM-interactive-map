@@ -452,7 +452,8 @@ class StoryMap {
     updateMapsForSection(sectionType) {
         switch (sectionType) {
             case 'factors':
-                this.updateFactorsMap('parent');
+                // Start with climate (first in CLORPT)
+                this.updateFactorsMap('climate');
                 break;
             case 'serpentine':
                 this.focusOnSerpentineAreas();
@@ -473,21 +474,27 @@ class StoryMap {
         
         console.log(`Updating factors map for: ${factor}`);
         
+        // Update map based on CLORPT factor
         switch (factor) {
-            case 'parent':
-                this.addBaseLayer(mapId, 'terrain');
-                break;
             case 'climate':
                 this.addBaseLayer(mapId, 'satellite');
-                break;
-            case 'topography':
-                this.addBaseLayer(mapId, 'topo');
+                // Could add climate data layer here if available
                 break;
             case 'organisms':
                 this.addBaseLayer(mapId, 'satellite');
+                // Shows vegetation patterns
+                break;
+            case 'relief':
+                this.addBaseLayer(mapId, 'topo');
+                // Shows topographic relief
+                break;
+            case 'parent':
+                this.addBaseLayer(mapId, 'terrain');
+                // Shows geological substrate
                 break;
             case 'time':
                 this.addBaseLayer(mapId, 'terrain');
+                // Shows landscape age features
                 break;
         }
     }

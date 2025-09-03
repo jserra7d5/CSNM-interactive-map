@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cascade-Siskiyou Soil Explorer</title>
+    <title>Soils of the Siskiyous</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -24,7 +24,7 @@
             <div class="header-content">
                 <h1 class="app-title">
                     <i class="fas fa-map"></i>
-                    Cascade-Siskiyou Pedologic Explorer
+                    Soils of the Siskiyous
                 </h1>
                 <div class="header-controls">
                     <button id="info-btn" class="btn btn-info">
@@ -147,7 +147,66 @@
                         </div>
                     </div>
 
-                    <!-- Menu 4: OVERLAYS -->
+                    <!-- Menu 4: CLIMATE NORMALS (30-year averages) -->
+                    <div class="dropdown-menu" id="menu-climate-trends">
+                        <div class="dropdown-header" data-menu="climate-trends">
+                            <i class="fas fa-caret-down dropdown-arrow"></i>
+                            <span>CLIMATE NORMALS (1991-2020)</span>
+                        </div>
+                        <div class="dropdown-content">
+                            <!-- Precipitation -->
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="precipitation">
+                                <span class="radio-label">Annual Precipitation</span>
+                                <button class="info-btn" data-source="precipitation" title="View source information">i</button>
+                            </label>
+                            <!-- Temperature options -->
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="temperatureMean">
+                                <span class="radio-label">Mean Temperature</span>
+                                <button class="info-btn" data-source="temperatureMean" title="View source information">i</button>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="temperatureMin">
+                                <span class="radio-label">Minimum Temperature</span>
+                                <button class="info-btn" data-source="temperatureMin" title="View source information">i</button>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="temperatureMax">
+                                <span class="radio-label">Maximum Temperature</span>
+                                <button class="info-btn" data-source="temperatureMax" title="View source information">i</button>
+                            </label>
+                            <!-- Vapor Pressure Deficit -->
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="vpdMin">
+                                <span class="radio-label">Min Vapor Pressure Deficit</span>
+                                <button class="info-btn" data-source="vpdMin" title="View source information">i</button>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="vpdMax">
+                                <span class="radio-label">Max Vapor Pressure Deficit</span>
+                                <button class="info-btn" data-source="vpdMax" title="View source information">i</button>
+                            </label>
+                            <!-- Solar Radiation -->
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="solarTotal">
+                                <span class="radio-label">Solar Radiation (Total)</span>
+                                <button class="info-btn" data-source="solarTotal" title="View source information">i</button>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="solarSloped">
+                                <span class="radio-label">Solar Radiation (Sloped)</span>
+                                <button class="info-btn" data-source="solarSloped" title="View source information">i</button>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="map_type" value="solarClear">
+                                <span class="radio-label">Solar Radiation (Clear Sky)</span>
+                                <button class="info-btn" data-source="solarClear" title="View source information">i</button>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Menu 5: OVERLAYS -->
                     <div class="dropdown-menu" id="menu-overlays">
                         <div class="dropdown-header" data-menu="overlays">
                             <i class="fas fa-caret-down dropdown-arrow"></i>
@@ -255,7 +314,7 @@
                 <!-- Landing Page Welcome Overlay -->
                 <div id="landing-overlay" class="landing-overlay">
                     <div class="landing-content">
-                        <h1>Cascade-Siskiyou<br>Pedologic Explorer</h1>
+                        <h1>Soils of the<br>Siskiyous</h1>
                         <p class="landing-description">
                             Explore soil properties, classifications, and environmental factors across the monument's diverse landscape.
                         </p>
@@ -388,6 +447,7 @@
     </script>
     <script src="js/config.js"></script>
     <script src="js/data-loader.js"></script>
+    <script src="js/prism-data-service.js"></script>
     <script src="js/raster-utils.js"></script>
     <script src="js/map-utils.js"></script>
     <script src="js/ui-controls.js"></script>

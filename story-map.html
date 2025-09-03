@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Story of CSNM Soils - Cascade-Siskiyou Soil Explorer</title>
+    <title>The Story of CSNM Soils - Soils of the Siskiyous</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -28,7 +28,7 @@
                     </a>
                 </div>
                 <div class="story-nav-center">
-                    <h1 class="story-title">Cascade-Siskiyou Pedologic Explorer</h1>
+                    <h1 class="story-title">Soils of the Siskiyous</h1>
                 </div>
                 <div class="story-nav-right">
                     <div class="story-progress">
@@ -118,76 +118,77 @@
                 </div>
             </section>
 
-            <!-- Section 2: The Five Factors -->
+            <!-- Section 2: CLORPT - The Five Factors of Soil Formation -->
             <section class="story-section" data-section="factors">
                 <div class="story-content">
                     <div class="story-text">
-                        <h2>The Recipe for Soil</h2>
+                        <h2>CLORPT: The Recipe for Soil</h2>
                         <p class="story-lead">
-                            Soil scientists recognize five fundamental factors that control soil formation. 
-                            In CSNM, each factor contributes to the monument's remarkable soil diversity.
+                            Hans Jenny's fundamental equation of soil formation—CLORPT—describes how five state factors 
+                            interact to create soils. In CSNM, this framework reveals how extraordinary geological and 
+                            ecological diversity produces one of North America's most complex soil landscapes.
                         </p>
                         
                         <div class="factors-grid">
-                            <div class="factor-card active" data-factor="parent">
-                                <div class="factor-icon">
-                                    <i class="fas fa-mountain"></i>
-                                </div>
-                                <h3>Parent Material</h3>
-                                <p>Lorem ipsum dolor sit amet consectetur adipiscing</p>
-                            </div>
-                            <div class="factor-card" data-factor="climate">
+                            <div class="factor-card active" data-factor="climate">
                                 <div class="factor-icon">
                                     <i class="fas fa-cloud-rain"></i>
                                 </div>
                                 <h3>Climate</h3>
-                                <p>Lorem ipsum dolor sit amet consectetur adipiscing</p>
-                            </div>
-                            <div class="factor-card" data-factor="topography">
-                                <div class="factor-icon">
-                                    <i class="fas fa-chart-area"></i>
-                                </div>
-                                <h3>Topography</h3>
-                                <p>Lorem ipsum dolor sit amet consectetur adipiscing</p>
+                                <p>Temperature and moisture patterns that drive weathering and organic matter accumulation</p>
                             </div>
                             <div class="factor-card" data-factor="organisms">
                                 <div class="factor-icon">
                                     <i class="fas fa-leaf"></i>
                                 </div>
                                 <h3>Organisms</h3>
-                                <p>Lorem ipsum dolor sit amet consectetur adipiscing</p>
+                                <p>Living organisms that cycle nutrients and build soil organic matter</p>
+                            </div>
+                            <div class="factor-card" data-factor="relief">
+                                <div class="factor-icon">
+                                    <i class="fas fa-chart-area"></i>
+                                </div>
+                                <h3>Relief (Topography)</h3>
+                                <p>Landscape position affecting water movement and erosion</p>
+                            </div>
+                            <div class="factor-card" data-factor="parent">
+                                <div class="factor-icon">
+                                    <i class="fas fa-mountain"></i>
+                                </div>
+                                <h3>Parent Material</h3>
+                                <p>The geological substrate from which soils develop</p>
                             </div>
                             <div class="factor-card" data-factor="time">
                                 <div class="factor-icon">
                                     <i class="fas fa-clock"></i>
                                 </div>
                                 <h3>Time</h3>
-                                <p>Lorem ipsum dolor sit amet consectetur adipiscing</p>
+                                <p>Duration of soil-forming processes and weathering</p>
                             </div>
                         </div>
                     </div>
                     <div class="story-visual">
                         <img src="storymap_screenshots/soil_orders.png" alt="Soil Orders map showing taxonomic classification across CSNM" class="story-screenshot">
                         <div class="factor-details">
-                            <div class="factor-detail active" data-detail="parent">
-                                <h4>Ancient Ocean Floors</h4>
-                                <p>The bedrock beneath CSNM includes ancient seafloor sediments, ophiolite complexes, and volcanic materials that provide diverse mineral compositions for soil development.</p>
-                            </div>
-                            <div class="factor-detail" data-detail="climate">
-                                <h4>Mediterranean Influence</h4>
-                                <p>Mediterranean climate patterns with cool, wet winters and hot, dry summers drive unique weathering processes that concentrate nutrients in surface soil layers.</p>
-                            </div>
-                            <div class="factor-detail" data-detail="topography">
-                                <h4>Steep Terrain</h4>
-                                <p>The monument's dramatic elevation changes from 1,200 to 7,533 feet create diverse microclimates and erosion patterns that influence soil development.</p>
+                            <div class="factor-detail active" data-detail="climate">
+                                <h4>Mediterranean Climate Regime</h4>
+                                <p>CSNM experiences a Mediterranean climate with cool, wet winters (40-60 inches annually) and hot, dry summers. This seasonal pattern drives distinctive weathering processes, creating soils with concentrated nutrients in surface horizons and deep clay accumulation zones.</p>
                             </div>
                             <div class="factor-detail" data-detail="organisms">
-                                <h4>Living Soil</h4>
-                                <p>Unique plant communities and soil microorganisms have co-evolved with the distinctive chemistry of serpentine and volcanic soils.</p>
+                                <h4>Biodiversity Hotspot</h4>
+                                <p>The monument hosts over 300 plant species including endemic serpentine specialists. Mixed conifer forests, oak woodlands, and grasslands each contribute unique organic matter inputs and root systems that shape soil structure and chemistry.</p>
+                            </div>
+                            <div class="factor-detail" data-detail="relief">
+                                <h4>Complex Topography</h4>
+                                <p>Elevation ranges from 1,200 to 7,533 feet create distinct soil catenas. Steep slopes experience high erosion rates forming shallow Entisols, while valley bottoms accumulate colluvium developing deep Mollisols. Aspect controls moisture retention and vegetation patterns.</p>
+                            </div>
+                            <div class="factor-detail" data-detail="parent">
+                                <h4>Geological Diversity</h4>
+                                <p>CSNM's soils develop from serpentinite (ultramafic), volcanic basalts and andesites, marine sediments, and granitic intrusions. Serpentine parent materials create unique soils high in magnesium and heavy metals but low in calcium, supporting rare endemic plant communities.</p>
                             </div>
                             <div class="factor-detail" data-detail="time">
-                                <h4>Deep Time</h4>
-                                <p>Soil formation here spans geological time scales, with parent materials dating back over 400 million years.</p>
+                                <h4>Soil Age Variations</h4>
+                                <p>Soil ages range from recent volcanic deposits (<10,000 years) to ancient stable surfaces (>1 million years). Older soils show deep weathering profiles with distinct clay-enriched B horizons, while younger soils retain parent material characteristics.</p>
                             </div>
                         </div>
                     </div>

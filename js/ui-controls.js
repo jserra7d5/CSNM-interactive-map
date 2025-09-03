@@ -131,7 +131,13 @@ class UIController {
         
         // Map type radio buttons
         this.elements.mapTypeRadios.forEach(radio => {
+            // Add click listener for debugging
+            radio.addEventListener('click', (e) => {
+                console.log('🖱️ UI: Radio button clicked:', e.target.value, 'was checked:', e.target.checked);
+            });
+            
             radio.addEventListener('change', (e) => {
+                console.log('📻 UI: Radio button changed:', e.target.value, 'checked:', e.target.checked);
                 if (e.target.checked) {
                     this.handleMapTypeChange(e.target.value);
                 }
@@ -253,10 +259,18 @@ class UIController {
     
     // Handle map type changes
     handleMapTypeChange(mapType) {
+        console.log('🎮 UI: handleMapTypeChange called with:', mapType);
         this.currentMapType = mapType;
         
         // Show/hide depth controls based on map type
         const showDepthControls = mapType === 'oc' || mapType === 'ph' || mapType === 'meanTemp';
+        
+        // Show/hide PRISM month controls
+        const showPrismControls = mapType && mapType.startsWith('prism-');
+        const prismControls = document.getElementById('prism-month-controls');
+        if (prismControls) {
+            prismControls.style.display = showPrismControls ? 'block' : 'none';
+        }
         
         if (this.elements.depthControls) {
             this.elements.depthControls.style.display = showDepthControls ? 'block' : 'none';
@@ -275,7 +289,13 @@ class UIController {
             this.elements.depthLabel.textContent = label;
         }
         
+        // Initialize PRISM controls if needed
+        if (showPrismControls && !this.prismInitialized) {
+            this.initializePRISMControls();
+        }
+        
         // Emit map type change event
+        console.log('🎮 UI: Dispatching mapTypeChanged event with:', mapType, 'depth:', this.currentDepth);
         const event = new CustomEvent('mapTypeChanged', {
             detail: { 
                 mapType: mapType,
@@ -283,6 +303,7 @@ class UIController {
             }
         });
         document.dispatchEvent(event);
+        console.log('🎮 UI: Event dispatched');
     }
     
     // Handle depth selector changes
@@ -2209,6 +2230,123 @@ class UIController {
         };
         
         Plotly.newPlot(container, [trace], layout, config);
+    }
+    
+    // Initialize PRISM controls
+    initializePRISMControls() {
+        this.prismInitialized = true;
+        this.currentMonthIndex = 11; // Start with most recent month
+        this.prismAnimationFrame = null;
+        this.prismIsPlaying = false;
+        
+        const monthSlider = document.getElementById('month-slider');
+        const monthDisplay = document.getElementById('month-display');
+        const playBtn = document.getElementById('prism-play-btn');
+        const updateTime = document.getElementById('prism-update-time');
+        
+        if (!monthSlider || !monthDisplay || !playBtn) {
+            console.warn('PRISM controls not found in DOM');
+            return;
+        }
+        
+        // Initialize month display
+        this.updateMonthDisplay(this.currentMonthIndex);
+        
+        // Month slider event
+        monthSlider.addEventListener('input', (e) => {
+            this.currentMonthIndex = parseInt(e.target.value);
+            this.updateMonthDisplay(this.currentMonthIndex);
+            
+            // Emit month change event
+            const event = new CustomEvent('prismMonthChanged', {
+                detail: { 
+                    monthIndex: this.currentMonthIndex,
+                    mapType: this.currentMapType
+                }
+            });
+            document.dispatchEvent(event);
+        });
+        
+        // Play/pause button event
+        playBtn.addEventListener('click', () => {
+            if (this.prismIsPlaying) {
+                this.stopPRISMAnimation();
+            } else {
+                this.startPRISMAnimation();
+            }
+        });
+        
+        // Set update time
+        const now = new Date();
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        updateTime.textContent = `Last updated: ${lastMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+    }
+    
+    // Update month display
+    updateMonthDisplay(monthIndex) {
+        const monthDisplay = document.getElementById('month-display');
+        if (!monthDisplay) return;
+        
+        const now = new Date();
+        const targetDate = new Date(now.getFullYear(), now.getMonth() - (11 - monthIndex), 1);
+        const monthName = CONFIG.prism.monthNames[targetDate.getMonth()];
+        const year = targetDate.getFullYear();
+        
+        if (monthIndex === 11) {
+            monthDisplay.textContent = 'Current';
+        } else {
+            monthDisplay.textContent = `${monthName} ${year}`;
+        }
+    }
+    
+    // Start PRISM animation
+    startPRISMAnimation() {
+        const playBtn = document.getElementById('prism-play-btn');
+        const monthSlider = document.getElementById('month-slider');
+        
+        if (!playBtn || !monthSlider) return;
+        
+        this.prismIsPlaying = true;
+        playBtn.classList.add('playing');
+        
+        // Animation loop
+        const animate = () => {
+            if (!this.prismIsPlaying) return;
+            
+            // Increment month
+            this.currentMonthIndex = (this.currentMonthIndex + 1) % 12;
+            monthSlider.value = this.currentMonthIndex;
+            this.updateMonthDisplay(this.currentMonthIndex);
+            
+            // Emit month change event
+            const event = new CustomEvent('prismMonthChanged', {
+                detail: { 
+                    monthIndex: this.currentMonthIndex,
+                    mapType: this.currentMapType
+                }
+            });
+            document.dispatchEvent(event);
+            
+            // Continue animation
+            this.prismAnimationFrame = setTimeout(animate, 500); // 500ms per frame
+        };
+        
+        animate();
+    }
+    
+    // Stop PRISM animation
+    stopPRISMAnimation() {
+        const playBtn = document.getElementById('prism-play-btn');
+        
+        this.prismIsPlaying = false;
+        if (playBtn) {
+            playBtn.classList.remove('playing');
+        }
+        
+        if (this.prismAnimationFrame) {
+            clearTimeout(this.prismAnimationFrame);
+            this.prismAnimationFrame = null;
+        }
     }
 }
 
