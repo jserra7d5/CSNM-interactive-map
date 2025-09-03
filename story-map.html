@@ -73,7 +73,7 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/satellite.png" alt="Overview of the Cascade-Siskiyou National Monument landscape" class="story-screenshot large">
+                        <img src="storymap_screenshots/satellite-base-map.png" alt="Overview of the Cascade-Siskiyou National Monument landscape" class="story-screenshot large">
                         <div class="map-caption">
                             The Cascade-Siskiyou National Monument spans the convergence of three major mountain ranges, creating a complex landscape of diverse soils and ecosystems
                         </div>
@@ -110,7 +110,7 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/soilweb.png" alt="Interactive soil explorer interface showing SSURGO soil data for CSNM" class="story-screenshot large">
+                        <img src="storymap_screenshots/ssurgo-data-view.png" alt="Interactive soil explorer interface showing SSURGO soil data for CSNM" class="story-screenshot large">
                         <div class="map-caption">
                             <strong>CSNM Soil Explorer:</strong> An interactive web application for exploring soil survey data, showing detailed map unit boundaries and soil classifications across the monument
                         </div>
@@ -168,7 +168,13 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/soil_orders.png" alt="Soil Orders map showing taxonomic classification across CSNM" class="story-screenshot">
+                        <div id="clorpt-map-container">
+                            <img id="clorpt-climate-img" src="storymap_screenshots/annual-precipitation.png" alt="Climate - Annual precipitation patterns across CSNM" class="story-screenshot active">
+                            <img id="clorpt-organisms-img" src="storymap_screenshots/land-cover.png" alt="Organisms - Land cover and vegetation across CSNM" class="story-screenshot">
+                            <img id="clorpt-relief-img" src="storymap_screenshots/elevation-hillshade.png" alt="Relief - Elevation and topography across CSNM" class="story-screenshot">
+                            <img id="clorpt-parent-img" src="storymap_screenshots/parent-material.png" alt="Parent Material - Geological substrate across CSNM" class="story-screenshot">
+                            <img id="clorpt-time-img" src="storymap_screenshots/soil-orders.png" alt="Time - Soil development and classification across CSNM" class="story-screenshot">
+                        </div>
                         <div class="factor-details">
                             <div class="factor-detail active" data-detail="climate">
                                 <h4>Mediterranean Climate Regime</h4>
@@ -224,7 +230,7 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/family_particle_class.png" alt="Family Particle Class map showing soil texture distribution across CSNM" class="story-screenshot">
+                        <img src="storymap_screenshots/particle-class.png" alt="Family Particle Class map showing soil texture distribution across CSNM" class="story-screenshot">
                         <div class="serpentine-legend">
                             <h4>Serpentine Soil Adaptations</h4>
                             <div class="adaptation-list">
@@ -279,7 +285,7 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/elevation.png" alt="Elevation map showing topographic relief across CSNM" class="story-screenshot">
+                        <img src="storymap_screenshots/elevation-hillshade.png" alt="Elevation map showing topographic relief across CSNM" class="story-screenshot">
                         <div class="elevation-profile">
                             <h4>Elevation and Soil Formation</h4>
                             <div class="profile-chart">
@@ -333,7 +339,7 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/land_cover.png" alt="Land Cover map showing vegetation distribution across CSNM" class="story-screenshot">
+                        <img src="storymap_screenshots/land-cover.png" alt="Land Cover map showing vegetation distribution across CSNM" class="story-screenshot">
                         <div class="climate-chart">
                             <h4>Temperature Gradient</h4>
                             <div class="temp-gradient">
@@ -345,6 +351,39 @@
                                     <span>55°F</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 5.5: Climate Patterns -->
+            <section class="story-section" data-section="climate-patterns">
+                <div class="story-content">
+                    <div class="story-text">
+                        <h2>Climate Patterns</h2>
+                        <p class="story-lead">
+                            The Mediterranean climate of CSNM shapes soil formation through distinct patterns 
+                            of temperature and precipitation that vary dramatically with elevation and aspect.
+                        </p>
+                        <p>
+                            Annual precipitation ranges from 20 to 60 inches, with most falling between November 
+                            and April. Summer drought conditions and winter moisture create unique soil weathering 
+                            patterns and influence which plant communities can thrive.
+                        </p>
+                        <div class="climate-toggle">
+                            <button class="climate-btn active" data-climate="precipitation">
+                                <i class="fas fa-cloud-rain"></i> Precipitation
+                            </button>
+                            <button class="climate-btn" data-climate="temperature">
+                                <i class="fas fa-thermometer-half"></i> Temperature
+                            </button>
+                        </div>
+                    </div>
+                    <div class="story-visual">
+                        <img id="precipitation-screenshot" src="storymap_screenshots/annual-precipitation.png" alt="Annual precipitation map showing rainfall patterns across CSNM" class="story-screenshot">
+                        <img id="temperature-screenshot" src="storymap_screenshots/mean-temperature-climate.png" alt="Mean temperature map showing temperature patterns across CSNM" class="story-screenshot" style="display: none;">
+                        <div class="map-caption" id="climate-caption">
+                            Annual precipitation varies from 20 inches in rain shadow valleys to over 60 inches on exposed ridges
                         </div>
                     </div>
                 </div>
@@ -387,8 +426,8 @@
                     </div>
                     <div class="story-visual">
                         <div id="properties-map-container">
-                            <img id="oc-screenshot" src="storymap_screenshots/organic_carbon.png" alt="Organic Carbon map showing carbon distribution in CSNM soils" class="story-screenshot">
-                            <img id="ph-screenshot" src="storymap_screenshots/soil_ph.png" alt="Soil pH map showing acidity levels across CSNM" class="story-screenshot" style="display: none;">
+                            <img id="oc-screenshot" src="storymap_screenshots/organic-carbon-0-5cm.png" alt="Organic Carbon map showing carbon distribution in CSNM soils" class="story-screenshot">
+                            <img id="ph-screenshot" src="storymap_screenshots/soil-ph-0-5cm.png" alt="Soil pH map showing acidity levels across CSNM" class="story-screenshot" style="display: none;">
                         </div>
                         <div class="depth-explorer">
                             <h4>Explore by Depth</h4>
@@ -461,7 +500,7 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/lithology.png" alt="Lithology map showing rock types underlying CSNM" class="story-screenshot">
+                        <img src="storymap_screenshots/parent-material.png" alt="Parent Material map showing rock types underlying CSNM" class="story-screenshot">
                         <div class="conservation-stats">
                             <div class="stat-card">
                                 <span class="stat-value">25+</span>

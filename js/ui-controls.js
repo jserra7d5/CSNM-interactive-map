@@ -1719,11 +1719,15 @@ class UIController {
                 </li>`;
         }
         
-        // Parent Material (placeholder)
+        // Parent Material
+        const parentMaterial = componentData.pmkind || componentData.pmorigin || componentData.parent_material || 
+                              componentData.parentmaterial || componentData.properties?.pmkind || 
+                              componentData.properties?.pmorigin || componentData.properties?.parent_material ||
+                              componentData.properties?.parentmaterial || 'Data not available';
         html += `
             <li class="mapunit-data-item">
                 <span class="mapunit-data-label">Parent Material:</span>
-                <span class="mapunit-data-value" style="font-style: italic;">Data not available</span>
+                <span class="mapunit-data-value"${parentMaterial === 'Data not available' ? ' style="font-style: italic;"' : ''}>${parentMaterial}</span>
             </li>`;
         
         // Total Plant Available Water (placeholder)
