@@ -1,5 +1,5 @@
 // Main Application Entry Point
-// Cascade-Siskiyou National Monument Soil Explorer
+// Soils of the Siskiyous
 
 class SoilExplorerApp {
     constructor() {
@@ -172,6 +172,7 @@ class SoilExplorerApp {
     async handleMapTypeChange(detail) {
         const { mapType, depth } = detail;
         
+        console.log('📍 APP: handleMapTypeChange called with:', mapType, 'depth:', depth);
         
         // If switching away from SoilWeb view, hide the click marker and detail panel
         if (mapType !== 'ssurgo') {
@@ -192,6 +193,9 @@ class SoilExplorerApp {
             this.mapManager.setBaseLayer('satellite');
         } else if (mapType === 'elevation') {
             this.mapManager.setBaseLayer('topo');
+        } else if (mapType.startsWith('temperature') || mapType.startsWith('vpd') || mapType.startsWith('solar') || mapType === 'precipitation') {
+            // Climate variables look best on terrain base
+            this.mapManager.setBaseLayer('terrain');
         } else {
             this.mapManager.setBaseLayer('terrain');
         }
@@ -253,6 +257,11 @@ class SoilExplorerApp {
     handleFeatureSelection(detail) {
         const { feature, latlng } = detail;
         
+        // Validate detail has required data
+        if (!feature || !latlng) {
+            console.warn('Feature selection missing required data');
+            return;
+        }
         
         // Check current map type
         const currentMapType = this.uiController.getCurrentState().currentMapType;
@@ -295,6 +304,12 @@ class SoilExplorerApp {
     
     // Show SSURGO detail panel (SoilWeb style)
     showSsurgoDetailPanel(feature, latlng) {
+        // Validate feature exists and has properties
+        if (!feature || !feature.properties) {
+            console.warn('No feature or properties available for SSURGO detail panel');
+            return;
+        }
+        
         // Get all components for this map unit
         const mukey = feature.properties.MUKEY || feature.properties.mukey;
         const components = this.getMapUnitComponents(mukey);

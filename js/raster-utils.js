@@ -16,13 +16,17 @@ class RasterManager {
     
     // Create a real raster layer from TIFF file
     async createTiffLayer(property, depth, options = {}) {
+        console.log(`🌍 RASTER: Creating TIFF layer for ${property}, depth ${depth}`);
+        
         if (!this.isGeoTiffAvailable) {
+            console.warn('GeoTIFF library not available');
             return null;
         }
         
         // Check cache for this specific property-depth combination
         const cacheKey = `${property}_depth_${depth}`;
         if (this.rasterCache.has(cacheKey)) {
+            console.log(`🌍 RASTER: Using cached layer for ${cacheKey}`);
             const cached = this.rasterCache.get(cacheKey);
             // Return a copy of the cached layer since Leaflet layers can only be added to one map at a time
             return {
@@ -33,6 +37,7 @@ class RasterManager {
         
         try {
             const filename = this.getRasterFilename(property, depth);
+            console.log(`🌍 RASTER: Loading file: ${filename}`);
             const fallbackFilename = this.getFallbackFilename(property, depth);
             const tiff = await this.loadTiff(filename, fallbackFilename);
             
@@ -42,17 +47,56 @@ class RasterManager {
             
             // Check how many images/bands are available
             const imageCount = await tiff.getImageCount();
+            console.log(`🌍 RASTER: TIFF has ${imageCount} images (IFDs)`);
             
-            // For depth-specific files, always use the first (and usually only) band
-            const imageIndex = 0;
+            // Get the first image to check for multi-band structure
+            const firstImage = await tiff.getImage(0);
+            const samplesPerPixel = firstImage.getSamplesPerPixel();
+            console.log(`🌍 RASTER: First image has ${samplesPerPixel} samples/bands per pixel`);
+            
+            // For climate variables, determine which band/sample to use
+            let imageIndex = 0;
+            let bandIndex = 0; // Band within the image
+            const climateVariables = ['meanTemp', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+                                    'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
+            
+            if (climateVariables.includes(property)) {
+                // Get band index from config
+                const dataSource = CONFIG.dataSources[property];
+                const desiredBand = (dataSource && dataSource.band) ? dataSource.band - 1 : 0; // Convert 1-based to 0-based
+                
+                // Check if this is a multi-band single image or multiple single-band images
+                if (samplesPerPixel > 1) {
+                    // Multi-band single image - use band within the image
+                    bandIndex = desiredBand;
+                    imageIndex = 0;
+                    console.log(`🌍 RASTER: Multi-band image detected. Using band ${bandIndex} from image 0`);
+                } else if (imageCount > 1) {
+                    // Multiple single-band images - use different images
+                    imageIndex = Math.min(desiredBand, imageCount - 1);
+                    bandIndex = 0;
+                    console.log(`🌍 RASTER: Multiple images detected. Using image ${imageIndex}`);
+                } else {
+                    // Single band, single image
+                    console.warn(`🌍 RASTER: Only 1 band available in 1 image. Climate data may not be properly separated.`);
+                    imageIndex = 0;
+                    bandIndex = 0;
+                }
+            } else {
+                // For depth-specific files, always use the first band of first image
+                imageIndex = 0;
+                bandIndex = 0;
+            }
+            
             const image = await tiff.getImage(imageIndex);
+            console.log(`🌍 RASTER: Got image ${imageIndex}, will use band ${bandIndex}`);
             
             if (!image) {
                 return null;
             }
             
             // Create canvas overlay
-            const canvasResult = await this.createCanvasOverlay(image, property, depth);
+            const canvasResult = await this.createCanvasOverlay(image, property, depth, bandIndex);
             
             // Cache the result for this property-depth combination
             if (canvasResult && canvasResult.layer) {
@@ -62,6 +106,7 @@ class RasterManager {
             return canvasResult;
             
         } catch (error) {
+            console.error(`🌍 RASTER ERROR: Failed to create TIFF layer for ${property}:`, error);
             return null;
         }
     }
@@ -134,10 +179,16 @@ class RasterManager {
     }
     
     // Create canvas overlay from GeoTIFF image
-    async createCanvasOverlay(image, property, depth) {
+    async createCanvasOverlay(image, property, depth, bandIndex = 0) {
         try {
             const rasters = await image.readRasters();
-            const data = rasters[0]; // First band
+            
+            // Check if rasters is multi-band
+            console.log(`🌍 RASTER: Rasters array has ${rasters.length} bands`);
+            
+            // Select the appropriate band
+            const data = rasters[bandIndex] || rasters[0];
+            console.log(`🌍 RASTER: Using band index ${bandIndex}, data points: ${data ? data.length : 0}`);
             const bbox = image.getBoundingBox();
             const [width, height] = [image.getWidth(), image.getHeight()];
             // Raster data loaded successfully
@@ -175,14 +226,22 @@ class RasterManager {
         const sampleRate = data.length > 1000000 ? Math.floor(data.length / 100000) : 1; // Sample ~100k points for large rasters
         const sampledData = sampleRate > 1 ? data.filter((_, i) => i % sampleRate === 0) : data;
         
+        // Climate variables where 0 can be a valid value
+        const climateVariables = ['precipitation', 'meanTemp', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+                                'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
+        
         if (property === 'nlcd' || property === 'lithology') {
             // For classification rasters, filter out common no-data values including 0
             validValues = sampledData.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== 255 && val !== 0);
         } else if (property === 'elevation') {
             // For elevation, filter out no-data values (typically very low negative values or specific no-data codes)
             validValues = sampledData.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== -3.4028235e+38 && val > -1000);
+        } else if (climateVariables.includes(property)) {
+            // For climate variables, 0 can be valid (e.g., 0°C, 0mm precipitation)
+            // Only filter out null, NaN, and standard no-data values
+            validValues = sampledData.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== -3.4028235e+38);
         } else {
-            // For other rasters, 0 is typically no-data
+            // For other rasters (OC, pH), 0 is typically no-data
             validValues = sampledData.filter(val => val !== null && !isNaN(val) && val !== -9999 && val !== 0);
         }
         // Calculate min/max safely for large arrays
@@ -195,7 +254,8 @@ class RasterManager {
             min = max = mean = 0;
         }
         
-        // Debug data analysis (simplified for performance)
+        // Debug data analysis
+        console.log(`🌍 RASTER: ${property} data range: min=${min.toFixed(2)}, max=${max.toFixed(2)}, mean=${mean.toFixed(2)}, valid values: ${validValues.length}`);
         
         // Create canvas with crisp pixel rendering
         const canvas = document.createElement('canvas');
@@ -243,7 +303,7 @@ class RasterManager {
             for (let i = startIdx; i < endIdx; i++) {
                 const value = data[i];
                 
-                // Check for no-data values (for land cover, 0 might be valid so be more careful)
+                // Check for no-data values
                 let isNoData;
                 if (property === 'nlcd' || property === 'lithology') {
                     // For classification rasters, common no-data values are 0, 255, and -9999
@@ -251,8 +311,11 @@ class RasterManager {
                 } else if (property === 'elevation') {
                     // For elevation, check for various no-data representations
                     isNoData = value === null || isNaN(value) || value === -9999 || value === -3.4028235e+38 || value < -1000;
+                } else if (climateVariables.includes(property)) {
+                    // For climate variables, 0 can be valid
+                    isNoData = value === null || isNaN(value) || value === -9999 || value === -3.4028235e+38;
                 } else {
-                    // For other rasters, 0 is typically no-data
+                    // For other rasters (OC, pH), 0 is typically no-data
                     isNoData = value === null || isNaN(value) || value === -9999 || value === 0;
                 }
                 
@@ -452,7 +515,7 @@ class RasterManager {
                 }
                 
                 const popupTitle = property === 'nlcd' ? 'Land Cover' :
-                                 property === 'lithology' ? 'Lithology' :
+                                 property === 'lithology' ? 'Parent Material' :
                                  property === 'elevation' ? 'Elevation' : 
                                  `${property.toUpperCase()} Value`;
                 const depthInfo = (property === 'nlcd' || property === 'lithology' || property === 'elevation') ? '' : `<p><strong>Depth:</strong> ${depthLabel}</p>`;
@@ -525,6 +588,18 @@ class RasterManager {
             return CONFIG.dataPaths.elevation;
         }
         
+        // Handle precipitation separately from other climate variables
+        if (property === 'precipitation') {
+            return CONFIG.dataPaths.precipitationAnnual;
+        }
+        
+        // Other climate normal variables - all in one multi-band file
+        const climateVariables = ['meanTemp', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+                                'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
+        if (climateVariables.includes(property)) {
+            return CONFIG.dataPaths.climateNormals;
+        }
+        
         // Map depth indices to filename patterns
         const depthMappings = {
             0: '0_5cm',     // 0-5 cm
@@ -542,8 +617,8 @@ class RasterManager {
         } else if (property === 'ph') {
             return `data/rasters/ph/CSNM_pH_${depthSuffix}.tif`;
         } else if (property === 'meanTemp') {
-            // Mean temperature uses a single file, not depth-specific files
-            return CONFIG.dataPaths.meanTempRaster;
+            // Mean temperature now uses the same climate normals file as temperatureMean
+            return CONFIG.dataPaths.climateNormals;
         }
         
         // No valid fallback - properties should be handled above
@@ -747,28 +822,142 @@ class RasterManager {
                 const intensity = Math.abs(normalized - 0.5) / 0.17; // Distance from center
                 return `rgb(50, ${Math.floor(150 + 105 * (1 - intensity))}, 50)`;
             }
-        } else if (property === 'meanTemp') {
-            // Mean temperature uses blue (cold) to red (hot) color scheme
-            const range = max - min;
-            const normalized = (value - min) / range; // 0 to 1
+        } else if (property === 'meanTemp' || property === 'temperatureMean' || property === 'temperatureMin' || property === 'temperatureMax') {
+            // Temperature uses blue (cold) to red (hot) color scheme
+            const climateColors = CONFIG.climateColors;
+            const tempConfig = (property === 'temperatureMin' || property === 'temperatureMax') ? 
+                              climateColors.temperatureExtreme : climateColors.temperature;
             
-            if (normalized < 0.25) {
-                // Cold: blue to cyan
-                const intensity = normalized / 0.25;
-                return `rgb(${Math.floor(0 + 65 * intensity)}, ${Math.floor(105 * intensity)}, ${Math.floor(255 - 40 * intensity)})`;
-            } else if (normalized < 0.5) {
-                // Cool: cyan to green
-                const intensity = (normalized - 0.25) / 0.25;
-                return `rgb(${Math.floor(65 - 15 * intensity)}, ${Math.floor(105 + 100 * intensity)}, ${Math.floor(215 - 165 * intensity)})`;
-            } else if (normalized < 0.75) {
-                // Warm: green to yellow
-                const intensity = (normalized - 0.5) / 0.25;
-                return `rgb(${Math.floor(50 + 205 * intensity)}, ${Math.floor(205 + 50 * intensity)}, ${Math.floor(50 - 50 * intensity)})`;
-            } else {
-                // Hot: yellow to red
-                const intensity = (normalized - 0.75) / 0.25;
-                return `rgb(${Math.floor(255)}, ${Math.floor(255 - 255 * intensity)}, ${Math.floor(0)})`;
+            // Use configured min/max or fall back to actual data range
+            const configMin = tempConfig.min;
+            const configMax = tempConfig.max;
+            const normalizedValue = (value - configMin) / (configMax - configMin);
+            const clampedValue = Math.max(0, Math.min(1, normalizedValue));
+            
+            // Interpolate through color array
+            const colors = tempConfig.colors;
+            const colorIndex = clampedValue * (colors.length - 1);
+            const lowerIndex = Math.floor(colorIndex);
+            const upperIndex = Math.ceil(colorIndex);
+            const fraction = colorIndex - lowerIndex;
+            
+            if (lowerIndex === upperIndex) {
+                return colors[lowerIndex];
             }
+            
+            // Interpolate between two colors
+            const lowerColor = this.hexToRgb(colors[lowerIndex]);
+            const upperColor = this.hexToRgb(colors[upperIndex]);
+            
+            const r = Math.round(lowerColor.r + (upperColor.r - lowerColor.r) * fraction);
+            const g = Math.round(lowerColor.g + (upperColor.g - lowerColor.g) * fraction);
+            const b = Math.round(lowerColor.b + (upperColor.b - lowerColor.b) * fraction);
+            
+            return `rgb(${r}, ${g}, ${b})`;
+        } else if (property === 'precipitation') {
+            // Precipitation uses brown (dry) to blue (wet) color scheme
+            const precipConfig = CONFIG.climateColors.precipitation;
+            const configMin = precipConfig.min;
+            const configMax = precipConfig.max;
+            const normalizedValue = (value - configMin) / (configMax - configMin);
+            const clampedValue = Math.max(0, Math.min(1, normalizedValue));
+            
+            const colors = precipConfig.colors;
+            const colorIndex = clampedValue * (colors.length - 1);
+            const lowerIndex = Math.floor(colorIndex);
+            const upperIndex = Math.ceil(colorIndex);
+            const fraction = colorIndex - lowerIndex;
+            
+            if (lowerIndex === upperIndex) {
+                return colors[lowerIndex];
+            }
+            
+            const lowerColor = this.hexToRgb(colors[lowerIndex]);
+            const upperColor = this.hexToRgb(colors[upperIndex]);
+            
+            const r = Math.round(lowerColor.r + (upperColor.r - lowerColor.r) * fraction);
+            const g = Math.round(lowerColor.g + (upperColor.g - lowerColor.g) * fraction);
+            const b = Math.round(lowerColor.b + (upperColor.b - lowerColor.b) * fraction);
+            
+            return `rgb(${r}, ${g}, ${b})`;
+        } else if (property === 'vpdMin') {
+            // Min VPD uses specialized low-range color scheme (0.7-3.2 hPa)
+            const vpdConfig = CONFIG.climateColors.vpdMin;
+            const configMin = vpdConfig.min;
+            const configMax = vpdConfig.max;
+            const normalizedValue = (value - configMin) / (configMax - configMin);
+            const clampedValue = Math.max(0, Math.min(1, normalizedValue));
+            
+            const colors = vpdConfig.colors;
+            const colorIndex = clampedValue * (colors.length - 1);
+            const lowerIndex = Math.floor(colorIndex);
+            const upperIndex = Math.ceil(colorIndex);
+            const fraction = colorIndex - lowerIndex;
+            
+            if (lowerIndex === upperIndex) {
+                return colors[lowerIndex];
+            }
+            
+            const lowerColor = this.hexToRgb(colors[lowerIndex]);
+            const upperColor = this.hexToRgb(colors[upperIndex]);
+            
+            const r = Math.round(lowerColor.r + (upperColor.r - lowerColor.r) * fraction);
+            const g = Math.round(lowerColor.g + (upperColor.g - lowerColor.g) * fraction);
+            const b = Math.round(lowerColor.b + (upperColor.b - lowerColor.b) * fraction);
+            
+            return `rgb(${r}, ${g}, ${b})`;
+        } else if (property === 'vpdMax') {
+            // Max VPD uses generic VPD color scheme (0-30 hPa)
+            const vpdConfig = CONFIG.climateColors.vpd;
+            const configMin = vpdConfig.min;
+            const configMax = vpdConfig.max;
+            const normalizedValue = (value - configMin) / (configMax - configMin);
+            const clampedValue = Math.max(0, Math.min(1, normalizedValue));
+            
+            const colors = vpdConfig.colors;
+            const colorIndex = clampedValue * (colors.length - 1);
+            const lowerIndex = Math.floor(colorIndex);
+            const upperIndex = Math.ceil(colorIndex);
+            const fraction = colorIndex - lowerIndex;
+            
+            if (lowerIndex === upperIndex) {
+                return colors[lowerIndex];
+            }
+            
+            const lowerColor = this.hexToRgb(colors[lowerIndex]);
+            const upperColor = this.hexToRgb(colors[upperIndex]);
+            
+            const r = Math.round(lowerColor.r + (upperColor.r - lowerColor.r) * fraction);
+            const g = Math.round(lowerColor.g + (upperColor.g - lowerColor.g) * fraction);
+            const b = Math.round(lowerColor.b + (upperColor.b - lowerColor.b) * fraction);
+            
+            return `rgb(${r}, ${g}, ${b})`;
+        } else if (property === 'solarTotal' || property === 'solarSloped' || property === 'solarClear') {
+            // Solar uses purple (low) to yellow/red (high) color scheme
+            const solarConfig = CONFIG.climateColors.solar;
+            const configMin = solarConfig.min;
+            const configMax = solarConfig.max;
+            const normalizedValue = (value - configMin) / (configMax - configMin);
+            const clampedValue = Math.max(0, Math.min(1, normalizedValue));
+            
+            const colors = solarConfig.colors;
+            const colorIndex = clampedValue * (colors.length - 1);
+            const lowerIndex = Math.floor(colorIndex);
+            const upperIndex = Math.ceil(colorIndex);
+            const fraction = colorIndex - lowerIndex;
+            
+            if (lowerIndex === upperIndex) {
+                return colors[lowerIndex];
+            }
+            
+            const lowerColor = this.hexToRgb(colors[lowerIndex]);
+            const upperColor = this.hexToRgb(colors[upperIndex]);
+            
+            const r = Math.round(lowerColor.r + (upperColor.r - lowerColor.r) * fraction);
+            const g = Math.round(lowerColor.g + (upperColor.g - lowerColor.g) * fraction);
+            const b = Math.round(lowerColor.b + (upperColor.b - lowerColor.b) * fraction);
+            
+            return `rgb(${r}, ${g}, ${b})`;
         }
         
         return '#888888';
@@ -781,9 +970,227 @@ class RasterManager {
             'ph': 'pH units',
             'meanTemp': '°C',
             'landcover': 'class',
-            'elevation': 'meters'
+            'elevation': 'meters',
+            'prism-temp': '°C',
+            'prism-precip': 'mm',
+            'precipitation': 'mm',
+            'temperatureMean': '°C',
+            'temperatureMin': '°C',
+            'temperatureMax': '°C',
+            'vpdMin': 'hPa',
+            'vpdMax': 'hPa',
+            'solarTotal': 'MJ/m²/day',
+            'solarSloped': 'MJ/m²/day',
+            'solarClear': 'MJ/m²/day'
         };
         return units[property] || '';
+    }
+    
+    // Process PRISM raster data
+    async processPRISMRaster(data, variable, monthIndex) {
+        if (!data || !data.data) {
+            console.error('Invalid PRISM data provided');
+            return null;
+        }
+        
+        // Determine color scheme based on variable type
+        const colorScheme = this.getPRISMColorScheme(variable);
+        
+        // Calculate statistics
+        const stats = this.calculateRasterStats(data.data);
+        
+        // Create canvas for rendering
+        const canvas = document.createElement('canvas');
+        canvas.width = data.width;
+        canvas.height = data.height;
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.createImageData(canvas.width, canvas.height);
+        
+        // Apply color mapping
+        for (let i = 0; i < data.data.length; i++) {
+            const value = data.data[i];
+            const pixelIndex = i * 4;
+            
+            if (isNaN(value)) {
+                // Transparent for no-data values
+                imageData.data[pixelIndex] = 0;
+                imageData.data[pixelIndex + 1] = 0;
+                imageData.data[pixelIndex + 2] = 0;
+                imageData.data[pixelIndex + 3] = 0;
+            } else {
+                const color = this.getPRISMColor(value, variable, stats.min, stats.max);
+                imageData.data[pixelIndex] = color.r;
+                imageData.data[pixelIndex + 1] = color.g;
+                imageData.data[pixelIndex + 2] = color.b;
+                imageData.data[pixelIndex + 3] = 255;
+            }
+        }
+        
+        ctx.putImageData(imageData, 0, 0);
+        
+        return {
+            canvas,
+            stats,
+            variable,
+            monthIndex,
+            bounds: data.bbox
+        };
+    }
+    
+    // Get PRISM color scheme
+    getPRISMColorScheme(variable) {
+        const schemes = {
+            'tmean': 'temperature',
+            'tmin': 'temperature',
+            'tmax': 'temperature',
+            'ppt': 'precipitation'
+        };
+        
+        return schemes[variable] || 'temperature';
+    }
+    
+    // Get color for PRISM value
+    getPRISMColor(value, variable, min, max) {
+        const scheme = this.getPRISMColorScheme(variable);
+        
+        if (scheme === 'temperature') {
+            // Blue to white to red (-10°C to 40°C)
+            const tempMin = Math.max(min, -10);
+            const tempMax = Math.min(max, 40);
+            const normalized = (value - tempMin) / (tempMax - tempMin);
+            
+            if (normalized < 0.5) {
+                // Blue to white
+                const intensity = normalized * 2;
+                return {
+                    r: Math.floor(0 + 255 * intensity),
+                    g: Math.floor(0 + 255 * intensity),
+                    b: 255
+                };
+            } else {
+                // White to red
+                const intensity = (normalized - 0.5) * 2;
+                return {
+                    r: 255,
+                    g: Math.floor(255 - 255 * intensity),
+                    b: Math.floor(255 - 255 * intensity)
+                };
+            }
+        } else if (scheme === 'precipitation') {
+            // Brown to white to blue (0 to max mm)
+            const precMin = 0;
+            const precMax = Math.min(max, 500);
+            const normalized = (value - precMin) / (precMax - precMin);
+            
+            if (normalized < 0.5) {
+                // Brown to white
+                const intensity = normalized * 2;
+                return {
+                    r: Math.floor(139 + 116 * intensity),
+                    g: Math.floor(69 + 186 * intensity),
+                    b: Math.floor(19 + 236 * intensity)
+                };
+            } else {
+                // White to blue
+                const intensity = (normalized - 0.5) * 2;
+                return {
+                    r: Math.floor(255 - 255 * intensity),
+                    g: Math.floor(255 - 255 * intensity),
+                    b: 255
+                };
+            }
+        }
+        
+        // Default gray
+        return { r: 128, g: 128, b: 128 };
+    }
+    
+    // Calculate raster statistics
+    calculateRasterStats(data) {
+        let min = Infinity;
+        let max = -Infinity;
+        let sum = 0;
+        let count = 0;
+        
+        for (let i = 0; i < data.length; i++) {
+            const value = data[i];
+            if (!isNaN(value)) {
+                min = Math.min(min, value);
+                max = Math.max(max, value);
+                sum += value;
+                count++;
+            }
+        }
+        
+        const mean = count > 0 ? sum / count : 0;
+        
+        // Calculate standard deviation
+        let sumSquaredDiff = 0;
+        for (let i = 0; i < data.length; i++) {
+            const value = data[i];
+            if (!isNaN(value)) {
+                sumSquaredDiff += Math.pow(value - mean, 2);
+            }
+        }
+        
+        const stdDev = count > 0 ? Math.sqrt(sumSquaredDiff / count) : 0;
+        
+        return { min, max, mean, stdDev, count };
+    }
+    
+    // Create PRISM layer for Leaflet
+    async createPRISMLayer(data, variable, monthIndex) {
+        const processed = await this.processPRISMRaster(data, variable, monthIndex);
+        if (!processed) {
+            return null;
+        }
+        
+        // Convert canvas to data URL
+        const dataUrl = processed.canvas.toDataURL();
+        
+        // Create Leaflet image overlay
+        const bounds = [
+            [processed.bounds[1], processed.bounds[0]], // SW corner
+            [processed.bounds[3], processed.bounds[2]]  // NE corner
+        ];
+        
+        const layer = L.imageOverlay(dataUrl, bounds, {
+            opacity: 0.8,
+            interactive: true
+        });
+        
+        // Add metadata to layer
+        layer.prismData = {
+            variable,
+            monthIndex,
+            stats: processed.stats
+        };
+        
+        return layer;
+    }
+    
+    // Generate time series animation frames
+    async generateTimeSeriesFrames(monthlyData, variable) {
+        const frames = [];
+        
+        for (let i = 0; i < monthlyData.length; i++) {
+            const frame = await this.createPRISMLayer(
+                monthlyData[i].data,
+                variable,
+                i
+            );
+            
+            if (frame) {
+                frames.push({
+                    layer: frame,
+                    date: monthlyData[i].date,
+                    year: monthlyData[i].year,
+                    month: monthlyData[i].month
+                });
+            }
+        }
+        
+        return frames;
     }
     
     // Generate mock raster data for demonstration
@@ -849,8 +1256,8 @@ class RasterManager {
                 depths: null
             },
             'lithology': {
-                name: 'Lithology',
-                description: 'Geological rock type classification',
+                name: 'Parent Material',
+                description: 'Geological parent material classification',
                 units: 'class',
                 source: 'USGS State Geologic Map',
                 depths: null
@@ -866,10 +1273,12 @@ if (typeof window !== 'undefined') {
     // Check if GeoTIFF is already loaded
     if (typeof GeoTIFF !== 'undefined' || typeof window.GeoTIFF !== 'undefined') {
         window.rasterManager = new RasterManager();
+        console.log('✅ RasterManager initialized immediately');
     } else {
         // Wait for window load to ensure all scripts are loaded
         window.addEventListener('load', function() {
             window.rasterManager = new RasterManager();
+            console.log('✅ RasterManager initialized on window load');
         });
     }
 }

@@ -45,6 +45,9 @@ class MapManager {
             position: 'bottomleft'
         }).addTo(this.map);
         
+        // Add north arrow control
+        this.addNorthArrow();
+        
         // Create base layers
         this.createBaseLayers();
         
@@ -58,6 +61,40 @@ class MapManager {
         this.setupRasterProgressListener();
         
         return this.map;
+    }
+    
+    // Add north arrow to the map
+    addNorthArrow() {
+        const NorthArrowControl = L.Control.extend({
+            options: {
+                position: 'topright'
+            },
+            
+            onAdd: function(map) {
+                const container = L.DomUtil.create('div', 'leaflet-north-arrow leaflet-bar leaflet-control');
+                
+                // Create the north arrow using SVG
+                container.innerHTML = `
+                    <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Outer circle -->
+                        <circle cx="20" cy="20" r="18" fill="white" stroke="#333" stroke-width="2"/>
+                        <!-- Arrow pointing north -->
+                        <path d="M 20 8 L 16 24 L 20 20 L 24 24 Z" fill="#333" stroke="none"/>
+                        <!-- N letter -->
+                        <text x="20" y="34" text-anchor="middle" font-family="Arial, sans-serif" 
+                              font-size="10" font-weight="bold" fill="#333">N</text>
+                    </svg>
+                `;
+                
+                // Prevent map interactions when clicking on the control
+                L.DomEvent.disableClickPropagation(container);
+                
+                return container;
+            }
+        });
+        
+        // Add the control to the map
+        new NorthArrowControl().addTo(this.map);
     }
     
     // Create base map layers
@@ -153,15 +190,192 @@ class MapManager {
         });
     }
     
-    // Handle map click events
+    // Handle map click events - new centralized click handler system
     handleMapClick(e) {
         const { lat, lng } = e.latlng;
         
-        // Emit custom event for other components to listen to
+        console.log('🎯 Central click handler:', this.currentMapType, 'at', [lat, lng]);
+        
+        // Check if we clicked on a feature layer
+        const clickedLayer = this.findClickedFeatureLayer(e);
+        
+        if (clickedLayer) {
+            console.log('🎯 Feature clicked:', clickedLayer);
+            this.handleFeatureClick(clickedLayer, e);
+        } else {
+            console.log('🎯 Map background clicked');
+            this.handleBackgroundClick(e);
+        }
+        
+        // Always emit custom event for other components
         const event = new CustomEvent('mapClick', {
             detail: { lat, lng, originalEvent: e }
         });
         document.dispatchEvent(event);
+    }
+    
+    // Find the feature layer that was clicked (if any) using Leaflet's event system
+    findClickedFeatureLayer(e) {
+        
+        // Use Leaflet's built-in capability to find layers at click point
+        // This is more reliable than manual point-in-polygon detection
+        const clickedLayers = [];
+        
+        // Check soil polygons layer
+        const soilLayer = this.layers.polygons.get('soil');
+        
+        if (soilLayer && this.map.hasLayer(soilLayer)) {
+            let totalGeoJsonLayers = 0;
+            let totalFeatureLayers = 0;
+            let layersChecked = 0;
+            let layersWithBounds = 0;
+            let layersInBounds = 0;
+            
+            // Use Leaflet's queryRenderedFeatures-like approach
+            // by checking which layers the click event would naturally hit
+            soilLayer.eachLayer((geoJsonLayer) => {
+                totalGeoJsonLayers++;
+                
+                if (geoJsonLayer.eachLayer) {
+                    geoJsonLayer.eachLayer((featureLayer) => {
+                        totalFeatureLayers++;
+                        layersChecked++;
+                        
+                        if (featureLayer.feature) {
+                            if (featureLayer.getBounds) {
+                                layersWithBounds++;
+                                if (featureLayer.getBounds().contains(e.latlng)) {
+                                    layersInBounds++;
+                                }
+                            }
+                            
+                            // Check if this layer would naturally receive the click event
+                            if (this.isLayerClickable(featureLayer, e)) {
+                                clickedLayers.push(featureLayer);
+                            }
+                        }
+                    });
+                } else if (geoJsonLayer.feature && this.isLayerClickable(geoJsonLayer, e)) {
+                    clickedLayers.push(geoJsonLayer);
+                }
+            });
+        }
+        
+        // Return the most relevant layer (prefer smaller polygons = more specific)
+        return this.selectMostRelevantLayer(clickedLayers, e.latlng);
+    }
+    
+    // Check if a layer is clickable at the given event location
+    isLayerClickable(layer, e) {
+        // Use Leaflet's built-in bounds checking as a fast first-pass filter
+        if (!layer.getBounds || !layer.getBounds().contains(e.latlng)) {
+            return false;
+        }
+        
+        // For more precise detection, we could implement point-in-polygon here
+        // For now, bounding box check is sufficient and performant
+        return true;
+    }
+    
+    // Select the most relevant layer from multiple candidates
+    selectMostRelevantLayer(layers, latlng) {
+        if (layers.length === 0) return null;
+        if (layers.length === 1) return layers[0];
+        
+        // Prefer smaller polygons (more specific) - approximate by bounding box area
+        let bestLayer = layers[0];
+        let smallestArea = this.getLayerBoundsArea(bestLayer);
+        
+        for (let i = 1; i < layers.length; i++) {
+            const area = this.getLayerBoundsArea(layers[i]);
+            if (area < smallestArea) {
+                smallestArea = area;
+                bestLayer = layers[i];
+            }
+        }
+        
+        return bestLayer;
+    }
+    
+    // Calculate approximate area of layer bounds
+    getLayerBoundsArea(layer) {
+        if (!layer.getBounds) return Infinity;
+        const bounds = layer.getBounds();
+        const sw = bounds.getSouthWest();
+        const ne = bounds.getNorthEast();
+        return Math.abs((ne.lat - sw.lat) * (ne.lng - sw.lng));
+    }
+    
+    // Handle clicks on feature layers
+    handleFeatureClick(layer, e) {
+        console.log('🎯 handleFeatureClick called for map type:', this.currentMapType);
+        
+        // Route to appropriate handler based on current map type
+        switch (this.currentMapType) {
+            case 'ssurgo':
+                this.handleSSURGOFeatureClick(layer, e);
+                break;
+                
+            case 'soil':
+            case 'particleSize': 
+            case 'parentMaterial':
+                this.handlePolygonFeatureClick(layer, e);
+                break;
+                
+            default:
+                console.log('🎯 No specific handler for map type:', this.currentMapType);
+                break;
+        }
+    }
+    
+    // Handle SSURGO-specific feature clicks (red marker + sidebar)
+    handleSSURGOFeatureClick(layer, e) {
+        console.log('🔍 SSURGO feature click:', layer);
+        
+        // Use the existing selectFeature logic for SSURGO
+        this.selectFeature({ target: layer, latlng: e.latlng });
+    }
+    
+    // Handle polygon feature clicks (simple popups)
+    handlePolygonFeatureClick(layer, e) {
+        console.log('🎯 Polygon feature click for', this.currentMapType, ':', layer);
+        
+        // Show simple popup for soil order, particle size, and parent material views
+        if (layer._featureData && layer._featureData.properties) {
+            const popupContent = this.createSimplePopupContent(layer._featureData.properties);
+            const popup = L.popup()
+                .setLatLng(e.latlng)
+                .setContent(popupContent)
+                .openOn(this.map);
+        }
+    }
+    
+    // Handle clicks on map background (no features)
+    handleBackgroundClick(e) {
+        // Close any open popups
+        this.map.closePopup();
+        
+        // Clear any selected features (for SSURGO)
+        if (this.currentMapType === 'ssurgo') {
+            this.clearSelectedFeature();
+        }
+    }
+    
+    // Clear selected feature (for SSURGO view)
+    clearSelectedFeature() {
+        // Remove red marker if it exists
+        if (this.selectedMarker) {
+            this.map.removeLayer(this.selectedMarker);
+            this.selectedMarker = null;
+        }
+        
+        // Hide component sidebar
+        const sidebar = document.getElementById('component-sidebar');
+        if (sidebar) {
+            sidebar.style.display = 'none';
+        }
+        
+        console.log('🔍 SSURGO: Cleared selected feature');
     }
     
     // Update mouse coordinates display
@@ -409,6 +623,22 @@ class MapManager {
         // For particle size view, show ALL components with their particle size colors
         const particleSize = this.extractParticleSize(feature.properties);
         const color = ConfigUtils.getParticleSizeColor(particleSize);
+        
+        return {
+            fillColor: color,
+            weight: 0.5,
+            color: '#333',
+            opacity: 0.8,
+            fillOpacity: 0.7,
+            fill: true
+        };
+    }
+
+    // Get style for parent material-filled polygons
+    getParentMaterialFillStyle(feature) {
+        // For parent material view, show ALL components with their parent material colors
+        const parentMaterial = this.extractParentMaterial(feature.properties);
+        const color = ConfigUtils.getParentMaterialColor(parentMaterial);
         
         return {
             fillColor: color,
@@ -688,6 +918,53 @@ class MapManager {
         
         return size;
     }
+
+    // Extract parent material from feature properties
+    extractParentMaterial(properties) {
+        // Get the geomdesc field which contains parent material information
+        let geomdesc = properties.geomdesc || 'Unknown';
+        
+        // Handle null values
+        if (geomdesc === null || geomdesc === undefined || geomdesc === '') {
+            geomdesc = 'Unknown';
+        }
+        
+        // Categorize based on geomdesc content
+        const desc = geomdesc.toLowerCase();
+        
+        // Alluvial materials (water-deposited)
+        if (desc.includes('alluvial') || desc.includes('flood plain') || desc.includes('alluvial plain')) {
+            return 'Alluvial';
+        }
+        
+        // Fluvial materials (river deposits)
+        if (desc.includes('river') || desc.includes('stream terrace') || desc.includes('terrace')) {
+            return 'Fluvial';
+        }
+        
+        // Lacustrine materials (lake deposits)
+        if (desc.includes('lake') || desc.includes('basin floor') || desc.includes('basin')) {
+            return 'Lacustrine';
+        }
+        
+        // Volcanic materials
+        if (desc.includes('lava') || desc.includes('volcanic')) {
+            return 'Volcanic';
+        }
+        
+        // Colluvial materials (slope deposits)
+        if (desc.includes('hillslope') || desc.includes('hill') || desc.includes('slope')) {
+            return 'Colluvial';
+        }
+        
+        // Mountainous/residual materials
+        if (desc.includes('mountain') || desc.includes('plateau') || desc.includes('ridge') || desc.includes('knoll')) {
+            return 'Mountainous';
+        }
+        
+        // Default to Unknown
+        return 'Unknown';
+    }
     
     // Setup interactions for each polygon
     onEachPolygon(feature, layer) {
@@ -695,17 +972,13 @@ class MapManager {
         layer.polygonId = feature.id || feature.properties.OBJECTID;
         layer.componentKey = feature.properties.cokey;
         
-        // Store popup content but don't bind it yet
+        // Store popup content and feature data for later use
         layer._popupContent = this.createPopupContent(feature.properties);
-        
-        // Only add click handler, no hover effects
-        layer.on({
-            click: (e) => {
-                // Stop the click from propagating to the map
-                L.DomEvent.stopPropagation(e);
-                this.selectFeature(e);
-            }
-        });
+        layer._featureData = {
+            properties: feature.properties,
+            geometry: feature.geometry,
+            id: feature.id
+        };
     }
     
     // Setup interactions for each road feature
@@ -746,6 +1019,7 @@ class MapManager {
     createPopupContent(properties) {
         const soilOrder = this.extractSoilOrder(properties);
         const particleSize = this.extractParticleSize(properties);
+        const parentMaterial = this.extractParentMaterial(properties);
         const mapUnit = properties.MUSYM || properties.musym || 'Unknown Map Unit';
         const compName = properties.compname || '';
         const compPct = properties.comppct_r;
@@ -758,6 +1032,7 @@ class MapManager {
                 ${compName ? `<p><strong>Major Component:</strong> ${compName} <span style="color: #4CAF50; font-size: 11px;">(Major)</span></p>` : ''}
                 <p><strong>Soil Order:</strong> ${soilOrder}</p>
                 <p><strong>Particle Size:</strong> ${particleSize}</p>
+                <p><strong>Parent Material:</strong> ${parentMaterial}</p>
                 ${compPct ? `<p><strong>Component %:</strong> ${compPct}%</p>` : ''}
                 <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
                 <p style="font-size: 12px; color: #666;">
@@ -787,6 +1062,14 @@ class MapManager {
                 <div class="simple-popup">
                     <strong>Map Unit:</strong> ${mapUnit}<br>
                     <strong>Particle Size:</strong> ${particleSize}
+                </div>
+            `;
+        } else if (this.currentMapType === 'parentMaterial') {
+            const parentMaterial = this.extractParentMaterial(properties);
+            return `
+                <div class="simple-popup">
+                    <strong>Map Unit:</strong> ${mapUnit}<br>
+                    <strong>Parent Material:</strong> ${parentMaterial}
                 </div>
             `;
         }
@@ -826,11 +1109,21 @@ class MapManager {
     
     // Select feature on click
     selectFeature(e) {
+        console.log('🎯 selectFeature called!', 'currentMapType:', this.currentMapType, 'event:', e);
+        
         const layer = e.target;
         const feature = layer.feature;
         
-        // Show simple popup for soil order and particle size views
-        if (this.currentMapType === 'soil' || this.currentMapType === 'particleSize') {
+        console.log('🎯 Layer:', layer, 'Feature:', feature);
+        
+        // Validate feature exists
+        if (!feature) {
+            console.warn('No feature available for selection');
+            return;
+        }
+        
+        // Show simple popup for soil order, particle size, and parent material views
+        if (this.currentMapType === 'soil' || this.currentMapType === 'particleSize' || this.currentMapType === 'parentMaterial') {
             // Create and show simple popup
             const popupContent = this.createSimplePopupContent(feature.properties);
             const popup = L.popup()
@@ -943,8 +1236,8 @@ class MapManager {
     // Ensure overlays are drawn in the correct order on top of soil polygons
     // Order: boundaries -> highways -> service roads -> information center (top)
     ensureOverlayDrawingOrder() {
-        // Only apply overlay ordering for soil, particleSize, and ssurgo map types
-        if (this.currentMapType !== 'soil' && this.currentMapType !== 'particleSize' && this.currentMapType !== 'ssurgo') {
+        // Only apply overlay ordering for soil, particleSize, parentMaterial, and ssurgo map types
+        if (this.currentMapType !== 'soil' && this.currentMapType !== 'particleSize' && this.currentMapType !== 'parentMaterial' && this.currentMapType !== 'ssurgo') {
             return;
         }
         
@@ -1205,14 +1498,22 @@ class MapManager {
     
     // Update legend and layer visibility based on current layer type
     async updateLayers(layerType, depth = 0) {
-        // Store current map type
-        this.currentMapType = layerType;
+        console.log(`🔄 updateLayers called: ${this.currentMapType} -> ${layerType}`);
         
-        // If no layer type selected, hide all layers except monument boundary
-        if (!layerType) {
-            this.hideAllLayers();
-            return;
-        }
+        try {
+            // Store previous map type for debugging
+            this.previousMapType = this.currentMapType;
+            
+            // Store current map type
+            this.currentMapType = layerType;
+            
+            // If no layer type selected, hide all layers except monument boundary
+            if (!layerType) {
+                this.hideAllLayers();
+                return;
+            }
+            
+            console.log(`🔄 After initial checks, proceeding with ${layerType}`);
         
         // Show loading screen for all map type changes
         const loadingElement = document.getElementById('loading');
@@ -1231,6 +1532,16 @@ class MapManager {
                     case 'landcover': mapTypeName = 'land cover'; break;
                     case 'elevation': mapTypeName = 'elevation map'; break;
                     case 'satellite': mapTypeName = 'satellite imagery'; break;
+                    // Climate normal variables
+                    case 'precipitation': mapTypeName = 'annual precipitation'; break;
+                    case 'temperatureMean': mapTypeName = 'mean temperature'; break;
+                    case 'temperatureMin': mapTypeName = 'minimum temperature'; break;
+                    case 'temperatureMax': mapTypeName = 'maximum temperature'; break;
+                    case 'vpdMin': mapTypeName = 'minimum vapor pressure deficit'; break;
+                    case 'vpdMax': mapTypeName = 'maximum vapor pressure deficit'; break;
+                    case 'solarTotal': mapTypeName = 'total solar radiation'; break;
+                    case 'solarSloped': mapTypeName = 'sloped solar radiation'; break;
+                    case 'solarClear': mapTypeName = 'clear sky solar radiation'; break;
                     default: mapTypeName = 'map data';
                 }
                 loadingText.textContent = `Loading ${mapTypeName}...`;
@@ -1238,7 +1549,10 @@ class MapManager {
             
             // Show progress bar for raster layers
             if (progressContainer) {
-                if (['oc', 'ph', 'meanTemp', 'landcover', 'elevation'].includes(layerType)) {
+                const rasterTypes = ['oc', 'ph', 'meanTemp', 'landcover', 'elevation', 'nlcd', 'lithology',
+                                   'precipitation', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+                                   'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
+                if (rasterTypes.includes(layerType)) {
                     progressContainer.style.display = 'block';
                     const progressFill = loadingElement.querySelector('.loading-progress-fill');
                     const progressText = loadingElement.querySelector('.loading-progress-text');
@@ -1277,28 +1591,64 @@ class MapManager {
             monumentBoundaryLayer.addTo(this.map);
         }
         
+        console.log(`🔄 Checking layer type: ${layerType}`);
+        
         if (layerType === 'ssurgo') {
+            console.log('🔍 SSURGO: Starting SSURGO view setup');
             // SSURGO view - show polygons with yellow boundaries for click detection
             if (soilLayer) {
                 if (!this.map.hasLayer(soilLayer)) {
+                    console.log('🔍 SSURGO: Adding soil layer to map');
                     soilLayer.addTo(this.map);
                 }
+                
+                let totalLayers = 0;
+                let featureLayers = 0;
+                
                 // Update all polygons to have transparent fill with orange boundaries
-                soilLayer.eachLayer((layer) => {
-                    if (layer.setStyle) {
-                        layer.setStyle({
+                // Need to iterate through nested layers properly
+                soilLayer.eachLayer((geoJsonLayer) => {
+                    totalLayers++;
+                    console.log('🔍 SSURGO: Processing layer', totalLayers, 'type:', geoJsonLayer.constructor.name);
+                    
+                    if (geoJsonLayer.eachLayer) {
+                        // This is a GeoJSON layer group, iterate through its features
+                        geoJsonLayer.eachLayer((featureLayer) => {
+                            featureLayers++;
+                            console.log('🔍 SSURGO: Processing feature layer', featureLayers, 
+                                       'has setStyle:', !!featureLayer.setStyle,
+                                       'has feature:', !!featureLayer.feature);
+                            
+                            if (featureLayer.setStyle) {
+                                featureLayer.setStyle({
+                                    fillColor: 'transparent',
+                                    fillOpacity: 0,
+                                    color: '#ff6600',  // Orange boundaries
+                                    weight: 0.65,      // Thin lines
+                                    opacity: 0.8
+                                });
+                                
+                                // No longer need individual click handlers - using centralized system
+                            }
+                        });
+                    } else if (geoJsonLayer.setStyle) {
+                        // Maybe it's a direct feature layer?
+                        console.log('🔍 SSURGO: Direct feature layer found');
+                        geoJsonLayer.setStyle({
                             fillColor: 'transparent',
                             fillOpacity: 0,
-                            color: '#ff6600',  // Orange boundaries
-                            weight: 0.65,      // Thin lines
+                            color: '#ff6600',
+                            weight: 0.65,
                             opacity: 0.8
                         });
                         
-                        // CRITICAL FIX: Ensure click handler is attached for SSURGO functionality
-                        layer.off('click'); // Remove any existing handlers to prevent duplicates
-                        layer.on('click', (e) => this.selectFeature(e)); // Reattach click handler
+                        // No longer need individual click handlers - using centralized system
                     }
                 });
+                
+                console.log(`🔍 SSURGO: Setup complete - Total layers: ${totalLayers}, Feature layers: ${featureLayers}`);
+            } else {
+                console.log('🔍 SSURGO: No soil layer available!');
             }
             // Hide legend for SSURGO view
             if (legendElement) {
@@ -1311,6 +1661,7 @@ class MapManager {
             // Hide loading screen for non-raster layers with a small delay
             this.hideLoadingScreen(300);
         } else if (layerType === 'soil') {
+            console.log('🌈 SOIL: Switching to soil view from', this.previousMapType);
             
             // Show soil polygons, permanent boundaries, and legend
             if (soilLayer && !this.map.hasLayer(soilLayer)) {
@@ -1331,13 +1682,21 @@ class MapManager {
                             if (featureLayer.setStyle && featureLayer.feature) {
                                 const style = this.getSoilFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
+                                
+                                // No longer need to manually manage click handlers
+                                
                                 if (colorCount < 5) { // Log first 5 for debugging
                                     colorCount++;
                                 }
                             }
                         });
+                    } else if (geoJsonLayer.setStyle) {
+                        // Handle direct GeoJSON layers (non-nested)
+                        totalLayers++;
+                        // No longer need to manually manage click handlers
                     }
                 });
+                console.log(`🌈 SOIL: Processed ${totalLayers} layers`);
             }
             
             // Bring soil layer to front to ensure it's visible
@@ -1398,11 +1757,18 @@ class MapManager {
                             if (featureLayer.setStyle && featureLayer.feature) {
                                 const style = this.getParticleSizeFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
+                                
+                                // No longer need to manually manage click handlers
+                                
                                 if (colorCount < 5) { // Log first 5 for debugging
                                     colorCount++;
                                 }
                             }
                         });
+                    } else if (geoJsonLayer.setStyle) {
+                        // Handle direct GeoJSON layers (non-nested)
+                        totalLayers++;
+                        // No longer need to manually manage click handlers
                     }
                 });
                 
@@ -1433,7 +1799,73 @@ class MapManager {
             
             // Hide loading screen for non-raster layers with a small delay
             this.hideLoadingScreen(300);
-        } else if (layerType === 'oc' || layerType === 'ph' || layerType === 'meanTemp' || layerType === 'elevation' || layerType === 'nlcd' || layerType === 'lithology') {
+        } else if (layerType === 'parentMaterial') {
+            
+            // Show soil polygons with parent material colors
+            if (soilLayer && !this.map.hasLayer(soilLayer)) {
+                soilLayer.addTo(this.map);
+            }
+            
+            // Update polygons with parent material colors
+            if (soilLayer) {
+                let colorCount = 0;
+                let totalLayers = 0;
+                
+                // Need to iterate through nested layers
+                soilLayer.eachLayer((geoJsonLayer) => {
+                    if (geoJsonLayer.eachLayer) {
+                        // This is a GeoJSON layer group, iterate through its features
+                        geoJsonLayer.eachLayer((featureLayer) => {
+                            totalLayers++;
+                            if (featureLayer.setStyle && featureLayer.feature) {
+                                const style = this.getParentMaterialFillStyle(featureLayer.feature);
+                                featureLayer.setStyle(style);
+                                
+                                // No longer need to manually manage click handlers
+                                
+                                if (colorCount < 5) { // Log first 5 for debugging
+                                    colorCount++;
+                                }
+                            }
+                        });
+                    } else if (geoJsonLayer.setStyle) {
+                        // Handle direct GeoJSON layers (non-nested)
+                        totalLayers++;
+                        // No longer need to manually manage click handlers
+                    }
+                });
+                
+                // Bring layers to front
+                soilLayer.eachLayer((geoJsonLayer) => {
+                    if (geoJsonLayer.eachLayer) {
+                        geoJsonLayer.eachLayer((featureLayer) => {
+                            if (featureLayer.bringToFront) {
+                                featureLayer.bringToFront();
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Show boundaries
+            if (permanentBoundaryLayer && !this.map.hasLayer(permanentBoundaryLayer)) {
+                permanentBoundaryLayer.addTo(this.map);
+            }
+            
+            // Show parent material legend
+            if (legendElement) {
+                this.showParentMaterialLegend();
+            }
+            
+            // Ensure overlays are drawn on top in the correct order
+            this.ensureOverlayDrawingOrder();
+            
+            // Hide loading screen for non-raster layers with a small delay
+            this.hideLoadingScreen(300);
+        } else if (layerType === 'oc' || layerType === 'ph' || layerType === 'meanTemp' || layerType === 'elevation' || layerType === 'nlcd' || layerType === 'lithology' ||
+                   layerType === 'precipitation' || layerType === 'temperatureMean' || layerType === 'temperatureMin' || layerType === 'temperatureMax' ||
+                   layerType === 'vpdMin' || layerType === 'vpdMax' || layerType === 'solarTotal' || layerType === 'solarSloped' || layerType === 'solarClear') {
+            console.log(`🔄 Entering raster layer branch for ${layerType}`);
             // Hide soil polygons and permanent boundaries for raster layers
             if (soilLayer && this.map.hasLayer(soilLayer)) {
                 this.map.removeLayer(soilLayer);
@@ -1451,6 +1883,7 @@ class MapManager {
             await this.loadRasterLayer(layerType, depth);
             // Loading screen will be hidden by raster loading completion
         } else {
+            console.log(`🔄 Falling through to else branch for ${layerType}`);
             // Hide soil-related layers for satellite/other, but keep monument boundary
             if (soilLayer && this.map.hasLayer(soilLayer)) {
                 this.map.removeLayer(soilLayer);
@@ -1469,6 +1902,13 @@ class MapManager {
             // Hide loading screen for non-raster layers with a small delay
             this.hideLoadingScreen(300);
         }
+        
+        } catch (error) {
+            console.error('🔄 ERROR in updateLayers:', error);
+            console.error('Stack trace:', error.stack);
+            // Hide loading screen on error
+            this.hideLoadingScreen(0);
+        }
     }
     
     // Hide loading screen with optional delay
@@ -1485,8 +1925,10 @@ class MapManager {
         }
     }
     
-    // Load raster layer for OC or pH
+    // Load raster layer
     async loadRasterLayer(property, depth) {
+        console.log(`🗺️ MAP: loadRasterLayer called for ${property}, depth ${depth}`);
+        
         // Ensure loading screen is visible for raster loading
         const loadingElement = document.getElementById('loading');
         if (loadingElement) {
@@ -1526,7 +1968,9 @@ class MapManager {
         }
         
         // Create either a real TIFF layer or fall back to mock data
+        console.log(`🗺️ MAP: Calling createRasterLayer for ${property}`);
         const rasterInfo = await this.createRasterLayer(property, depth);
+        console.log(`🗺️ MAP: createRasterLayer returned:`, rasterInfo);
         
         // Don't hide loading screen for elevation here - let the progress completion event handle it
         // This allows the processing percentage to be displayed
@@ -1540,6 +1984,8 @@ class MapManager {
     // Create a raster layer from TIFF file or fall back to mock
     async createRasterLayer(property, depth) {
         const depthLabel = CONFIG.depthLevels.labels[depth];
+        
+        console.log(`🗺️ MAP: createRasterLayer - rasterManager exists:`, !!window.rasterManager);
         
         try {
             // Try to create a real TIFF layer first
@@ -1736,6 +2182,71 @@ class MapManager {
         
         return sortedSizes;
     }
+
+    // Show parent material legend
+    showParentMaterialLegend() {
+        const legendElement = document.getElementById('soil-legend');
+        const legendItems = document.getElementById('legend-items');
+        
+        if (!legendElement || !legendItems) return;
+        
+        // Clear existing items
+        legendItems.innerHTML = '';
+        
+        // Update legend title
+        const legendTitle = legendElement.querySelector('h4');
+        if (legendTitle) {
+            legendTitle.textContent = 'Parent Material Classes';
+        }
+        
+        // Get available parent materials from data
+        const availableMaterials = this.getAvailableParentMaterials();
+        
+        // Create legend items
+        availableMaterials.forEach(material => {
+            const color = ConfigUtils.getParentMaterialColor(material);
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.innerHTML = `
+                <div class="legend-color" style="background-color: ${color};"></div>
+                <span>${material}</span>
+            `;
+            legendItems.appendChild(item);
+        });
+        
+        legendElement.style.display = 'block';
+    }
+    
+    // Get available parent materials from loaded data (only from dominant components)
+    getAvailableParentMaterials() {
+        if (!this.data || !this.data.soilPolygons) {
+            return [];
+        }
+        
+        const materials = new Set();
+        
+        // Only process dominant components to match what's displayed on the map
+        this.data.soilPolygons.features.forEach(feature => {
+            if (this.isFeatureDominant(feature)) {
+                const material = this.extractParentMaterial(feature.properties);
+                // Only add materials that have defined colors and are not Unknown
+                if (material && 
+                    CONFIG.parentMaterialColors[material] && 
+                    material !== 'Unknown') {
+                    materials.add(material);
+                }
+            }
+        });
+        
+        // Sort materials alphabetically, putting Unknown at the end
+        const sortedMaterials = Array.from(materials).sort((a, b) => {
+            if (a === 'Unknown') return 1;
+            if (b === 'Unknown') return -1;
+            return a.localeCompare(b);
+        });
+        
+        return sortedMaterials;
+    }
     
     // Show raster legend for OC, pH, and Land Cover
     showRasterLegend(property, depth, dataRange) {
@@ -1757,29 +2268,61 @@ class MapManager {
             // Show elevation gradient legend
             this.showElevationLegend(legendElement, legendItems, dataRange);
         } else {
-            // Show continuous raster legend for OC, pH, and Mean Temperature
+            // Show continuous raster legend
             const depthLabel = CONFIG.depthLevels.labels[depth];
             let propertyName;
+            let units;
+            
+            // Handle both soil properties and climate variables
             if (property === 'oc') {
                 propertyName = 'Soil Organic Carbon';
+                units = '[g/kg]';
             } else if (property === 'ph') {
                 propertyName = 'Soil pH';
+                units = '[pH]';
             } else if (property === 'meanTemp') {
                 propertyName = 'Mean Temperature';
+                units = '[°C]';
+            } else if (property === 'precipitation') {
+                propertyName = 'Annual Precipitation';
+                units = '[mm]';
+            } else if (property === 'temperatureMean') {
+                propertyName = 'Mean Temperature';
+                units = '[°C]';
+            } else if (property === 'temperatureMin') {
+                propertyName = 'Minimum Temperature';
+                units = '[°C]';
+            } else if (property === 'temperatureMax') {
+                propertyName = 'Maximum Temperature';
+                units = '[°C]';
+            } else if (property === 'vpdMin') {
+                propertyName = 'Min Vapor Pressure Deficit';
+                units = '[hPa]';
+            } else if (property === 'vpdMax') {
+                propertyName = 'Max Vapor Pressure Deficit';
+                units = '[hPa]';
+            } else if (property === 'solarTotal') {
+                propertyName = 'Total Solar Radiation';
+                units = '[MJ/m²/day]';
+            } else if (property === 'solarSloped') {
+                propertyName = 'Sloped Solar Radiation';
+                units = '[MJ/m²/day]';
+            } else if (property === 'solarClear') {
+                propertyName = 'Clear Sky Solar Radiation';
+                units = '[MJ/m²/day]';
             }
             
             // Set legend title with units
             const legendTitle = legendElement.querySelector('h4');
             if (legendTitle) {
-                let units;
-                if (property === 'oc') {
-                    units = '[g/kg]';
-                } else if (property === 'ph') {
-                    units = '[pH]';
-                } else if (property === 'meanTemp') {
-                    units = '[°C]';
+                // For climate variables, don't show depth label
+                const climateVariables = ['precipitation', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+                                        'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
+                if (climateVariables.includes(property)) {
+                    legendTitle.textContent = `${propertyName} ${units}`;
+                } else {
+                    legendTitle.textContent = `${propertyName} (${depthLabel}) ${units}`;
                 }
-                legendTitle.textContent = `${propertyName} (${depthLabel}) ${units}`;
             }
             
             // Create color scale legend
@@ -1832,7 +2375,7 @@ class MapManager {
         // Set legend title
         const legendTitle = legendElement.querySelector('h4');
         if (legendTitle) {
-            legendTitle.textContent = 'Lithology Classification';
+            legendTitle.textContent = 'Parent Material Classification';
         }
         
         // Get unique values from the raster if available
@@ -1918,6 +2461,9 @@ class MapManager {
             
             // Format value based on property
             let displayValue;
+            const climateVariables = ['precipitation', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+                                    'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
+            
             if (property === 'elevation') {
                 // Elevation values in meters, no decimals needed
                 displayValue = Math.round(value).toString();
@@ -1928,8 +2474,20 @@ class MapManager {
                 } else {
                     displayValue = value.toFixed(1);
                 }
+            } else if (property === 'precipitation') {
+                // Precipitation in mm, show as integer
+                displayValue = Math.round(value).toString();
+            } else if (property.startsWith('temperature')) {
+                // Temperature in °C, show one decimal
+                displayValue = value.toFixed(1);
+            } else if (property.startsWith('vpd')) {
+                // VPD in hPa, show one decimal
+                displayValue = value.toFixed(1);
+            } else if (property.startsWith('solar')) {
+                // Solar radiation in MJ/m²/day, show one decimal
+                displayValue = value.toFixed(1);
             } else {
-                // OC values
+                // OC and other values
                 displayValue = value.toFixed(1);
             }
             
@@ -1949,11 +2507,18 @@ class MapManager {
         const steps = 10;
         const colors = [];
         
+        // Check if this is a climate variable
+        const climateVariables = ['precipitation', 'temperatureMean', 'temperatureMin', 'temperatureMax',
+                                'vpdMin', 'vpdMax', 'solarTotal', 'solarSloped', 'solarClear'];
+        
         for (let i = 0; i <= steps; i++) {
             const value = min + (max - min) * (i / steps);
             let color;
             
-            if (property === 'elevation') {
+            if (climateVariables.includes(property)) {
+                // Use the same color logic as in raster-utils.js
+                color = window.rasterManager.getColorForValue(property, value, min, max);
+            } else if (property === 'elevation') {
                 // Elevation uses terrain color gradient
                 const normalized = i / steps;
                 color = ConfigUtils.getElevationColor(normalized);
@@ -2075,4 +2640,4 @@ class MapManager {
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { MapManager };
-}
+}// Cache bust: Tue Sep  2 17:31:43 PDT 2025

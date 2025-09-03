@@ -23,7 +23,10 @@
       "Bash(for file in js/*.js)",
       "Bash(do echo \"Checking $file...\")",
       "Bash(echo:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "WebFetch(domain:prism.oregonstate.edu)",
+      "WebSearch",
+      "Read(/mnt/c/Users/redst/Pictures/Screenshots/**)"
     ],
     "deny": []
   }

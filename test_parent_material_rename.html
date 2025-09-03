@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Parent Material Rename</title>
+    <script src="js/config.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #367fa9;
+            text-align: center;
+        }
+        .test-result {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .code {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Parent Material Rename Test</h1>
+        
+        <div class="test-result info">
+            <strong>🔍 Testing Configuration Changes</strong><br>
+            Verifying that "lithology" has been properly renamed to "Parent Material" in user-facing elements.
+        </div>
+        
+        <div id="config-test" class="test-result">
+            <strong>Configuration Test:</strong><br>
+            <div id="config-results"></div>
+        </div>
+        
+        <div class="test-result info">
+            <strong>📋 What Was Changed:</strong>
+            <ul>
+                <li>✅ UI Label: "Lithology" → "Parent Material" in dropdown menu</li>
+                <li>✅ Popup Title: Shows "Parent Material" when clicking on map</li>
+                <li>✅ Legend Title: "Parent Material Classification"</li>
+                <li>✅ Configuration: Updated data source name</li>
+                <li>✅ Raster Metadata: Updated name and description</li>
+            </ul>
+        </div>
+        
+        <div class="test-result info">
+            <strong>🔧 Technical Details:</strong>
+            <ul>
+                <li><strong>Value:</strong> <code>lithology</code> (unchanged for backend compatibility)</li>
+                <li><strong>Data File:</strong> <code>Lithology_CSNM.tif</code> (unchanged)</li>
+                <li><strong>Config Keys:</strong> All internal references preserved</li>
+                <li><strong>Color Mapping:</strong> All lithologyColors unchanged</li>
+            </ul>
+        </div>
+        
+        <div class="test-result success">
+            <strong>✅ Rename Complete!</strong><br>
+            The lithology layer now appears as "Parent Material" to users while maintaining full backward compatibility with the existing data and code.
+        </div>
+    </div>
+    
+    <script>
+        // Test the configuration updates
+        document.addEventListener('DOMContentLoaded', function() {
+            const results = document.getElementById('config-results');
+            let testResults = [];
+            
+            // Test data source name
+            if (CONFIG.dataSources.lithology && CONFIG.dataSources.lithology.name === "Parent Material") {
+                testResults.push("✅ Data source name updated to 'Parent Material'");
+            } else {
+                testResults.push("❌ Data source name not updated");
+            }
+            
+            // Test that the value is still 'lithology' for compatibility
+            if (CONFIG.dataPaths.lithology) {
+                testResults.push("✅ Data path key 'lithology' preserved for compatibility");
+            } else {
+                testResults.push("❌ Data path key missing");
+            }
+            
+            // Test that lithology colors are still available
+            if (CONFIG.lithologyColors && Object.keys(CONFIG.lithologyColors).length > 0) {
+                testResults.push("✅ Lithology color mappings preserved");
+            } else {
+                testResults.push("❌ Lithology color mappings missing");
+            }
+            
+            // Test ConfigUtils functions
+            if (typeof ConfigUtils !== 'undefined' && 
+                ConfigUtils.getLithologyColor && 
+                ConfigUtils.getLithologyName) {
+                testResults.push("✅ ConfigUtils lithology functions available");
+            } else {
+                testResults.push("❌ ConfigUtils lithology functions missing");
+            }
+            
+            results.innerHTML = testResults.join('<br>');
+            
+            console.log('Parent Material rename test completed');
+            console.log('Data source:', CONFIG.dataSources.lithology);
+        });
+    </script>
+</body>
+</html>

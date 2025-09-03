@@ -1,4 +1,4 @@
-# Cascade-Siskiyou Soil Explorer - JavaScript Version
+# Soils of the Siskiyous
 
 A modern web-based application for exploring soil data in the Cascade-Siskiyou National Monument, translated from the original R Shiny application.
 
@@ -143,6 +143,26 @@ Open Developer Tools (F12) and check the Console for:
 - Debug data about raster value ranges
 
 ## Recent Updates
+
+### ✨ NEW: PRISM Climate Data Integration (v0.2.0)
+**Real-time Climate Monitoring**:
+- **Monthly Climate Data**: Access last 12 months of PRISM AN81M data
+- **Climate Variables**: Temperature and precipitation visualization
+- **Time Series Animation**: Play through monthly data with smooth transitions
+- **Automatic Updates**: Checks for new data on the 15th of each month
+- **Monument-Clipped Data**: All data properly cropped to CSNM boundaries
+
+**Climate Visualization Features**:
+- Temperature maps with blue-white-red color scheme (-10°C to 40°C)
+- Precipitation maps with brown-white-blue scheme (0-500mm)
+- Interactive month slider with play/pause animation
+- Click anywhere for detailed climate time series
+
+**Technical Implementation**:
+- Client-side GeoTIFF processing with boundary clipping
+- IndexedDB caching for offline access and performance
+- Progressive loading with ~50MB total storage
+- Web Services API integration with PRISM Oregon State
 
 **Enhanced Terrain Visualization**:
 - Combined hillshade and elevation for realistic 3D effect
