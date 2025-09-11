@@ -455,7 +455,7 @@ const CONFIG = {
     // Data file paths (for local development, copy files to data directory)
     dataPaths: {
         mapunitTable: "data/Mapunit_OR_table.csv",
-        soilPolygons: "data/CSNM_Polygons_WGS84.geojson?v=2", // WGS84 projected SSURGO data - v2 forces cache bypass
+        soilPolygons: "data/CSNM_Polygons_WGS84_MajorComponents.geojson", // Major components only - cleaner overlaps
         boundaryPolygon: "data/CSNM_boundary_WGS84.geojson",
         highways: "data/CSNM_Highways.geojson",
         serviceRoads: "data/CSNM_ServiceRoads.geojson",

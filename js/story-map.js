@@ -10,6 +10,7 @@ class StoryMap {
         this.appData = null;
         this.scrollTimeout = null;
         this.isScrolling = false;
+        this.interactiveMaps = null; // For the new interactive maps
         
         this.init();
     }
@@ -28,7 +29,19 @@ class StoryMap {
             // Start story immediately so content is visible
             this.startStory();
             
-            // Initialize data loader (async)
+            // Initialize interactive maps module
+            try {
+                this.interactiveMaps = new StoryInteractiveMaps();
+                await this.interactiveMaps.init();
+                // Small delay to ensure DOM is ready
+                setTimeout(() => {
+                    this.createInteractiveMaps();
+                }, 100);
+            } catch (e) {
+                console.warn('Interactive maps not available:', e);
+            }
+            
+            // Initialize data loader (async) - for old map system
             try {
                 this.dataLoader = window.dataLoader || dataLoader;
             } catch (e) {
@@ -54,6 +67,99 @@ class StoryMap {
     setupSections() {
         this.sections = Array.from(document.querySelectorAll('.story-section'));
         console.log(`Found ${this.sections.length} story sections`);
+    }
+    
+    // Create interactive maps in their containers
+    createInteractiveMaps() {
+        if (!this.interactiveMaps) return;
+        
+        console.log('Creating interactive story maps...');
+        
+        // Create soil orders map for CLORPT intro
+        const clorptMap = document.getElementById('clorpt-intro-map');
+        if (clorptMap) {
+            this.interactiveMaps.createMap('clorpt-intro-map', 'soilOrders', {
+                zoom: 10
+            });
+            
+            // Add legend for soil orders
+            const soilOrderLegend = [
+                { color: '#00A551', label: 'Mollisols' },
+                { color: '#CB7662', label: 'Inceptisols' },
+                { color: '#EA028C', label: 'Andisols' },
+                { color: '#FFF100', label: 'Vertisols' },
+                { color: '#B5D55D', label: 'Alfisols' },
+                { color: '#75CDD6', label: 'Entisols' }
+            ];
+            this.interactiveMaps.addLegend('clorpt-intro-map', soilOrderLegend);
+        }
+        
+        // Create main soil orders map
+        const soilOrdersMap = document.getElementById('soil-orders-map');
+        if (soilOrdersMap) {
+            this.interactiveMaps.createMap('soil-orders-map', 'soilOrders', {
+                zoom: 10
+            });
+            
+            // Add the same legend
+            const soilOrderLegend = [
+                { color: '#00A551', label: 'Mollisols (Prairie)' },
+                { color: '#CB7662', label: 'Inceptisols (Developing)' },
+                { color: '#EA028C', label: 'Andisols (Volcanic)' },
+                { color: '#FFF100', label: 'Vertisols (Shrink-Swell)' },
+                { color: '#B5D55D', label: 'Alfisols (Forest)' },
+                { color: '#75CDD6', label: 'Entisols (Young)' }
+            ];
+            this.interactiveMaps.addLegend('soil-orders-map', soilOrderLegend);
+        }
+        
+        // Create particle size map
+        const particleMap = document.getElementById('particle-size-map');
+        if (particleMap) {
+            this.interactiveMaps.createMap('particle-size-map', 'particleSizes', {
+                zoom: 10
+            });
+            
+            // Add legend for particle sizes
+            const particleLegend = [
+                { color: '#2C3E50', label: 'Fine' },
+                { color: '#5D6D7E', label: 'Fine-loamy' },
+                { color: '#7B8D9F', label: 'Loamy' },
+                { color: '#95A5A6', label: 'Coarse-loamy' },
+                { color: '#D4B896', label: 'Sandy' },
+                { color: '#8B7355', label: 'Loamy-skeletal' },
+                { color: '#CD853F', label: 'Medial (volcanic)' }
+            ];
+            this.interactiveMaps.addLegend('particle-size-map', particleLegend);
+        }
+        
+        // Create parent material map
+        const parentMap = document.getElementById('parent-material-map');
+        if (parentMap) {
+            console.log('Creating parent material map...');
+            try {
+                this.interactiveMaps.createMap('parent-material-map', 'parentMaterial', {
+                    zoom: 10
+                });
+                
+                // Add legend for parent materials
+                const parentLegend = [
+                    { color: '#D2691E', label: 'Volcanic' },
+                    { color: '#4682B4', label: 'Alluvial' },
+                    { color: '#95A5A6', label: 'Mixed colluvium' },
+                    { color: '#CD853F', label: 'Plateau deposits' },
+                    { color: '#FFF100', label: 'Clay-rich sediments' },
+                    { color: '#8B7355', label: 'Basin deposits' },
+                    { color: '#2E7D32', label: 'Serpentine' }
+                ];
+                this.interactiveMaps.addLegend('parent-material-map', parentLegend);
+                console.log('Parent material map created successfully');
+            } catch (error) {
+                console.error('Error creating parent material map:', error);
+            }
+        } else {
+            console.warn('Parent material map container not found');
+        }
     }
     
     setupScrollListeners() {
@@ -93,8 +199,8 @@ class StoryMap {
     }
     
     setupInteractivity() {
-        // Factor cards interaction
-        this.setupFactorCards();
+        // Factor cards interaction - removed (no longer using preview cards)
+        // this.setupFactorCards();
         
         // Property selector interaction
         this.setupPropertySelector();
@@ -199,14 +305,20 @@ class StoryMap {
     updatePropertiesScreenshots(property) {
         const ocScreenshot = document.getElementById('oc-screenshot');
         const phScreenshot = document.getElementById('ph-screenshot');
+        const ocLegend = document.getElementById('oc-legend');
+        const phLegend = document.getElementById('ph-legend');
         
         if (ocScreenshot && phScreenshot) {
             if (property === 'oc') {
                 ocScreenshot.style.display = 'block';
                 phScreenshot.style.display = 'none';
+                if (ocLegend) ocLegend.style.display = 'block';
+                if (phLegend) phLegend.style.display = 'none';
             } else if (property === 'ph') {
                 ocScreenshot.style.display = 'none';
                 phScreenshot.style.display = 'block';
+                if (ocLegend) ocLegend.style.display = 'none';
+                if (phLegend) phLegend.style.display = 'block';
             }
         }
     }
@@ -236,6 +348,8 @@ class StoryMap {
         const climateBtns = document.querySelectorAll('.climate-btn');
         const precipitationImg = document.getElementById('precipitation-screenshot');
         const temperatureImg = document.getElementById('temperature-screenshot');
+        const precipLegend = document.getElementById('precip-legend');
+        const tempLegend = document.getElementById('temp-legend');
         const climateCaption = document.getElementById('climate-caption');
         
         climateBtns.forEach(btn => {
@@ -246,16 +360,20 @@ class StoryMap {
                 climateBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
-                // Toggle images
+                // Toggle images and legends
                 if (climate === 'precipitation') {
                     if (precipitationImg) precipitationImg.style.display = 'block';
                     if (temperatureImg) temperatureImg.style.display = 'none';
+                    if (precipLegend) precipLegend.style.display = 'block';
+                    if (tempLegend) tempLegend.style.display = 'none';
                     if (climateCaption) {
                         climateCaption.textContent = 'Annual precipitation varies from 20 inches in rain shadow valleys to over 60 inches on exposed ridges';
                     }
                 } else if (climate === 'temperature') {
                     if (precipitationImg) precipitationImg.style.display = 'none';
                     if (temperatureImg) temperatureImg.style.display = 'block';
+                    if (precipLegend) precipLegend.style.display = 'none';
+                    if (tempLegend) tempLegend.style.display = 'block';
                     if (climateCaption) {
                         climateCaption.textContent = 'Mean annual temperature ranges from 35°F at high elevations to 55°F in low valleys';
                     }
@@ -520,9 +638,37 @@ class StoryMap {
     
     updateMapsForSection(sectionType) {
         switch (sectionType) {
-            case 'factors':
-                // Start with climate (first in CLORPT)
+            case 'clorpt-intro':
+                // Introduction to CLORPT factors
                 this.updateFactorsMap('climate');
+                break;
+            case 'clorpt-climate':
+                // Climate factor section
+                this.updateFactorsMap('climate');
+                break;
+            case 'clorpt-organisms':
+                // Organisms factor section
+                this.updateFactorsMap('organisms');
+                break;
+            case 'clorpt-relief':
+                // Relief/topography factor section
+                this.updateFactorsMap('relief');
+                break;
+            case 'clorpt-parent':
+                // Parent material factor section
+                this.updateFactorsMap('parent');
+                break;
+            case 'clorpt-time':
+                // Time factor section
+                this.updateFactorsMap('time');
+                break;
+            case 'soil-history':
+                // Soil formation history section
+                this.updateFactorsMap('time');
+                break;
+            case 'soil-orders':
+                // Soil orders classification section
+                this.addBaseLayer('conservation-map', 'terrain');
                 break;
             case 'serpentine':
                 this.focusOnSerpentineAreas();

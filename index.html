@@ -28,6 +28,10 @@
                     <img src="data/icons/OSU_AgSci_horizontal_1C_B.png" alt="Oregon State University Agricultural Sciences" class="osu-logo">
                 </h1>
                 <div class="header-controls">
+                    <a href="story-map.html" class="btn btn-story-map">
+                        <i class="fas fa-book-open"></i>
+                        Story Map
+                    </a>
                     <button id="info-btn" class="btn btn-info">
                         <i class="fas fa-info-circle"></i>
                         Info
@@ -136,6 +140,11 @@
                                 <button class="info-btn" data-source="meanTemp" title="View source information">i</button>
                             </label>
                             <label class="radio-option">
+                                <input type="radio" name="map_type" value="precipitation">
+                                <span class="radio-label">Annual Precipitation</span>
+                                <button class="info-btn" data-source="precipitation" title="View source information">i</button>
+                            </label>
+                            <label class="radio-option">
                                 <input type="radio" name="map_type" value="nlcd">
                                 <span class="radio-label">Land Cover</span>
                                 <button class="info-btn" data-source="nlcd" title="View source information">i</button>
@@ -160,18 +169,7 @@
                             <span>CLIMATE NORMALS (1991-2020)</span>
                         </div>
                         <div class="dropdown-content">
-                            <!-- Precipitation -->
-                            <label class="radio-option">
-                                <input type="radio" name="map_type" value="precipitation">
-                                <span class="radio-label">Annual Precipitation</span>
-                                <button class="info-btn" data-source="precipitation" title="View source information">i</button>
-                            </label>
-                            <!-- Temperature options -->
-                            <label class="radio-option">
-                                <input type="radio" name="map_type" value="temperatureMean">
-                                <span class="radio-label">Mean Temperature</span>
-                                <button class="info-btn" data-source="temperatureMean" title="View source information">i</button>
-                            </label>
+                            <!-- Temperature extremes -->
                             <label class="radio-option">
                                 <input type="radio" name="map_type" value="temperatureMin">
                                 <span class="radio-label">Minimum Temperature</span>
@@ -443,6 +441,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
     <script src="https://unpkg.com/geotiff@2.1.3/dist-browser/geotiff.js"></script>
+    <script src="https://unpkg.com/@mapbox/leaflet-pip@1.1.0/leaflet-pip.js"></script>
     <script>
         // Ensure GeoTIFF library is available for raster processing
         window.addEventListener('load', function() {

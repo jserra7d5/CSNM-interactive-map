@@ -214,44 +214,78 @@ class MapManager {
         document.dispatchEvent(event);
     }
     
-    // Find the feature layer that was clicked (if any) using Leaflet's event system
+    // Find the feature layer that was clicked (if any) using leaflet-pip
     findClickedFeatureLayer(e) {
+        // Check if leaflet-pip is available
+        if (typeof leafletPip === 'undefined') {
+            console.warn('⚠️ leaflet-pip library not loaded, falling back to ray-casting detection');
+            return this.findClickedFeatureLayerFallback(e);
+        }
         
-        // Use Leaflet's built-in capability to find layers at click point
-        // This is more reliable than manual point-in-polygon detection
         const clickedLayers = [];
         
         // Check soil polygons layer
         const soilLayer = this.layers.polygons.get('soil');
         
         if (soilLayer && this.map.hasLayer(soilLayer)) {
-            let totalGeoJsonLayers = 0;
-            let totalFeatureLayers = 0;
-            let layersChecked = 0;
-            let layersWithBounds = 0;
-            let layersInBounds = 0;
+            // Use leaflet-pip for accurate point-in-polygon detection
+            // Note: leaflet-pip expects [lng, lat] order
+            const point = [e.latlng.lng, e.latlng.lat];
             
-            // Use Leaflet's queryRenderedFeatures-like approach
-            // by checking which layers the click event would naturally hit
+            // For each GeoJSON layer group within the soil layer
             soilLayer.eachLayer((geoJsonLayer) => {
-                totalGeoJsonLayers++;
-                
+                if (geoJsonLayer.toGeoJSON) {
+                    try {
+                        // Use leaflet-pip to find all polygons containing this point
+                        const results = leafletPip.pointInLayer(point, geoJsonLayer, false);
+                        clickedLayers.push(...results);
+                    } catch (error) {
+                        console.warn('⚠️ leaflet-pip error:', error);
+                        // Fall back to manual checking for this layer
+                        if (geoJsonLayer.eachLayer) {
+                            geoJsonLayer.eachLayer((featureLayer) => {
+                                if (featureLayer.feature && this.isLayerClickable(featureLayer, e)) {
+                                    clickedLayers.push(featureLayer);
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+            
+            // Debug logging
+            if (clickedLayers.length > 0) {
+                console.log(`📍 leaflet-pip found ${clickedLayers.length} polygon(s) at click location`);
+            } else {
+                console.log(`📍 No polygons found at click location`);
+            }
+        }
+        
+        // Return the most relevant layer (prefer smaller polygons = more specific)
+        return this.selectMostRelevantLayer(clickedLayers, e.latlng);
+    }
+    
+    // Fallback method using our ray-casting implementation if leaflet-pip is not available
+    findClickedFeatureLayerFallback(e) {
+        const clickedLayers = [];
+        const soilLayer = this.layers.polygons.get('soil');
+        
+        if (soilLayer && this.map.hasLayer(soilLayer)) {
+            let layersInBounds = 0;
+            let layersInPolygon = 0;
+            
+            soilLayer.eachLayer((geoJsonLayer) => {
                 if (geoJsonLayer.eachLayer) {
                     geoJsonLayer.eachLayer((featureLayer) => {
-                        totalFeatureLayers++;
-                        layersChecked++;
-                        
                         if (featureLayer.feature) {
-                            if (featureLayer.getBounds) {
-                                layersWithBounds++;
-                                if (featureLayer.getBounds().contains(e.latlng)) {
-                                    layersInBounds++;
+                            // First check bounding box (fast)
+                            if (featureLayer.getBounds && featureLayer.getBounds().contains(e.latlng)) {
+                                layersInBounds++;
+                                // Then check actual polygon using ray-casting
+                                if (this.isLayerClickable(featureLayer, e)) {
+                                    layersInPolygon++;
+                                    clickedLayers.push(featureLayer);
                                 }
-                            }
-                            
-                            // Check if this layer would naturally receive the click event
-                            if (this.isLayerClickable(featureLayer, e)) {
-                                clickedLayers.push(featureLayer);
                             }
                         }
                     });
@@ -259,9 +293,12 @@ class MapManager {
                     clickedLayers.push(geoJsonLayer);
                 }
             });
+            
+            if (layersInBounds > 0) {
+                console.log(`📍 Ray-casting detection: ${layersInBounds} in bounds, ${layersInPolygon} in actual polygon`);
+            }
         }
         
-        // Return the most relevant layer (prefer smaller polygons = more specific)
         return this.selectMostRelevantLayer(clickedLayers, e.latlng);
     }
     
@@ -272,29 +309,126 @@ class MapManager {
             return false;
         }
         
-        // For more precise detection, we could implement point-in-polygon here
-        // For now, bounding box check is sufficient and performant
+        // For GeoJSON layers, use actual point-in-polygon detection
+        if (layer.feature && layer.feature.geometry) {
+            return this.isPointInPolygon(e.latlng, layer.feature.geometry);
+        }
+        
+        // Fallback to bounding box check for non-GeoJSON layers
         return true;
+    }
+    
+    // Check if a point is inside a polygon using ray-casting algorithm
+    isPointInPolygon(latlng, geometry) {
+        const point = [latlng.lng, latlng.lat];
+        
+        if (geometry.type === 'Polygon') {
+            return this.pointInPolygonRings(point, geometry.coordinates);
+        } else if (geometry.type === 'MultiPolygon') {
+            for (const polygon of geometry.coordinates) {
+                if (this.pointInPolygonRings(point, polygon)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Not a polygon geometry
+        return false;
+    }
+    
+    // Check if point is in polygon rings (handles exterior and holes)
+    pointInPolygonRings(point, rings) {
+        if (rings.length === 0) return false;
+        
+        // Check if point is inside exterior ring
+        if (!this.pointInRing(point, rings[0])) {
+            return false;
+        }
+        
+        // Check if point is not in any holes
+        for (let i = 1; i < rings.length; i++) {
+            if (this.pointInRing(point, rings[i])) {
+                return false; // Point is in a hole
+            }
+        }
+        
+        return true;
+    }
+    
+    // Ray-casting algorithm for point in ring test
+    pointInRing(point, ring) {
+        let inside = false;
+        const x = point[0], y = point[1];
+        
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+            const xi = ring[i][0], yi = ring[i][1];
+            const xj = ring[j][0], yj = ring[j][1];
+            
+            const intersect = ((yi > y) !== (yj > y))
+                && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            
+            if (intersect) inside = !inside;
+        }
+        
+        return inside;
     }
     
     // Select the most relevant layer from multiple candidates
     selectMostRelevantLayer(layers, latlng) {
         if (layers.length === 0) return null;
-        if (layers.length === 1) return layers[0];
-        
-        // Prefer smaller polygons (more specific) - approximate by bounding box area
-        let bestLayer = layers[0];
-        let smallestArea = this.getLayerBoundsArea(bestLayer);
-        
-        for (let i = 1; i < layers.length; i++) {
-            const area = this.getLayerBoundsArea(layers[i]);
-            if (area < smallestArea) {
-                smallestArea = area;
-                bestLayer = layers[i];
-            }
+        if (layers.length === 1) {
+            console.log(`📍 Single polygon found at click location`);
+            return layers[0];
         }
         
-        return bestLayer;
+        console.log(`📍 Multiple polygons (${layers.length}) found at click location, selecting best match...`);
+        
+        // Calculate distance from click point to polygon centroid for each layer
+        const layerScores = layers.map(layer => {
+            const score = {
+                layer: layer,
+                boundsArea: this.getLayerBoundsArea(layer),
+                distanceToCenter: Infinity,
+                mukey: layer.feature?.properties?.MUKEY || layer.feature?.properties?.mukey || 'Unknown',
+                musym: layer.feature?.properties?.MUSYM || layer.feature?.properties?.musym || 'Unknown',
+                compname: layer.feature?.properties?.compname || 'Unknown'
+            };
+            
+            // Calculate distance to polygon centroid
+            if (layer.getBounds) {
+                const bounds = layer.getBounds();
+                const center = bounds.getCenter();
+                score.distanceToCenter = latlng.distanceTo(center);
+            }
+            
+            return score;
+        });
+        
+        // Sort by distance to center (closest first), then by area (smallest first)
+        layerScores.sort((a, b) => {
+            // Prefer polygons where click is closer to center
+            const distDiff = a.distanceToCenter - b.distanceToCenter;
+            if (Math.abs(distDiff) > 0.0001) { // Significant distance difference
+                return distDiff;
+            }
+            // If similar distance, prefer smaller polygons
+            return a.boundsArea - b.boundsArea;
+        });
+        
+        // Log the selection for debugging
+        console.log(`📍 Selected polygon:`, {
+            mukey: layerScores[0].mukey,
+            musym: layerScores[0].musym,
+            component: layerScores[0].compname,
+            distanceToCenter: layerScores[0].distanceToCenter.toFixed(2) + 'm',
+            otherCandidates: layerScores.slice(1).map(s => ({
+                musym: s.musym,
+                distance: s.distanceToCenter.toFixed(2) + 'm'
+            }))
+        });
+        
+        return layerScores[0].layer;
     }
     
     // Calculate approximate area of layer bounds
@@ -309,6 +443,27 @@ class MapManager {
     // Handle clicks on feature layers
     handleFeatureClick(layer, e) {
         console.log('🎯 handleFeatureClick called for map type:', this.currentMapType);
+        
+        // Debug the actual feature properties when clicked
+        if (layer && layer.feature && layer.feature.properties) {
+            const props = layer.feature.properties;
+            const mapUnit = props.MUSYM || props.musym || 'Unknown';
+            const mukey = props.MUKEY || props.mukey || 'Unknown';
+            console.log(`🔍 Clicked feature - Map Unit: ${mapUnit}, MUKEY: ${mukey}`);
+            
+            if (props.MUSYM === '33A' || props.musym === '33A') {
+                console.log(`🔍 Detailed 33A properties:`, {
+                    MUKEY: mukey,
+                    compname: props.compname,
+                    cokey: props.cokey,
+                    comppct_r: props.comppct_r,
+                    majcompflag: props.majcompflag,
+                    taxorder: props.taxorder,
+                    soilOrder: props.soilOrder,
+                    _isMajorComponent: props._isMajorComponent
+                });
+            }
+        }
         
         // Route to appropriate handler based on current map type
         switch (this.currentMapType) {
@@ -340,9 +495,27 @@ class MapManager {
     handlePolygonFeatureClick(layer, e) {
         console.log('🎯 Polygon feature click for', this.currentMapType, ':', layer);
         
-        // Show simple popup for soil order, particle size, and parent material views
-        if (layer._featureData && layer._featureData.properties) {
-            const popupContent = this.createSimplePopupContent(layer._featureData.properties);
+        // Use the feature data that's actually being styled (layer.feature) 
+        // This ensures consistency between what's displayed and what's in the popup
+        const properties = layer.feature ? layer.feature.properties : 
+                         (layer._featureData ? layer._featureData.properties : null);
+        
+        if (properties) {
+            // Debug log to verify data consistency
+            if (layer.feature && layer._featureData) {
+                const featureProps = layer.feature.properties;
+                const storedProps = layer._featureData.properties;
+                if (featureProps.cokey !== storedProps.cokey) {
+                    console.warn('⚠️ Data mismatch detected:', {
+                        feature_cokey: featureProps.cokey,
+                        feature_compname: featureProps.compname,
+                        stored_cokey: storedProps.cokey,
+                        stored_compname: storedProps.compname
+                    });
+                }
+            }
+            
+            const popupContent = this.createSimplePopupContent(properties);
             const popup = L.popup()
                 .setLatLng(e.latlng)
                 .setContent(popupContent)
@@ -417,12 +590,38 @@ class MapManager {
             
             const existing = dominantFeaturesByArea.get(areaKey);
             if (!existing || this.isDominantComponent(feature, existing)) {
+                // Log dominant component selection
+                if (feature.properties.MUSYM === '33A' || feature.properties.musym === '33A' || 
+                    feature.properties.MUSYM === '28E' || feature.properties.musym === '28E') {
+                    console.log(`🎯 Selecting dominant for ${feature.properties.MUSYM || feature.properties.musym}:`, {
+                        areaKey: areaKey.substring(0, 50) + '...',
+                        compname: feature.properties.compname,
+                        comppct_r: feature.properties.comppct_r,
+                        majcompflag: feature.properties.majcompflag,
+                        cokey: feature.properties.cokey,
+                        taxorder: feature.properties.taxorder,
+                        replacing: existing ? {
+                            compname: existing.properties.compname,
+                            comppct_r: existing.properties.comppct_r,
+                            cokey: existing.properties.cokey
+                        } : 'none'
+                    });
+                }
                 dominantFeaturesByArea.set(areaKey, feature);
             }
         });
         
         const features = Array.from(dominantFeaturesByArea.values());
         const totalFeatures = features.length;
+        
+        // Store the filtered dominant features for legend and popup consistency
+        this.dominantFeatures = features;
+        
+        console.log(`📊 Dominant component filtering complete:`, {
+            totalOriginalFeatures: allFeatures.length,
+            uniqueGeographicAreas: dominantFeaturesByArea.size,
+            dominantFeaturesKept: features.length
+        });
         
         
         // Create empty layer groups for progressive loading
@@ -608,6 +807,17 @@ class MapManager {
         const soilOrder = this.extractSoilOrder(feature.properties);
         const color = ConfigUtils.getSoilOrderColor(soilOrder);
         
+        // Debug logging for more detailed analysis
+        if (!this._soilStyleLogCount) this._soilStyleLogCount = 0;
+        if (this._soilStyleLogCount < 10) {
+            const mapUnit = feature.properties.MUSYM || feature.properties.musym || 'Unknown';
+            const mukey = feature.properties.MUKEY || feature.properties.mukey || 'Unknown';
+            const compName = feature.properties.compname || 'Unknown';
+            const cokey = feature.properties.cokey || 'Unknown';
+            console.log(`🎨 Styling - Map Unit: ${mapUnit}, MUKEY: ${mukey}, Component: ${compName}, Soil Order: ${soilOrder}, Color: ${color}, Cokey: ${cokey}`);
+            this._soilStyleLogCount++;
+        }
+        
         return {
             fillColor: color,
             weight: 0.5,
@@ -624,6 +834,13 @@ class MapManager {
         const particleSize = this.extractParticleSize(feature.properties);
         const color = ConfigUtils.getParticleSizeColor(particleSize);
         
+        // Debug logging for first few features
+        if (!this._particleStyleLogCount) this._particleStyleLogCount = 0;
+        if (this._particleStyleLogCount < 5) {
+            console.log(`🎨 Styling - Particle Size: ${particleSize}, Color: ${color}, MUKEY: ${feature.properties.MUKEY || feature.properties.mukey}`);
+            this._particleStyleLogCount++;
+        }
+        
         return {
             fillColor: color,
             weight: 0.5,
@@ -639,6 +856,13 @@ class MapManager {
         // For parent material view, show ALL components with their parent material colors
         const parentMaterial = this.extractParentMaterial(feature.properties);
         const color = ConfigUtils.getParentMaterialColor(parentMaterial);
+        
+        // Debug logging for first few features
+        if (!this._materialStyleLogCount) this._materialStyleLogCount = 0;
+        if (this._materialStyleLogCount < 5) {
+            console.log(`🎨 Styling - Parent Material: ${parentMaterial}, Color: ${color}, MUKEY: ${feature.properties.MUKEY || feature.properties.mukey}`);
+            this._materialStyleLogCount++;
+        }
         
         return {
             fillColor: color,
@@ -1047,28 +1271,38 @@ class MapManager {
     // Create simple popup content based on current map type
     createSimplePopupContent(properties) {
         const mapUnit = properties.MUSYM || properties.musym || 'Unknown';
+        const mukey = properties.MUKEY || properties.mukey || 'Unknown';
         
         if (this.currentMapType === 'soil') {
             const soilOrder = this.extractSoilOrder(properties);
+            const color = ConfigUtils.getSoilOrderColor(soilOrder);
+            console.log(`🔍 Popup - Soil Order: ${soilOrder}, Color: ${color}, Map Unit: ${mapUnit}, MUKEY: ${mukey}`);
             return `
                 <div class="simple-popup">
                     <strong>Map Unit:</strong> ${mapUnit}<br>
+                    <strong>MUKEY:</strong> ${mukey}<br>
                     <strong>Soil Order:</strong> ${soilOrder}
                 </div>
             `;
         } else if (this.currentMapType === 'particleSize') {
             const particleSize = this.extractParticleSize(properties);
+            const color = ConfigUtils.getParticleSizeColor(particleSize);
+            console.log(`🔍 Popup - Particle Size: ${particleSize}, Color: ${color}, Map Unit: ${mapUnit}, MUKEY: ${mukey}`);
             return `
                 <div class="simple-popup">
                     <strong>Map Unit:</strong> ${mapUnit}<br>
+                    <strong>MUKEY:</strong> ${mukey}<br>
                     <strong>Particle Size:</strong> ${particleSize}
                 </div>
             `;
         } else if (this.currentMapType === 'parentMaterial') {
             const parentMaterial = this.extractParentMaterial(properties);
+            const color = ConfigUtils.getParentMaterialColor(parentMaterial);
+            console.log(`🔍 Popup - Parent Material: ${parentMaterial}, Color: ${color}, Map Unit: ${mapUnit}, MUKEY: ${mukey}`);
             return `
                 <div class="simple-popup">
                     <strong>Map Unit:</strong> ${mapUnit}<br>
+                    <strong>MUKEY:</strong> ${mukey}<br>
                     <strong>Parent Material:</strong> ${parentMaterial}
                 </div>
             `;
@@ -1303,19 +1537,39 @@ class MapManager {
         const poi = CONFIG.pointsOfInterest.informationCenter;
         const [lat, lng] = poi.coordinates;
         
-        // Create a custom star icon
-        const starIcon = L.divIcon({
-            className: 'information-center-marker',
-            html: '<div class="star-icon">★</div>',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10],
-            popupAnchor: [0, -10]
-        });
+        // Function to update icon size based on zoom
+        const updateIconSize = () => {
+            const zoom = this.map.getZoom();
+            // Scale from 60px at zoom 10 to 120px at zoom 16
+            const baseSize = 60;
+            const scaleFactor = 1 + (zoom - 10) * 0.2;
+            const size = Math.max(baseSize, Math.min(120, baseSize * scaleFactor));
+            
+            const starIcon = L.divIcon({
+                className: 'information-center-marker',
+                html: `<div class="star-icon" style="font-size: ${size}px; width: ${size}px; height: ${size}px;">★</div>`,
+                iconSize: [size, size],
+                iconAnchor: [size/2, size/2],
+                popupAnchor: [0, -size/2]
+            });
+            
+            if (this.informationCenterMarker) {
+                this.informationCenterMarker.setIcon(starIcon);
+            }
+            
+            return starIcon;
+        };
+        
+        // Create initial icon
+        const initialIcon = updateIconSize();
         
         // Create marker
         this.informationCenterMarker = L.marker([lat, lng], {
-            icon: starIcon
+            icon: initialIcon
         });
+        
+        // Update icon size on zoom
+        this.map.on('zoomend', updateIconSize);
         
         // Add popup
         const popupContent = `
@@ -1507,6 +1761,11 @@ class MapManager {
             // Store current map type
             this.currentMapType = layerType;
             
+            // Reset debug log counts for fresh logging
+            this._soilStyleLogCount = 0;
+            this._particleStyleLogCount = 0;
+            this._materialStyleLogCount = 0;
+            
             // If no layer type selected, hide all layers except monument boundary
             if (!layerType) {
                 this.hideAllLayers();
@@ -1683,9 +1942,21 @@ class MapManager {
                                 const style = this.getSoilFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
                                 
-                                // No longer need to manually manage click handlers
+                                // Update the stored feature data to match what we're styling
+                                // This ensures popup consistency
+                                if (featureLayer._featureData) {
+                                    featureLayer._featureData.properties = featureLayer.feature.properties;
+                                }
                                 
-                                if (colorCount < 5) { // Log first 5 for debugging
+                                // Log specific details for debugging map unit 33A
+                                if ((featureLayer.feature.properties.MUSYM === '33A' || featureLayer.feature.properties.musym === '33A') && colorCount < 2) {
+                                    console.log(`🔍 Re-styling Map Unit 33A:`, {
+                                        compname: featureLayer.feature.properties.compname,
+                                        cokey: featureLayer.feature.properties.cokey,
+                                        taxorder: featureLayer.feature.properties.taxorder,
+                                        soilOrder: featureLayer.feature.properties.soilOrder,
+                                        color: style.fillColor
+                                    });
                                     colorCount++;
                                 }
                             }
@@ -1758,7 +2029,11 @@ class MapManager {
                                 const style = this.getParticleSizeFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
                                 
-                                // No longer need to manually manage click handlers
+                                // Update the stored feature data to match what we're styling
+                                // This ensures popup consistency
+                                if (featureLayer._featureData) {
+                                    featureLayer._featureData.properties = featureLayer.feature.properties;
+                                }
                                 
                                 if (colorCount < 5) { // Log first 5 for debugging
                                     colorCount++;
@@ -1821,7 +2096,11 @@ class MapManager {
                                 const style = this.getParentMaterialFillStyle(featureLayer.feature);
                                 featureLayer.setStyle(style);
                                 
-                                // No longer need to manually manage click handlers
+                                // Update the stored feature data to match what we're styling
+                                // This ensures popup consistency
+                                if (featureLayer._featureData) {
+                                    featureLayer._featureData.properties = featureLayer.feature.properties;
+                                }
                                 
                                 if (colorCount < 5) { // Log first 5 for debugging
                                     colorCount++;
@@ -2077,6 +2356,27 @@ class MapManager {
     
     // Get available soil orders from loaded data (only from dominant components)
     getAvailableSoilOrders() {
+        // Use the filtered dominant features if available
+        if (this.dominantFeatures && this.dominantFeatures.length > 0) {
+            const orders = new Set();
+            
+            // Process only the dominant features that are actually rendered
+            this.dominantFeatures.forEach(feature => {
+                const order = this.extractSoilOrder(feature.properties);
+                orders.add(order);
+            });
+            
+            // Sort orders alphabetically, putting Unknown at the end
+            const sortedOrders = Array.from(orders).sort((a, b) => {
+                if (a === 'Unknown') return 1;
+                if (b === 'Unknown') return -1;
+                return a.localeCompare(b);
+            });
+            
+            return sortedOrders;
+        }
+        
+        // Fallback if dominant features not yet loaded
         if (!this.data || !this.data.soilPolygons) {
             return Object.keys(CONFIG.soilOrderColors);
         }
@@ -2137,6 +2437,52 @@ class MapManager {
     
     // Get available particle sizes from loaded data (only from dominant components)
     getAvailableParticleSizes() {
+        // Use the filtered dominant features if available
+        if (this.dominantFeatures && this.dominantFeatures.length > 0) {
+            const sizes = new Set();
+            
+            // Process only the dominant features that are actually rendered
+            this.dominantFeatures.forEach(feature => {
+                const size = this.extractParticleSize(feature.properties);
+                // Only add sizes that have defined colors and are not Unknown or "not used"
+                if (size && 
+                    CONFIG.particleSizeColors[size] && 
+                    size !== 'Unknown' && 
+                    size !== 'not used') {
+                    sizes.add(size);
+                }
+            });
+            
+            // Sort sizes by texture categories
+            const sortedSizes = Array.from(sizes).sort((a, b) => {
+                // Define sort order based on texture categories
+                const order = {
+                    'very-fine': 1,
+                    'fine': 2,
+                    'fine-loamy': 3,
+                    'coarse-loamy': 4,
+                    'fine-silty': 5,
+                    'coarse-silty': 6,
+                    'sandy': 7,
+                    'sandy-skeletal': 8,
+                    'loamy-skeletal': 9,
+                    'clayey-skeletal': 10,
+                    'fragmental': 11,
+                    'cindery': 12,
+                    'pumiceous': 13,
+                    'medial': 14,
+                    'medial-skeletal': 15,
+                    'hydrous': 16,
+                    'hydrous-skeletal': 17
+                };
+                
+                return (order[a] || 99) - (order[b] || 99);
+            });
+            
+            return sortedSizes;
+        }
+        
+        // Fallback if dominant features not yet loaded
         if (!this.data || !this.data.soilPolygons) {
             return [];
         }
@@ -2219,6 +2565,32 @@ class MapManager {
     
     // Get available parent materials from loaded data (only from dominant components)
     getAvailableParentMaterials() {
+        // Use the filtered dominant features if available
+        if (this.dominantFeatures && this.dominantFeatures.length > 0) {
+            const materials = new Set();
+            
+            // Process only the dominant features that are actually rendered
+            this.dominantFeatures.forEach(feature => {
+                const material = this.extractParentMaterial(feature.properties);
+                // Only add materials that have defined colors and are not Unknown
+                if (material && 
+                    CONFIG.parentMaterialColors[material] && 
+                    material !== 'Unknown') {
+                    materials.add(material);
+                }
+            });
+            
+            // Sort materials alphabetically, putting Unknown at the end
+            const sortedMaterials = Array.from(materials).sort((a, b) => {
+                if (a === 'Unknown') return 1;
+                if (b === 'Unknown') return -1;
+                return a.localeCompare(b);
+            });
+            
+            return sortedMaterials;
+        }
+        
+        // Fallback if dominant features not yet loaded
         if (!this.data || !this.data.soilPolygons) {
             return [];
         }
