@@ -98,12 +98,156 @@ html {
     border-radius: 2px;
 }
 
+/* Timeline Navigation */
+.timeline-nav {
+    position: fixed;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    animation: fadeInLeft 0.8s ease forwards;
+    animation-delay: 0.5s;
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px) translateY(-50%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) translateY(-50%);
+    }
+}
+
+.timeline-track {
+    position: absolute;
+    left: 6px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: -1;
+}
+
+.timeline-items {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+    padding-left: 0;
+}
+
+.timeline-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #d0d0d0;
+    transition: all 0.3s ease;
+    position: relative;
+    flex-shrink: 0;
+    transform-origin: center center;
+    z-index: 2;
+}
+
+.timeline-label {
+    margin-left: 12px;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #999;
+    opacity: 1;
+    transition: all 0.3s ease;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: transparent;
+    pointer-events: auto;
+    border-left: 3px solid transparent;
+}
+
+/* Active state */
+.timeline-item.active .timeline-dot {
+    background: #367fa9;
+    border-color: #367fa9;
+    box-shadow: 0 0 0 4px rgba(54, 127, 169, 0.3);
+    transform: scale(1.4);
+}
+
+.timeline-item.active .timeline-label {
+    color: #367fa9;
+    font-weight: 700;
+    background: rgba(54, 127, 169, 0.1);
+    border-left: 3px solid #367fa9;
+    padding-left: 6px;
+    font-size: 13px;
+    transform: translateX(2px);
+}
+
+/* Hover state */
+.timeline-item:hover:not(.active) .timeline-dot {
+    border-color: #367fa9;
+    transform: scale(1.15);
+}
+
+.timeline-item:hover:not(.active) .timeline-label {
+    color: #555;
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Visited state - keep labels readable but don't highlight dots */
+.timeline-item.visited:not(.active) .timeline-dot {
+    /* Keep default styling - no special visited state */
+}
+
+.timeline-item.visited:not(.active) .timeline-label {
+    /* Keep default gray color - no special visited state */
+}
+
+/* Hide timeline on mobile */
+@media (max-width: 1024px) {
+    .timeline-nav {
+        display: none;
+    }
+}
+
+/* Adjust for very small screens */
+@media (max-width: 1280px) and (min-width: 1025px) {
+    .timeline-nav {
+        left: 20px;
+    }
+}
+
 /* Story Container */
 .story-container {
     margin-top: 60px;
     overflow-x: hidden;
     height: auto;
     min-height: calc(100vh - 60px);
+    /* Add padding-left to make room for timeline with visible labels */
+    padding-left: 180px;
+}
+
+/* Adjust container padding on smaller screens */
+@media (max-width: 1280px) and (min-width: 1025px) {
+    .story-container {
+        padding-left: 160px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .story-container {
+        padding-left: 0;
+    }
 }
 
 /* Story Sections */
@@ -164,6 +308,42 @@ html {
     text-align: center;
 }
 
+/* Full-width story content for soil orders section */
+.story-content.full-width {
+    grid-template-columns: 1fr;
+    max-width: 1200px;
+}
+
+.story-text.centered {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.story-map-container {
+    width: 100%;
+    margin-bottom: 60px;
+}
+
+/* Special styling for soil orders section */
+.soil-orders-section {
+    min-height: auto;
+    padding: 80px 20px 40px;
+}
+
+/* Container wrapper for soil orders section */
+.story-container-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.story-container-wrapper .story-content {
+    margin-bottom: 40px;
+}
+
+.story-container-wrapper .soil-orders-grid {
+    margin-top: 40px;
+}
+
 .story-text h2 {
     font-size: 2.5rem;
     font-weight: 700;
@@ -202,6 +382,27 @@ html {
     border: 1px solid #e0e0e0;
 }
 
+/* Interactive Maps */
+.story-interactive-map {
+    width: 100%;
+    height: 400px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+    background: #f8f9fa;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Force proper aspect ratio for OC/pH maps */
+/* Monument is roughly square when corrected for latitude */
+#properties-oc-map,
+#properties-ph-map {
+    height: 500px !important;
+    position: relative;
+}
+
+
 /* Screenshot Images */
 .story-screenshot {
     width: 100%;
@@ -234,6 +435,497 @@ html {
     text-align: center;
     font-style: italic;
     padding: 0 20px;
+}
+
+/* Story Map Legend Styles */
+.story-map-legend {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    max-width: 180px;
+}
+
+.story-map-legend .legend-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+}
+
+.story-map-legend .legend-item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.story-map-legend .legend-color {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #ccc;
+    margin-right: 8px;
+    border-radius: 3px;
+}
+
+.story-map-legend .legend-label {
+    color: #555;
+    font-size: 11px;
+}
+
+/* Gradient legends within story map legend controls */
+.story-map-legend .gradient-legend {
+    margin-top: 5px;
+}
+
+.story-map-legend .gradient-bar {
+    height: 15px;
+    width: 100%;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+}
+
+.story-map-legend .gradient-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 10px;
+    color: #666;
+}
+
+.story-map-legend h5 {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+}
+
+/* Vertical Elevation Legend */
+.elevation-map-container {
+    display: flex;
+    gap: 15px;
+    align-items: stretch;
+}
+
+.elevation-map-container #relief-elevation-map {
+    flex: 1;
+}
+
+.vertical-elevation-legend {
+    width: 80px;
+    background: white;
+    border-radius: 8px;
+    padding: 15px 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.vertical-elevation-legend .legend-title {
+    font-weight: 600;
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.vertical-elevation-legend .legend-scale {
+    flex: 1;
+    position: relative;
+    min-height: 300px;
+}
+
+.vertical-elevation-legend .legend-gradient {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to bottom, #ffffff, #dc2626, #f97316, #fbbf24, #10b981, #1e3a8a);
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.vertical-elevation-legend .legend-ticks {
+    position: absolute;
+    left: 35px;
+    top: 0;
+    bottom: 0;
+    width: 35px;
+}
+
+.vertical-elevation-legend .tick {
+    position: absolute;
+    left: 0;
+    display: flex;
+    align-items: center;
+    transform: translateY(-50%); /* Center the tick on its position */
+}
+
+.vertical-elevation-legend .tick::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    width: 20px;
+    height: 1px;
+    background: #666;
+}
+
+.vertical-elevation-legend .tick span {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* Horizontal Land Cover Legend (below map) */
+.horizontal-landcover-legend {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.horizontal-landcover-legend .legend-title {
+    font-weight: 600;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 6px;
+}
+
+.horizontal-landcover-legend .legend-items {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px 10px;
+}
+
+.horizontal-landcover-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.horizontal-landcover-legend .color-box {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.horizontal-landcover-legend .label {
+    font-size: 10px;
+    color: #555;
+    line-height: 1.2;
+}
+
+/* Parent material map - no legend needed, full width */
+
+/* Removed .vertical-landcover-legend - now using .horizontal-landcover-legend below map */
+
+/* Precipitation Map Container */
+.precipitation-map-container {
+    display: flex;
+    gap: 15px;
+    align-items: stretch;
+}
+
+.precipitation-map-container #climate-precip-map {
+    flex: 1;
+}
+
+/* Vertical Precipitation Legend */
+.vertical-precipitation-legend {
+    width: 100px;
+    background: white;
+    border-radius: 8px;
+    padding: 15px 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.vertical-precipitation-legend .legend-title {
+    font-weight: 600;
+    font-size: 10px;
+    margin-bottom: 10px;
+    color: #333;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.vertical-precipitation-legend .legend-scale {
+    position: relative;
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vertical-precipitation-legend .legend-gradient {
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(to bottom, 
+        #4a90e2 0%,     /* Blue at top (wet) */
+        #5ba3e5 20%,
+        #7bbce8 40%,
+        #f4e4b1 60%,    /* Tan/yellow in middle */
+        #d4a373 80%,
+        #8b6f47 100%    /* Brown at bottom (dry) */
+    );
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.vertical-precipitation-legend .legend-ticks {
+    position: relative;
+    flex: 1;
+    height: 100%;
+}
+
+.vertical-precipitation-legend .tick {
+    position: absolute;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    transform: translateY(-50%);
+}
+
+.vertical-precipitation-legend .tick::before {
+    content: '';
+    width: 6px;
+    height: 1px;
+    background: #666;
+    margin-right: 4px;
+    position: absolute;
+    left: -8px;
+}
+
+.vertical-precipitation-legend .tick span {
+    font-size: 10px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* Temperature Map Container */
+.temperature-map-container {
+    display: flex;
+    gap: 15px;
+    align-items: stretch;
+}
+
+.temperature-map-container #climate-temp-map {
+    flex: 1;
+}
+
+/* Vertical Temperature Legend */
+.vertical-temperature-legend {
+    width: 100px;
+    background: white;
+    border-radius: 8px;
+    padding: 15px 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.vertical-temperature-legend .legend-title {
+    font-weight: 600;
+    font-size: 10px;
+    margin-bottom: 10px;
+    color: #333;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.vertical-temperature-legend .legend-scale {
+    position: relative;
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vertical-temperature-legend .legend-gradient {
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(to bottom,
+        #b40426 0%,     /* Dark red at top (warmest) */
+        #d73027 12.5%,  /* Red */
+        #f46d43 25%,    /* Orange-red */
+        #fdae61 37.5%,  /* Light orange */
+        #fee090 50%,    /* Pale yellow */
+        #e0f3f8 62.5%,  /* Pale blue */
+        #abd9e9 75%,    /* Light blue */
+        #74add1 87.5%,  /* Medium blue */
+        #4575b4 100%    /* Dark blue at bottom (coldest) */
+    );
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.vertical-temperature-legend .legend-ticks {
+    position: relative;
+    flex: 1;
+    height: 100%;
+}
+
+.vertical-temperature-legend .tick {
+    position: absolute;
+    left: 0;
+    display: flex;
+    align-items: center;
+    transform: translateY(-50%);
+}
+
+.vertical-temperature-legend .tick::before {
+    content: '';
+    width: 8px;
+    height: 1px;
+    background: #666;
+    margin-right: 4px;
+}
+
+.vertical-temperature-legend .tick span {
+    font-size: 10px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* Mobile responsiveness for elevation legend */
+@media (max-width: 768px) {
+    .elevation-map-container {
+        flex-direction: column;
+    }
+    
+    .vertical-elevation-legend {
+        width: 100%;
+        flex-direction: row;
+        padding: 10px;
+        min-height: auto;
+    }
+    
+    .vertical-elevation-legend .legend-scale {
+        min-height: 60px;
+        width: 100%;
+    }
+    
+    .vertical-elevation-legend .legend-gradient {
+        top: 10px;
+        left: 0;
+        right: 0;
+        bottom: auto;
+        height: 20px;
+        width: auto;
+        background: linear-gradient(to right, #1e3a8a, #10b981, #fbbf24, #f97316, #dc2626, #ffffff);
+    }
+    
+    .vertical-elevation-legend .legend-ticks {
+        top: 35px;
+        left: 0;
+        right: 0;
+        bottom: auto;
+        width: auto;
+        height: 25px;
+    }
+    
+    .vertical-elevation-legend .tick {
+        top: auto !important;
+        bottom: 0;
+        transform: none; /* Remove vertical centering for horizontal layout */
+    }
+    
+    .vertical-elevation-legend .tick::before {
+        top: -15px;
+        left: auto;
+        width: 1px;
+        height: 10px;
+    }
+    
+    .vertical-elevation-legend .tick:nth-child(1) { left: 100%; transform: translateX(-100%); }
+    .vertical-elevation-legend .tick:nth-child(2) { left: 80%; }
+    .vertical-elevation-legend .tick:nth-child(3) { left: 60%; }
+    .vertical-elevation-legend .tick:nth-child(4) { left: 40%; }
+    .vertical-elevation-legend .tick:nth-child(5) { left: 20%; }
+    .vertical-elevation-legend .tick:nth-child(6) { left: 0%; }
+    
+    /* Land cover legend mobile */
+    .horizontal-landcover-legend .legend-items {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px 8px;
+    }
+    
+    .horizontal-landcover-legend .label {
+        font-size: 9px;
+    }
+    
+    /* Parent material map mobile - no legend needed */
+    
+    /* Precipitation legend mobile */
+    .precipitation-map-container {
+        flex-direction: column;
+    }
+    
+    .vertical-precipitation-legend {
+        width: 100%;
+        flex-direction: row;
+        padding: 10px;
+        min-height: auto;
+    }
+    
+    .vertical-precipitation-legend .legend-scale {
+        flex-direction: row;
+        min-height: 40px;
+        width: 100%;
+    }
+    
+    .vertical-precipitation-legend .legend-gradient {
+        width: 100%;
+        height: 20px;
+        background: linear-gradient(to right, 
+            #8b6f47 0%,
+            #d4a373 20%,
+            #f4e4b1 40%,
+            #7bbce8 60%,
+            #5ba3e5 80%,
+            #4a90e2 100%
+        );
+    }
+    
+    .vertical-precipitation-legend .legend-ticks {
+        width: 100%;
+        height: auto;
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+    }
+    
+    .vertical-precipitation-legend .tick {
+        position: static;
+        transform: none;
+    }
+    
+    .vertical-precipitation-legend .tick::before {
+        display: none;
+    }
+}
+
+/* Story Map Popup */
+.story-map-popup {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.story-map-popup strong {
+    color: #333;
 }
 
 /* Story Statistics */
@@ -843,6 +1535,290 @@ html {
     margin: 0;
 }
 
+/* New CLORPT Individual Sections */
+.organism-roles, .relief-zones, .parent-materials, .time-stages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.role-card, .zone-card, .material-card, .stage-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.role-card:hover, .zone-card:hover, .material-card:hover, .stage-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.role-card i {
+    font-size: 2rem;
+    color: #00A551;
+    margin-bottom: 10px;
+}
+
+.zone-type {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #f0f0f0;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.material-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+
+.stage-age {
+    display: block;
+    font-size: 0.9rem;
+    color: #764ba2;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* Timeline Container */
+.timeline-container {
+    position: relative;
+    padding: 20px 0;
+    margin: 40px 0;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #764ba2, #667eea);
+}
+
+.timeline-event {
+    position: relative;
+    padding-left: 70px;
+    margin-bottom: 40px;
+}
+
+.timeline-event::before {
+    content: '';
+    position: absolute;
+    left: 22px;
+    top: 8px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #764ba2;
+    border: 3px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.timeline-date {
+    display: block;
+    font-size: 0.9rem;
+    color: #764ba2;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.timeline-event h4 {
+    margin-bottom: 8px;
+    color: #2c3e50;
+}
+
+/* Soil Profile Diagram */
+.soil-profile-diagram {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin: 30px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-stages {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.profile-stage {
+    text-align: center;
+}
+
+.profile-column {
+    height: 300px;
+    border: 2px solid #333;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.horizon-o {
+    background: #3e2723;
+    color: white;
+    padding: 5px;
+    flex: 0.5;
+}
+
+.horizon-a {
+    background: #5d4037;
+    color: white;
+    padding: 5px;
+    flex: 1;
+}
+
+.horizon-a.thin {
+    flex: 0.3;
+}
+
+.horizon-e {
+    background: #d7ccc8;
+    padding: 5px;
+    flex: 0.5;
+}
+
+.horizon-b {
+    background: #8d6e63;
+    color: white;
+    padding: 5px;
+    flex: 1.5;
+}
+
+.horizon-b.thick {
+    flex: 2;
+}
+
+.horizon-c {
+    background: #bcaaa4;
+    padding: 5px;
+    flex: 1;
+}
+
+.horizon-rock {
+    background: linear-gradient(45deg, #666 25%, #888 25%, #888 50%, #666 50%, #666 75%, #888 75%, #888);
+    background-size: 10px 10px;
+    color: white;
+    padding: 5px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.horizon-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.horizon-legend span {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Soil Orders Grid - 3x2 layout */
+.soil-orders-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 25px;
+    margin: 40px auto;
+    max-width: 1200px;
+    padding: 0 20px;
+}
+
+/* Responsive adjustment for tablets */
+@media (max-width: 992px) {
+    .soil-orders-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+    }
+}
+
+/* Responsive adjustment for mobile */
+@media (max-width: 576px) {
+    .soil-orders-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+}
+
+.soil-order-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.soil-order-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.order-header {
+    padding: 20px;
+    color: white;
+    position: relative;
+}
+
+.order-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.order-percent {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.order-content {
+    padding: 20px;
+}
+
+.order-content p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.order-content ul {
+    list-style-position: inside;
+    color: #666;
+}
+
+.order-content li {
+    margin-bottom: 8px;
+}
+
 /* Properties Map Container */
 #properties-map-container {
     position: relative;
@@ -876,6 +1852,26 @@ html {
 
 #clorpt-map-container img.active {
     display: block; /* Show only the active one */
+}
+
+/* Photo Credit Styles */
+.photo-credit {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    font-style: normal;
+    color: #888;
+}
+
+.photo-credit a {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.photo-credit a:hover {
+    color: #764ba2;
+    text-decoration: underline;
 }
 
 /* Responsive Design */
@@ -998,4 +1994,548 @@ html {
     border-color: #17a2b8;
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+/* Map Legends */
+.map-legend {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    margin-top: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.map-legend h5 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 10px 0;
+    letter-spacing: 0.5px;
+}
+
+/* Categorical Legend Items */
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.legend-items.vertical {
+    flex-direction: column;
+    gap: 6px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.legend-color-box {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* Gradient Legend */
+.gradient-legend {
+    margin-top: 10px;
+    position: relative;
+}
+
+.gradient-bar {
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    margin: 8px 0;
+}
+
+.gradient-ticks {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    height: 6px;
+    margin-top: -6px;
+    margin-bottom: 2px;
+}
+
+.gradient-ticks .tick {
+    width: 1px;
+    height: 6px;
+    background-color: #333;
+    display: block;
+    position: relative;
+}
+
+/* Align first and last tick with edges of gradient bar */
+.gradient-ticks .tick:first-child {
+    margin-left: -0.5px;
+}
+
+.gradient-ticks .tick:last-child {
+    margin-right: -0.5px;
+}
+
+.gradient-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #666;
+    position: relative;
+}
+
+.gradient-labels span {
+    flex: 0 0 auto;
+    text-align: center;
+}
+
+/* Adjust first and last label positioning to align with ticks */
+.gradient-labels span:first-child {
+    text-align: left;
+    margin-left: -10px;
+}
+
+.gradient-labels span:last-child {
+    text-align: right;
+    margin-right: -10px;
+}
+
+/* Dynamic legend visibility */
+#clorpt-legends {
+    margin-top: 15px;
+}
+
+#clorpt-legends .map-legend {
+    display: none;
+}
+
+#clorpt-legends .map-legend.active {
+    display: block;
+}
+
+/* CLORPT Header Section */
+.clorpt-header {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: calc(-50vw + 50%);
+    padding: 0 !important;
+}
+
+.clorpt-banner {
+    background: none;
+    padding: 80px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.clorpt-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.clorpt-title {
+    font-size: 48px;
+    color: #000;
+    margin: 0 0 30px 0;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.clorpt-equation {
+    font-size: 36px;
+    color: #000;
+    margin: 30px 0;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 10px;
+    display: inline-block;
+}
+
+.clorpt-equation span {
+    font-weight: bold;
+    margin: 0 3px;
+}
+
+.factor-c { color: #60a5fa; }
+.factor-o { color: #34d399; }
+.factor-r { color: #fb923c; }
+.factor-p { color: #c084fc; }
+.factor-t { color: #f472b6; }
+
+.clorpt-lead {
+    font-size: 20px;
+    color: #000;
+    max-width: 800px;
+    margin: 30px auto;
+    line-height: 1.6;
+}
+
+.clorpt-factors {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 40px 0;
+}
+
+.factor-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.factor-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 28px;
+    font-weight: bold;
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+}
+
+.factor-icon:hover {
+    transform: scale(1.1);
+}
+
+.factor-name {
+    color: #000;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.clorpt-description {
+    font-size: 18px;
+    color: #cbd5e1;
+    max-width: 900px;
+    margin: 40px auto 0;
+    line-height: 1.7;
+}
+
+/* Feature Tables - Consistent bullet point formatting */
+.feature-table {
+    display: table;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.feature-row {
+    display: table-row;
+}
+
+.feature-label {
+    display: table-cell;
+    padding: 8px 15px 8px 0;
+    font-weight: 600;
+    color: #2c3e50;
+    vertical-align: top;
+    white-space: nowrap;
+    width: auto;
+}
+
+.feature-content {
+    display: table-cell;
+    padding: 8px 0;
+    color: #555;
+    line-height: 1.6;
+    vertical-align: top;
+}
+
+/* Parent Material Layout */
+.parent-material-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+@media (max-width: 968px) {
+    .parent-material-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Serpentine Feature Box */
+.serpentine-feature {
+    background: linear-gradient(135deg, #2c3e50 0%, #3f5166 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin: 30px 0;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.serpentine-feature h3 {
+    color: #4ade80;
+    margin: 0 0 15px 0;
+    font-size: 24px;
+}
+
+.serpentine-feature h3 i {
+    margin-right: 10px;
+}
+
+.serpentine-intro {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    color: #ffffff !important;
+}
+
+.serpentine-intro strong {
+    color: #ffffff !important;
+}
+
+.serpentine-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin-top: 20px;
+}
+
+@media (max-width: 968px) {
+    .serpentine-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.serpentine-property {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.serpentine-property h4 {
+    color: #4ade80;
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    border-bottom: 2px solid rgba(74, 222, 128, 0.3);
+    padding-bottom: 8px;
+}
+
+.chemistry-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chemistry-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.chemistry-item .label {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.chemistry-item .value {
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+.adaptation-table {
+    display: table;
+    width: 100%;
+}
+
+.adaptation-row {
+    display: table-row;
+}
+
+.adaptation-label {
+    display: table-cell;
+    padding: 8px 15px 8px 0;
+    color: #60a5fa;
+    font-weight: 600;
+    white-space: nowrap;
+    vertical-align: top;
+    width: auto;
+}
+
+.adaptation-desc {
+    display: table-cell;
+    padding: 8px 0;
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.5;
+    vertical-align: top;
+}
+
+.serpentine-citation {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 13px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.serpentine-citation i {
+    margin-right: 5px;
+    color: #60a5fa;
+}
+
+.serpentine-citation a {
+    color: #4ade80;
+    text-decoration: none;
+    border-bottom: 1px dotted #4ade80;
+}
+
+.serpentine-citation a:hover {
+    color: #86efac;
+    border-bottom-color: #86efac;
+}
+
+/* Serpentine Section Visual Styles */
+.serpentine-visual-container {
+    margin-top: 20px;
+}
+
+.serpentine-map-placeholder {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 25%, #66BB6A 50%, #81C784 75%, #A5D6A7 100%);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.serpentine-overlay {
+    text-align: center;
+    color: white;
+    padding: 40px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+}
+
+.serpentine-overlay i {
+    font-size: 48px;
+    color: #FFD700;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.serpentine-overlay h3 {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 10px 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.serpentine-overlay p {
+    font-size: 18px;
+    margin: 0;
+    opacity: 0.95;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.endemic-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.endemic-tag {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-style: italic;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.endemic-note {
+    margin: 10px 0 0 0;
+    font-size: 14px;
+    color: #ffffff;
+    text-align: center;
+}
+
+/* Climate Zones Info Box */
+.climate-zones-info {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.climate-zones-info h4 {
+    color: #2c3e50;
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    border-bottom: 2px solid rgba(54, 127, 169, 0.3);
+    padding-bottom: 10px;
+}
+
+.climate-zones-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.climate-zone-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 12px;
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+
+.climate-zone-item:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.zone-elevation {
+    min-width: 100px;
+    font-weight: 600;
+    color: #367fa9;
+    font-size: 14px;
+    padding-top: 2px;
+}
+
+.zone-details strong {
+    display: block;
+    color: #2c3e50;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.zone-details p {
+    margin: 0;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.4;
 }

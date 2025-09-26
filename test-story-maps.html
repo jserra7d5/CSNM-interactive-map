@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Map Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .pending { background: #fff3cd; color: #856404; }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Story Map Interactive Maps Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Status</h2>
+        <p>Loading story map in iframe to test all interactive maps...</p>
+        <div id="test-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Story Map Preview</h2>
+        <iframe src="story-map.html" id="story-frame"></iframe>
+    </div>
+    
+    <script>
+        const testResults = document.getElementById('test-results');
+        const iframe = document.getElementById('story-frame');
+        
+        // Wait for iframe to load
+        iframe.onload = function() {
+            setTimeout(() => {
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    
+                    // Check for interactive map containers
+                    const mapTests = [
+                        { id: 'clorpt-intro-map', name: 'CLORPT Intro Map' },
+                        { id: 'soil-orders-map', name: 'Soil Orders Map' },
+                        { id: 'particle-size-map', name: 'Particle Size Map' },
+                        { id: 'parent-material-map', name: 'Parent Material Map' },
+                        { id: 'organisms-landcover-map', name: 'Land Cover Map' },
+                        { id: 'relief-elevation-map', name: 'Elevation Map' },
+                        { id: 'climate-precip-map', name: 'Precipitation Map' },
+                        { id: 'climate-temp-map', name: 'Temperature Map' },
+                        { id: 'properties-oc-map', name: 'Organic Carbon Map' },
+                        { id: 'properties-ph-map', name: 'pH Map' }
+                    ];
+                    
+                    let html = '<h3>Map Container Tests:</h3><ul>';
+                    
+                    mapTests.forEach(test => {
+                        const element = iframeDoc.getElementById(test.id);
+                        if (element) {
+                            const hasMap = element.querySelector('.leaflet-container');
+                            if (hasMap) {
+                                html += `<li><span class="status success">✓</span> ${test.name} - Initialized</li>`;
+                            } else {
+                                html += `<li><span class="status pending">⚠</span> ${test.name} - Container found, map pending</li>`;
+                            }
+                        } else {
+                            html += `<li><span class="status error">✗</span> ${test.name} - Container not found</li>`;
+                        }
+                    });
+                    
+                    html += '</ul>';
+                    
+                    // Check for interactive controls
+                    html += '<h3>Interactive Controls:</h3><ul>';
+                    
+                    const controls = [
+                        { selector: '.climate-btn', name: 'Climate Toggle Buttons' },
+                        { selector: '.property-btn', name: 'Property Toggle Buttons' },
+                        { selector: '#properties-depth', name: 'Depth Selector Dropdown' }
+                    ];
+                    
+                    controls.forEach(control => {
+                        const elements = iframeDoc.querySelectorAll(control.selector);
+                        if (elements.length > 0) {
+                            html += `<li><span class="status success">✓</span> ${control.name} - Found (${elements.length})</li>`;
+                        } else {
+                            html += `<li><span class="status error">✗</span> ${control.name} - Not found</li>`;
+                        }
+                    });
+                    
+                    html += '</ul>';
+                    
+                    testResults.innerHTML = html;
+                    
+                } catch (error) {
+                    testResults.innerHTML = `<p class="status error">Error accessing iframe content: ${error.message}</p>`;
+                }
+            }, 3000); // Give maps time to initialize
+        };
+    </script>
+</body>
+</html>

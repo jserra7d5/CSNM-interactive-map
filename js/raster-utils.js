@@ -305,9 +305,12 @@ class RasterManager {
                 
                 // Check for no-data values
                 let isNoData;
-                if (property === 'nlcd' || property === 'lithology') {
-                    // For classification rasters, common no-data values are 0, 255, and -9999
-                    isNoData = value === null || isNaN(value) || value === -9999 || value === 255 || value === 0;
+                if (property === 'nlcd') {
+                    // For NLCD classification, 0 and 255 are no-data, valid values are 11-95
+                    isNoData = value === null || isNaN(value) || value === -9999 || value === 255 || value === 0 || value < 11 || value > 95;
+                } else if (property === 'lithology') {
+                    // For lithology classification rasters, common no-data values are -9999 and 255
+                    isNoData = value === null || isNaN(value) || value === -9999 || value === 255;
                 } else if (property === 'elevation') {
                     // For elevation, check for various no-data representations
                     isNoData = value === null || isNaN(value) || value === -9999 || value === -3.4028235e+38 || value < -1000;
@@ -431,6 +434,11 @@ class RasterManager {
         // Put image data on canvas
         ctx.putImageData(imageData, 0, 0);
         
+        // Log classification raster unique values
+        if ((property === 'nlcd' || property === 'lithology') && uniqueValues.size > 0) {
+            console.log(`🌍 RASTER: ${property} unique values:`, Array.from(uniqueValues).sort((a,b) => a-b));
+        }
+        
         // Log hillshade statistics if elevation was processed
         if (property === 'elevation' && hillshadeStats.processed > 0) {
         }
@@ -454,15 +462,34 @@ class RasterManager {
         }, 100); // Small delay to ensure 100% is visible before hiding
         
         // Create Leaflet canvas overlay
-        const bounds = [
-            [bbox[1], bbox[0]], // SW corner
-            [bbox[3], bbox[2]]  // NE corner
-        ];
+        // For OC/pH, completely override the bounds to match the monument exactly
+        let bounds;
+
+        if (property === 'oc' || property === 'ph') {
+            // Force exact monument bounds regardless of what TIFF says
+            // These bounds match the red boundary exactly
+            bounds = [
+                [41.9459, -122.6740],  // SW corner - exact from boundary
+                [42.3171, -122.1502]   // NE corner - exact from boundary
+            ];
+            console.log(`🗺️ RASTER BOUNDS: Forcing monument bounds for ${property}`);
+            console.log(`   Original TIFF bbox was: [${bbox}]`);
+            console.log(`   Using forced bounds: SW[${bounds[0]}] NE[${bounds[1]}]`);
+        } else {
+            // Other rasters use their natural bounds
+            bounds = [
+                [bbox[1], bbox[0]], // SW corner (lat, lng)
+                [bbox[3], bbox[2]]  // NE corner (lat, lng)
+            ];
+            console.log(`🗺️ RASTER BOUNDS for ${property}: using natural TIFF bounds`);
+        }
         
         const overlay = L.imageOverlay(canvas.toDataURL(), bounds, {
             opacity: 0.9,
             interactive: true,
-            className: 'crisp-raster'
+            className: 'crisp-raster',
+            // Ensure the raster is properly positioned
+            attribution: `${property.toUpperCase()} raster`
         });
         
         // Add click handler for raster values
@@ -579,7 +606,7 @@ class RasterManager {
     getRasterFilename(property, depth = 0) {
         // Classification rasters and elevation don't have depth levels
         if (property === 'nlcd') {
-            return CONFIG.dataPaths.nlcd;
+            return CONFIG.dataPaths.nlcd || 'data/rasters/NLCD_2024_CSNM.tif';
         }
         if (property === 'lithology') {
             return CONFIG.dataPaths.lithology;
@@ -589,7 +616,7 @@ class RasterManager {
         }
         
         // Handle precipitation separately from other climate variables
-        if (property === 'precipitation') {
+        if (property === 'precipitation' || property === 'precipitationAnnual') {
             return CONFIG.dataPaths.precipitationAnnual;
         }
         
@@ -854,7 +881,7 @@ class RasterManager {
             const b = Math.round(lowerColor.b + (upperColor.b - lowerColor.b) * fraction);
             
             return `rgb(${r}, ${g}, ${b})`;
-        } else if (property === 'precipitation') {
+        } else if (property === 'precipitation' || property === 'precipitationAnnual') {
             // Precipitation uses brown (dry) to blue (wet) color scheme
             const precipConfig = CONFIG.climateColors.precipitation;
             const configMin = precipConfig.min;
@@ -969,7 +996,6 @@ class RasterManager {
             'oc': 'g/kg',
             'ph': 'pH units',
             'meanTemp': '°C',
-            'landcover': 'class',
             'elevation': 'meters',
             'prism-temp': '°C',
             'prism-precip': 'mm',
@@ -1234,11 +1260,18 @@ class RasterManager {
                 source: 'SoilGrids 250m',
                 depths: CONFIG.depthLevels.labels
             },
-            'landcover': {
-                name: 'Land Cover',
-                description: 'ESA WorldCover 2021 Land Cover Classification',
-                units: 'class',
-                source: 'ESA WorldCover 2021',
+            'precipitationAnnual': {
+                name: 'Annual Precipitation',
+                description: '30-year normal precipitation',
+                units: 'inches',
+                source: 'PRISM Climate Data',
+                depths: null
+            },
+            'precipitation': {
+                name: 'Annual Precipitation',
+                description: '30-year normal precipitation',
+                units: 'inches',
+                source: 'PRISM Climate Data',
                 depths: null
             },
             'elevation': {

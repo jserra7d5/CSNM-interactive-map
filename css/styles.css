@@ -563,6 +563,24 @@ body {
     background-color: #138496;
 }
 
+.btn-story-map {
+    background-color: #e74c3c;
+    color: white;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #c0392b;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-story-map:hover {
+    background-color: #c0392b;
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
 .btn-sm {
     padding: 6px 12px;
     font-size: 13px;
@@ -1081,13 +1099,19 @@ body {
 }
 
 .information-center-marker .star-icon {
-    color: #8a2be2; /* Purple star */
-    font-size: 20px;
+    color: #ffd700; /* Gold star */
     font-weight: bold;
     text-align: center;
-    line-height: 20px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    filter: drop-shadow(0 0 3px rgba(138, 43, 226, 0.8));
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7), -1px -1px 2px rgba(0,0,0,0.3);
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.9));
+    -webkit-text-stroke: 2px #8a2be2; /* Purple outline - thicker */
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 /* Info center popup styling */

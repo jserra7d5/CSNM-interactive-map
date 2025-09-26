@@ -14,6 +14,7 @@ class UIController {
         this.currentSeriesName = null; // Track which series is being viewed
         this.openSections = new Set(); // Track which sections are open
         this.activeChart = 'soil-sketch'; // Track active soil profile chart
+        this.detailPanelScrollPosition = 0; // Track scroll position of detail panel
         // Initialize dropdown states from localStorage or default to all closed
         this.dropdownStates = this.loadDropdownStates() || {
             'general-maps': false,
@@ -838,9 +839,30 @@ class UIController {
         }
     }
     
+    // Save the scroll position of the detail panel
+    saveDetailPanelScrollPosition() {
+        const panelContent = document.querySelector('.detail-panel-content');
+        if (panelContent) {
+            this.detailPanelScrollPosition = panelContent.scrollTop;
+            console.log('📍 Saved scroll position:', this.detailPanelScrollPosition);
+        }
+    }
+    
+    // Restore the scroll position of the detail panel
+    restoreDetailPanelScrollPosition() {
+        const panelContent = document.querySelector('.detail-panel-content');
+        if (panelContent && this.detailPanelScrollPosition > 0) {
+            panelContent.scrollTop = this.detailPanelScrollPosition;
+            console.log('📍 Restored scroll position:', this.detailPanelScrollPosition);
+        }
+    }
+    
     // Open SSURGO detail panel (SoilWeb style)
     openSsurgoDetailPanel(detailData, clickLocation = null) {
         if (this.elements.ssurgoDetailPanel) {
+            // Save current scroll position before updating
+            this.saveDetailPanelScrollPosition();
+            
             // Check if we're currently viewing a series detail BEFORE resetting
             const wasViewingSeries = this.currentSeriesView === true;
             const previousSeriesName = this.currentSeriesName;
@@ -852,6 +874,8 @@ class UIController {
                 this.resetSsurgoDetailPanel();
                 this.elements.ssurgoDetailPanel.style.display = 'flex';
                 this.populateSsurgoDetailPanel(detailData, clickLocation);
+                // Restore scroll position after content is loaded
+                setTimeout(() => this.restoreDetailPanelScrollPosition(), 50);
             } else {
                 // We're in a series detail view - need to update for the new location
                 // but stay in the series view
@@ -873,12 +897,16 @@ class UIController {
                     // Show the series detail for this component
                     if (componentToShow) {
                         this.showSoilSeriesDetail(componentToShow.compname, clickLocation, componentToShow);
+                        // Restore scroll position after series detail is loaded
+                        setTimeout(() => this.restoreDetailPanelScrollPosition(), 50);
                     }
                 } else {
                     // No components available, fall back to main view
                     this.resetSsurgoDetailPanel();
                     this.elements.ssurgoDetailPanel.style.display = 'flex';
                     this.populateSsurgoDetailPanel(detailData, clickLocation);
+                    // Restore scroll position after content is loaded
+                    setTimeout(() => this.restoreDetailPanelScrollPosition(), 50);
                 }
             }
         }
@@ -892,6 +920,8 @@ class UIController {
             this.currentSeriesView = null;
             this.currentSeriesName = null;
             this.openSections.clear();
+            // Reset scroll position when closing
+            this.detailPanelScrollPosition = 0;
         }
     }
     

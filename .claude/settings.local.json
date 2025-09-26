@@ -1,37 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:casoilresource.lawr.ucdavis.edu)",
-      "Bash(mkdir:*)",
-      "Bash(mv:*)",
-      "Bash(grep:*)",
-      "Bash(chmod:*)",
-      "Bash(node:*)",
-      "Bash(ls:*)",
-      "Bash(sed:*)",
-      "Bash(grep:*)",
-      "Bash(awk:*)",
-      "Bash(claude mcp:*)",
-      "Bash(screencapture:*)",
-      "mcp__puppeteer__puppeteer_navigate",
-      "mcp__puppeteer__puppeteer_screenshot",
-      "mcp__puppeteer__puppeteer_click",
-      "mcp__puppeteer__puppeteer_evaluate",
-      "Bash(gunzip:*)",
-      "WebFetch(domain:leafletjs.com)",
-      "WebFetch(domain:developers.google.com)",
-      "Bash(for file in js/*.js)",
-      "Bash(do echo \"Checking $file...\")",
-      "Bash(echo:*)",
-      "Bash(done)",
-      "WebFetch(domain:prism.oregonstate.edu)",
       "WebSearch",
-      "Read(/mnt/c/Users/redst/Pictures/Screenshots/**)",
-      "Bash(convert:*)",
-      "Bash(sips:*)",
-      "Bash(for file in *.png)",
-      "Bash(do)"
+      "Bash(python3:*)",
+      "Bash(curl:*)",
+      "Bash(xargs ls:*)",
+      "Bash(echo \"✅ Layout Updates Complete!\n\nWhat was changed:\n1. **Soil Orders Section Layout**\n   - Text and map are now side-by-side (original 2-column layout)\n   - Six soil order cards display below in a 3x2 grid\n   - Better visual hierarchy and flow\n\n2. **Parent Material Map**\n   - Added error handling and logging\n   - Fixed initialization timing\n   - Should now display properly in the Parent Material section\n\n3. **CSS Improvements**\n   - Added wrapper container for proper layout\n   - Responsive design maintained\n   - Clean spacing between sections\n\nThe story map now has a better visual flow with:\n- Text descriptions next to interactive maps\n- Soil order cards as a visual summary below\n- All 4 interactive maps working with actual SSURGO data\n\nVisit http://localhost:8000/story-map.html to see the updates!\")",
+      "WebFetch(domain:pubs.usgs.gov)",
+      "WebFetch(domain:mrdata.usgs.gov)",
+      "WebFetch(domain:localhost)",
+      "WebFetch(domain:www.fs.usda.gov)"
     ],
-    "deny": []
+    "deny": [],
+    "ask": []
   }
 }

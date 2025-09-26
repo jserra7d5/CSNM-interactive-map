@@ -187,15 +187,15 @@ const CONFIG = {
             max: 2000  // mm - adjusted for western US precipitation patterns
         },
         temperature: {
-            // Blue (cold) to white to red (hot) - standard temperature gradient
-            // Following scientific convention with white at neutral
-            colors: ["#00008B", "#0000FF", "#4169E1", "#87CEEB", "#FFFFFF", "#FFE4B5", "#FFA500", "#FF6347", "#DC143C", "#8B0000"],
+            // Blue (cold) to red (hot) - diverging color scheme matching MEANTEMP raster
+            // RdBu diverging color palette from ColorBrewer
+            colors: ["#4575b4", "#74add1", "#abd9e9", "#e0f3f8", "#fee090", "#fdae61", "#f46d43", "#d73027", "#b40426"],
             min: 0,   // °C
             max: 20   // °C
         },
         temperatureExtreme: {
-            // For min/max temperatures with wider range
-            colors: ["#00008B", "#0000FF", "#4169E1", "#87CEEB", "#FFFFFF", "#FFE4B5", "#FFA500", "#FF6347", "#DC143C", "#8B0000"],
+            // For min/max temperatures with wider range - same diverging palette
+            colors: ["#4575b4", "#74add1", "#abd9e9", "#e0f3f8", "#fee090", "#fdae61", "#f46d43", "#d73027", "#b40426"],
             min: -5,  // °C
             max: 30   // °C
         },
@@ -455,7 +455,7 @@ const CONFIG = {
     // Data file paths (for local development, copy files to data directory)
     dataPaths: {
         mapunitTable: "data/Mapunit_OR_table.csv",
-        soilPolygons: "data/CSNM_Polygons_WGS84.geojson?v=2", // WGS84 projected SSURGO data - v2 forces cache bypass
+        soilPolygons: "data/CSNM_Polygons_WGS84_MajorComponents.geojson", // Major components only - cleaner overlaps
         boundaryPolygon: "data/CSNM_boundary_WGS84.geojson",
         highways: "data/CSNM_Highways.geojson",
         serviceRoads: "data/CSNM_ServiceRoads.geojson",
