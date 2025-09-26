@@ -159,47 +159,7 @@ class StoryMap {
             console.log('CLORPT parent material map created successfully');
         }
         
-        // Also create parent material map for Geological Foundation section (if it exists)
-        const geoParentMap = document.getElementById('parent-material-map');
-        if (geoParentMap) {
-            console.log('Creating Geological Foundation parent material map...');
-            // Add a small delay to ensure data is fully loaded
-            setTimeout(() => {
-                try {
-                    this.interactiveMaps.createMap('parent-material-map', 'parentMaterial', {
-                        zoom: 10.5,  // Zoomed in more to focus on parent materials
-                        center: [42.13, -122.466]
-                    });
-                    // Use same legend as CLORPT - recreate it since it's out of scope
-                    const geoParentLegend = [
-                        { color: '#356eff', label: 'Water' },
-                        { color: '#acb6da', label: 'Carbonate' },
-                        { color: '#d6b879', label: 'Non-carbonate' },
-                        { color: '#313131', label: 'Alkaline intrusive' },
-                        { color: '#eda800', label: 'Silicic residual' },
-                        { color: '#616161', label: 'Extrusive volcanic' },
-                        { color: '#d6d6d6', label: 'Colluvial sediment' },
-                        { color: '#d0ddae', label: 'Glacial till clay' },
-                        { color: '#b8d279', label: 'Glacial till loam' },
-                        { color: '#d5d378', label: 'Glacial till coarse' },
-                        { color: '#70a663', label: 'Glacial lake sediment' },
-                        { color: '#cc6a70', label: 'Glacial outwash fine' },
-                        { color: '#8ab3d5', label: 'Glacial outwash sandy' },
-                        { color: '#6db155', label: 'Glacial outwash coarse' },
-                        { color: '#9b6d55', label: 'Hydric' },
-                        { color: '#feeec9', label: 'Eolian sediment coarse' },
-                        { color: '#d6b879', label: 'Eolian sediment fine' },
-                        { color: '#00b7ec', label: 'Saline lake sediment' },
-                        { color: '#ffda90', label: 'Alluvium fine' },
-                        { color: '#f8b28c', label: 'Coastal sediment coarse' }
-                    ];
-                    // Legend is displayed externally, not inside the map
-                    console.log('Geological Foundation parent material map created successfully');
-                } catch (error) {
-                    console.error('Error creating geological parent material map:', error);
-                }
-            }, 500); // Delay to ensure data is loaded
-        }
+        // Note: Geological Foundation section was removed (duplicate of parent material)
         
         // Initialize Land Cover Map
         if (document.getElementById('organisms-landcover-map')) {
@@ -241,14 +201,27 @@ class StoryMap {
                     zoom: 9.5,  // Zoomed out to show regional context
                     center: [42.13, -122.466]  // Slightly shifted north to move monument down in view
                 });
-                
-                // Legend is displayed externally, not inside the map
+
+                // Update precipitation legend with actual data range
+                setTimeout(() => {
+                    const mapObj = this.interactiveMaps.maps.get('climate-precip-map');
+                    if (mapObj && mapObj.dataRange) {
+                        const { min, max } = mapObj.dataRange;
+                        // Update legend tick values
+                        document.getElementById('precip-min') && (document.getElementById('precip-min').textContent = Math.round(min));
+                        document.getElementById('precip-25') && (document.getElementById('precip-25').textContent = Math.round(min + (max - min) * 0.25));
+                        document.getElementById('precip-50') && (document.getElementById('precip-50').textContent = Math.round(min + (max - min) * 0.5));
+                        document.getElementById('precip-75') && (document.getElementById('precip-75').textContent = Math.round(min + (max - min) * 0.75));
+                        document.getElementById('precip-max') && (document.getElementById('precip-max').textContent = Math.round(max));
+                    }
+                }, 1500);
+
                 console.log('Precipitation map created successfully');
             } catch (error) {
                 console.error('Error creating precipitation map:', error);
             }
         }
-        
+
         if (document.getElementById('climate-temp-map')) {
             try {
                 await this.interactiveMaps.createRasterMap('climate-temp-map', 'temperature', {
@@ -256,8 +229,26 @@ class StoryMap {
                     zoom: 9.5,  // Zoomed out to show regional context
                     center: [42.13, -122.466]  // Slightly shifted north to move monument down in view
                 });
-                
-                // Legend is displayed externally, not inside the map
+
+                // Update temperature legend with actual data range
+                setTimeout(() => {
+                    const mapObj = this.interactiveMaps.maps.get('climate-temp-map');
+                    if (mapObj && mapObj.dataRange) {
+                        const { min, max } = mapObj.dataRange;
+                        // Temperature values may be scaled - convert to Celsius if needed
+                        const displayMin = min > 100 ? (min / 10).toFixed(1) : min.toFixed(1);
+                        const displayMax = max > 100 ? (max / 10).toFixed(1) : max.toFixed(1);
+                        const range = parseFloat(displayMax) - parseFloat(displayMin);
+
+                        // Update legend tick values
+                        document.getElementById('temp-min') && (document.getElementById('temp-min').textContent = displayMin);
+                        document.getElementById('temp-25') && (document.getElementById('temp-25').textContent = (parseFloat(displayMin) + range * 0.25).toFixed(1));
+                        document.getElementById('temp-50') && (document.getElementById('temp-50').textContent = (parseFloat(displayMin) + range * 0.5).toFixed(1));
+                        document.getElementById('temp-75') && (document.getElementById('temp-75').textContent = (parseFloat(displayMin) + range * 0.75).toFixed(1));
+                        document.getElementById('temp-max') && (document.getElementById('temp-max').textContent = displayMax);
+                    }
+                }, 1500);
+
                 console.log('Temperature map created successfully');
             } catch (error) {
                 console.error('Error creating temperature map:', error);
@@ -1085,26 +1076,20 @@ class StoryMap {
                 // Parent material factor section
                 this.updateFactorsMap('parent');
                 break;
-            case 'clorpt-time':
-                // Time factor section
-                this.updateFactorsMap('time');
-                break;
-            case 'soil-history':
-                // Soil formation history section
+            case 'time-history':
+                // Combined time and geological history section
                 this.updateFactorsMap('time');
                 break;
             case 'soil-orders':
                 // Soil orders classification section
-                this.addBaseLayer('conservation-map', 'terrain');
+                // No special map update needed - handled by interactive maps
                 break;
-            case 'serpentine':
-                this.focusOnSerpentineAreas();
+            case 'soil-properties':
+                // Soil texture section - no special action needed
                 break;
-            case 'volcanic':
-                this.focusOnVolcanicAreas();
-                break;
-            case 'properties':
-                this.updatePropertiesMap('oc');
+            case 'soil-chemistry':
+                // Soil chemistry section with OC and pH maps
+                this.updatePropertiesMap('oc', 0);
                 break;
         }
     }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Story of CSNM Soils - Soils of the Siskiyous</title>
+    <title>The Story of Monument Soils - Soils of the Siskiyous</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -72,29 +72,25 @@
                     <div class="timeline-dot"></div>
                     <div class="timeline-label">Parent Material</div>
                 </div>
-                <div class="timeline-item" data-section="clorpt-time">
+                <div class="timeline-item" data-section="time-history">
                     <div class="timeline-dot"></div>
-                    <div class="timeline-label">Time</div>
-                </div>
-                <div class="timeline-item" data-section="soil-history">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-label">Soil History</div>
+                    <div class="timeline-label">Time & History</div>
                 </div>
                 <div class="timeline-item" data-section="soil-orders">
                     <div class="timeline-dot"></div>
                     <div class="timeline-label">Soil Orders</div>
                 </div>
-                <div class="timeline-item" data-section="serpentine">
+                <div class="timeline-item" data-section="soil-properties">
                     <div class="timeline-dot"></div>
                     <div class="timeline-label">Soil Texture</div>
                 </div>
-                <div class="timeline-item" data-section="properties">
+                <div class="timeline-item" data-section="soil-chemistry">
                     <div class="timeline-dot"></div>
-                    <div class="timeline-label">Chemistry</div>
+                    <div class="timeline-label">Soil Chemistry</div>
                 </div>
-                <div class="timeline-item" data-section="conservation">
+                <div class="timeline-item" data-section="serpentine">
                     <div class="timeline-dot"></div>
-                    <div class="timeline-label">Geology</div>
+                    <div class="timeline-label">Serpentine</div>
                 </div>
                 <div class="timeline-item" data-section="explore">
                     <div class="timeline-dot"></div>
@@ -126,12 +122,12 @@
                                 <span class="stat-label">acres protected</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-number">12</span>
+                                <span class="stat-number">6</span>
                                 <span class="stat-label">soil orders present</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-number">3,500</span>
-                                <span class="stat-label">years old (oldest trees)</span>
+                                <span class="stat-number">300+</span>
+                                <span class="stat-label">plant species</span>
                             </div>
                         </div>
                     </div>
@@ -157,14 +153,26 @@
                         <p>
                             Inspired by UC Davis SoilWeb, this application transforms USDA-NRCS soil survey 
                             data (SSURGO) into an engaging exploration tool. The interface provides multiple 
-                            ways to visualize and understand CSNM's soil resources:
+                            ways to visualize and understand the monument's soil resources:
                         </p>
-                        <ul class="story-features">
-                            <li><strong>Multiple Map Views:</strong> Switch between soil orders, particle classes, chemistry, and environmental factors</li>
-                            <li><strong>Interactive Exploration:</strong> Click anywhere to see detailed soil profiles and classifications</li>
-                            <li><strong>Depth Analysis:</strong> Explore soil properties at six different depth intervals</li>
-                            <li><strong>Overlay Comparisons:</strong> View boundaries, roads, and points of interest alongside soil data</li>
-                        </ul>
+                        <div class="feature-table">
+                            <div class="feature-row">
+                                <div class="feature-label">Multiple Map Views:</div>
+                                <div class="feature-content">Switch between soil orders, particle classes, chemistry, and environmental factors</div>
+                            </div>
+                            <div class="feature-row">
+                                <div class="feature-label">Interactive Exploration:</div>
+                                <div class="feature-content">Click anywhere to see detailed soil profiles and classifications</div>
+                            </div>
+                            <div class="feature-row">
+                                <div class="feature-label">Depth Analysis:</div>
+                                <div class="feature-content">Explore soil properties at six different depth intervals</div>
+                            </div>
+                            <div class="feature-row">
+                                <div class="feature-label">Overlay Comparisons:</div>
+                                <div class="feature-content">View boundaries, roads, and points of interest alongside soil data</div>
+                            </div>
+                        </div>
                         <div class="serpentine-callout">
                             <i class="fas fa-map"></i>
                             <div>
@@ -174,28 +182,56 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/ssurgo-data-view.png" alt="Interactive soil explorer interface showing SSURGO soil data for CSNM" class="story-screenshot large">
+                        <img src="storymap_screenshots/ssurgo-data-view.png" alt="Interactive soil explorer interface showing SSURGO soil data for the monument" class="story-screenshot large">
                         <div class="map-caption">
-                            <strong>CSNM Soil Explorer:</strong> An interactive web application for exploring soil survey data, showing detailed map unit boundaries and soil classifications across the monument
+                            <strong>Monument Soil Explorer:</strong> An interactive web application for exploring soil survey data, showing detailed map unit boundaries and soil classifications across the monument
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- Section 2: Introduction to CLORPT -->
-            <section class="story-section" data-section="clorpt-intro">
-                <div class="story-content">
-                    <div class="story-text">
-                        <h2>CLORPT: The Recipe for Soil</h2>
-                        <p class="story-lead">
-                            In 1941, soil scientist Hans Jenny revolutionized our understanding of soil formation with a 
-                            simple yet profound equation: S = f(cl, o, r, p, t). This formula, known as CLORPT, reveals 
-                            that soils are not random but predictable products of five state factors.
+            <section class="story-section clorpt-header" data-section="clorpt-intro">
+                <div class="clorpt-banner">
+                    <div class="clorpt-content">
+                        <h1 class="clorpt-title">CLORPT: The Recipe for Soil</h1>
+                        <div class="clorpt-equation">
+                            S = f(<span class="factor-c">cl</span>, <span class="factor-o">o</span>, <span class="factor-r">r</span>, <span class="factor-p">p</span>, <span class="factor-t">t</span>)
+                        </div>
+                        <p class="clorpt-lead">
+                            In 1941, soil scientist Hans Jenny revolutionized our understanding of soil formation with this
+                            elegant equation. CLORPT reveals that soils are not random but predictable products of five state factors.
                         </p>
-                        <p>
-                            In the Cascade-Siskiyou National Monument, these five factors—Climate, Organisms, Relief, 
-                            Parent material, and Time—interact in extraordinary ways, creating one of North America's 
-                            most diverse soil landscapes. Let's explore each factor to understand how CSNM's soils came to be.
+                        <div class="clorpt-factors">
+                            <div class="factor-item">
+                                <span class="factor-icon">C</span>
+                                <span class="factor-name">Climate</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-icon">L</span>
+                                <span class="factor-name">Life</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-icon">O</span>
+                                <span class="factor-name">Organisms</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-icon">R</span>
+                                <span class="factor-name">Relief</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-icon">P</span>
+                                <span class="factor-name">Parent Material</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-icon">T</span>
+                                <span class="factor-name">Time</span>
+                            </div>
+                        </div>
+                        <p class="clorpt-description">
+                            In the Cascade-Siskiyou National Monument, these five factors interact in extraordinary ways,
+                            creating one of North America's most diverse soil landscapes. Let's explore each factor to
+                            understand how the monument's soils came to be.
                         </p>
                     </div>
                 </div>
@@ -211,20 +247,27 @@
                             organic matter decomposition, and the movement of materials through the soil profile.
                         </p>
                         <p>
-                            CSNM experiences a Mediterranean climate with distinct wet winters and dry summers. Annual 
-                            precipitation ranges from 20 inches in rain shadow valleys to over 60 inches on exposed 
+                            The monument experiences a Mediterranean climate with distinct wet winters and dry summers. Annual
+                            precipitation ranges from 20 inches in rain shadow valleys to over 60 inches on exposed
                             ridges. This seasonal moisture pattern creates unique soil-forming conditions:
                         </p>
-                        <ul class="story-features">
-                            <li><strong>Winter leaching:</strong> Heavy rains move clays and nutrients deeper into the profile</li>
-                            <li><strong>Summer drying:</strong> Creates cracks and concentrates salts at the surface</li>
-                            <li><strong>Temperature fluctuations:</strong> Freeze-thaw cycles break down rocks and minerals</li>
-                            <li><strong>Elevation gradients:</strong> Every 1,000 feet of elevation equals ~3°F temperature change</li>
-                        </ul>
-                        <div class="climate-fact">
-                            <i class="fas fa-info-circle"></i>
-                            <p><strong>Soil Science Fact:</strong> It takes approximately 500-1,000 years to form just one inch 
-                            of topsoil under ideal climate conditions. In CSNM's variable climate, this process can take even longer.</p>
+                        <div class="feature-table">
+                            <div class="feature-row">
+                                <div class="feature-label">Winter leaching:</div>
+                                <div class="feature-content">Heavy rains move clays and nutrients deeper into the soil profile</div>
+                            </div>
+                            <div class="feature-row">
+                                <div class="feature-label">Summer drying:</div>
+                                <div class="feature-content">Creates cracks and concentrates salts at the surface</div>
+                            </div>
+                            <div class="feature-row">
+                                <div class="feature-label">Temperature fluctuations:</div>
+                                <div class="feature-content">Freeze-thaw cycles break down rocks and minerals</div>
+                            </div>
+                            <div class="feature-row">
+                                <div class="feature-label">Elevation gradients:</div>
+                                <div class="feature-content">Every 1,000 feet of elevation equals ~3°F temperature change</div>
+                            </div>
                         </div>
                     </div>
                     <div class="story-visual">
@@ -236,17 +279,17 @@
                                 <div class="legend-scale">
                                     <div class="legend-gradient"></div>
                                     <div class="legend-ticks">
-                                        <div class="tick" style="top: 0%"><span>1460</span></div>
-                                        <div class="tick" style="top: 25%"><span>1210</span></div>
-                                        <div class="tick" style="top: 50%"><span>960</span></div>
-                                        <div class="tick" style="top: 75%"><span>710</span></div>
-                                        <div class="tick" style="top: 100%"><span>459</span></div>
+                                        <div class="tick" style="top: 0%"><span id="precip-max">-</span></div>
+                                        <div class="tick" style="top: 25%"><span id="precip-75">-</span></div>
+                                        <div class="tick" style="top: 50%"><span id="precip-50">-</span></div>
+                                        <div class="tick" style="top: 75%"><span id="precip-25">-</span></div>
+                                        <div class="tick" style="top: 100%"><span id="precip-min">-</span></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="map-caption">
-                            <strong>Interactive Map:</strong> 30-year precipitation normals. Precipitation varies dramatically 
+                            30-year precipitation normals. Precipitation varies dramatically
                             across the monument, from 18 inches (459mm) in valleys to 57 inches (1460mm) on mountain peaks.
                         </div>
                     </div>
@@ -255,9 +298,9 @@
                     <div class="story-visual" style="margin-top: 40px;">
                         <h3>Temperature Gradients</h3>
                         <p>
-                            Annual temperatures range from 2°C to 14°C, with most falling between November 
-                            and April. Summer drought conditions and winter moisture create unique soil weathering 
-                            patterns and influence which plant communities can thrive.
+                            Mean annual temperatures range from 5.9°C (43°F) at high elevations to 11.7°C (53°F)
+                            in low valleys. Summer drought conditions and winter moisture create unique soil
+                            weathering patterns and influence which plant communities can thrive.
                         </p>
                         <div class="temperature-map-container">
                             <div id="climate-temp-map" class="story-interactive-map"></div>
@@ -266,17 +309,17 @@
                                 <div class="legend-scale">
                                     <div class="legend-gradient"></div>
                                     <div class="legend-ticks">
-                                        <div class="tick" style="top: 0%"><span>14</span></div>
-                                        <div class="tick" style="top: 25%"><span>11</span></div>
-                                        <div class="tick" style="top: 50%"><span>8</span></div>
-                                        <div class="tick" style="top: 75%"><span>5</span></div>
-                                        <div class="tick" style="top: 100%"><span>2</span></div>
+                                        <div class="tick" style="top: 0%"><span id="temp-max">-</span></div>
+                                        <div class="tick" style="top: 25%"><span id="temp-75">-</span></div>
+                                        <div class="tick" style="top: 50%"><span id="temp-50">-</span></div>
+                                        <div class="tick" style="top: 75%"><span id="temp-25">-</span></div>
+                                        <div class="tick" style="top: 100%"><span id="temp-min">-</span></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="map-caption">
-                            <strong>Interactive Map:</strong> Mean annual temperatures decrease with elevation, creating distinct 
+                            Mean annual temperatures decrease with elevation, creating distinct
                             climate zones that control soil formation rates and vegetation communities.
                         </div>
                     </div>
@@ -293,7 +336,7 @@
                             that transform minerals and organic matter into living soil.
                         </p>
                         <p>
-                            CSNM hosts over 300 plant species, each contributing to soil formation in unique ways. 
+                            The monument hosts over 300 plant species, each contributing to soil formation in unique ways. 
                             The monument's position at the convergence of major ecoregions creates exceptional 
                             biological diversity that directly influences soil properties:
                         </p>
@@ -318,7 +361,7 @@
                             <i class="fas fa-leaf"></i>
                             <div>
                                 <h4>Serpentine Specialists</h4>
-                                <p>Over 140 endemic plant species have adapted to CSNM's ultramafic soils, creating unique 
+                                <p>Over 140 endemic plant species have adapted to the monument's ultramafic soils, creating unique 
                                 plant-soil relationships found nowhere else on Earth.</p>
                             </div>
                         </div>
@@ -397,7 +440,7 @@
                                 </div>
                             </div>
                         <div class="map-caption">
-                            <strong>Interactive Map:</strong> The diverse vegetation communities across CSNM both reflect and influence 
+                            The diverse vegetation communities across the monument both reflect and influence 
                             soil properties. From oak woodlands to alpine meadows, each vegetation type contributes 
                             unique organic matter and influences soil chemistry.
                         </div>
@@ -415,7 +458,7 @@
                             where soils erode, accumulate, and develop distinct characteristics.
                         </p>
                         <p>
-                            With elevations ranging from 1,200 to 7,533 feet, CSNM's complex topography creates 
+                            With elevations ranging from 2,200 to 6,562 feet (675 to 2,000 meters), the monument's complex topography creates 
                             a mosaic of soil-forming environments. Slope position, aspect, and gradient all 
                             influence soil development:
                         </p>
@@ -439,7 +482,7 @@
                         <div class="climate-fact">
                             <i class="fas fa-mountain"></i>
                             <p><strong>Catena Concept:</strong> A sequence of soils along a slope, from ridge to valley, 
-                            is called a catena. CSNM's varied topography creates numerous catenas, each telling a 
+                            is called a catena. The monument's varied topography creates numerous catenas, each telling a 
                             story of erosion, transport, and deposition.</p>
                         </div>
                         
@@ -487,20 +530,20 @@
                             </div>
                         </div>
                         <div class="map-caption">
-                            <strong>Interactive Map:</strong> From valley floors at 2,215 feet (675m) to Mt. Ashland's peak at 6,562 feet (2000m), 
+                            From valley floors at 2,215 feet (675m) to Mt. Ashland's peak at 6,562 feet (2000m), 
                             elevation creates distinct soil zones. Shallow soils form on steep slopes while deep accumulations develop in protected valleys.
                         </div>
                         <div class="elevation-profile">
                             <h4>Elevation Zones</h4>
                             <div class="profile-chart">
-                                <div class="elevation-bar" style="height: 60%; background: #dc2626;" data-elevation="7533ft">
-                                    <span class="elevation-label">Mt. Ashland<br>7,533 ft</span>
+                                <div class="elevation-bar" style="height: 90%; background: linear-gradient(to top, #f4a582, #fddbc7, #ffffff);" data-elevation="6562ft">
+                                    <span class="elevation-label" style="color: #333;">Mt. Ashland<br>6,562 ft</span>
                                 </div>
-                                <div class="elevation-bar" style="height: 40%; background: #f97316;" data-elevation="4500ft">
-                                    <span class="elevation-label">Mid Slopes<br>4,500 ft</span>
+                                <div class="elevation-bar" style="height: 60%; background: linear-gradient(to bottom, #d73027, #fc8d59, #fee090);" data-elevation="4500ft">
+                                    <span class="elevation-label" style="color: #fff;">Mid Slopes<br>4,500 ft</span>
                                 </div>
-                                <div class="elevation-bar" style="height: 20%; background: #fbbf24;" data-elevation="2000ft">
-                                    <span class="elevation-label">Valley Floor<br>2,000 ft</span>
+                                <div class="elevation-bar" style="height: 30%; background: linear-gradient(to top, #2166ac, #4393c3);" data-elevation="2000ft">
+                                    <span class="elevation-label" style="color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Valley Floor<br>2,200 ft</span>
                                 </div>
                             </div>
                         </div>
@@ -510,15 +553,15 @@
 
             <!-- Section 2d: Parent Material Factor -->
             <section class="story-section" data-section="clorpt-parent">
-                <div class="story-content">
+                <div class="story-content parent-material-layout">
                     <div class="story-text">
                         <h2>Parent Material: The Foundation</h2>
                         <p class="story-lead">
-                            The geological substrate from which soils develop provides the initial minerals and 
+                            The geological substrate from which soils develop provides the initial minerals and
                             strongly influences soil chemistry, texture, and fertility.
                         </p>
                         <p>
-                            CSNM sits at the junction of three mountain ranges, each with distinct geological 
+                            The monument sits at the junction of three mountain ranges, each with distinct geological
                             histories. This convergence creates an extraordinary diversity of parent materials:
                         </p>
                         <div class="parent-materials">
@@ -558,36 +601,27 @@
                         <!-- Interactive Parent Material Map for CLORPT -->
                         <div id="clorpt-parent-material-map" class="story-interactive-map" style="height: 500px;"></div>
                         <div class="map-caption">
-                            <strong>Interactive Map:</strong> Parent materials from three converging mountain ranges create a complex geological foundation. 
+                            Parent materials from three converging mountain ranges create a complex geological foundation.
                             The diverse parent materials—from volcanic ash to river deposits—directly influence soil properties across the monument.
-                        </div>
-                    </div>
-                    <div class="story-text">
-                        <div class="serpentine-callout">
-                            <i class="fas fa-gem"></i>
-                            <div>
-                                <h4>The Serpentine Syndrome</h4>
-                                <p>Serpentine soils have Ca:Mg ratios <1, high levels of nickel and chromium, and low 
-                                essential nutrients—conditions toxic to most plants but supporting rare endemic species.</p>
-                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Section 2e: Time Factor -->
-            <section class="story-section" data-section="clorpt-time">
+            <!-- Section 2e: Time Factor & Geological History (Merged) -->
+            <section class="story-section" data-section="time-history">
                 <div class="story-content">
                     <div class="story-text">
-                        <h2>Time: The Fourth Dimension</h2>
+                        <h2>Time: The Fourth Dimension of Soil</h2>
                         <p class="story-lead">
-                            Time transforms fresh rock into deep, weathered soil profiles. The longer materials 
-                            are exposed to soil-forming processes, the more developed the soil becomes.
+                            Time transforms fresh rock into deep, weathered soil profiles. From ancient ocean
+                            floors to recent volcanic eruptions, each layer tells a story millions of years in the making.
                         </p>
                         <p>
-                            CSNM's soils range from recent volcanic deposits less than 10,000 years old to 
-                            ancient surfaces that have been weathering for over a million years. This temporal 
-                            diversity creates a living laboratory of soil development stages:
+                            The monument's soils range from recent volcanic deposits less than 10,000 years old to
+                            ancient surfaces that have been weathering for over a million years. According to Oregon State
+                            University research, it takes 500-1,000 years to form just one inch of topsoil—meaning
+                            a six-inch topsoil layer represents 3,000-6,000 years of soil formation.
                         </p>
                         <div class="time-stages">
                             <div class="stage-card">
@@ -616,37 +650,18 @@
                                 <p>Highly weathered profiles, some Vertisols with shrink-swell clays</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="story-visual">
-                        <img src="storymap_screenshots/soil-orders.png" alt="Time - Soil development and classification across CSNM" class="story-screenshot">
-                        <div class="map-caption">
-                            Soil orders reflect different stages of development, from young Entisols on recent 
-                            deposits to mature Alfisols on stable ancient surfaces
-                        </div>
-                    </div>
-                </div>
-            </section>
 
-            <!-- Section 3: Soil Formation History -->
-            <section class="story-section" data-section="soil-history">
-                <div class="story-content">
-                    <div class="story-text">
-                        <h2>Deep Time: The History of Soil Formation</h2>
-                        <p class="story-lead">
-                            The soils beneath our feet connect us to deep geological time, from ancient ocean 
-                            floors to recent volcanic eruptions, each layer telling a story millions of years in the making.
-                        </p>
+                        <h3>Deep Geological Time</h3>
                         <p>
-                            According to research from the University of Oregon, soil formation is both an ancient 
-                            and ongoing process. While Earth's first soils appeared over 3 billion years ago, the 
-                            deep, complex soils we see today have only existed for about 500 million years—less than 
-                            10% of our planet's history.
+                            While Earth's first soils appeared over 3 billion years ago, the deep, complex soils
+                            we see today have only existed for about 500 million years. The monument's geological history
+                            spans from ancient ocean floors to recent volcanic eruptions:
                         </p>
                         <div class="timeline-container">
                             <div class="timeline-event">
                                 <span class="timeline-date">150 million years ago</span>
                                 <h4>Oceanic Foundation</h4>
-                                <p>The Klamath Mountains, including parts of CSNM, formed as ocean floor sediments and 
+                                <p>The Klamath Mountains, including parts of the monument, formed as ocean floor sediments and 
                                 volcanic islands collided with North America</p>
                             </div>
                             <div class="timeline-event">
@@ -663,7 +678,7 @@
                             <div class="timeline-event">
                                 <span class="timeline-date">7,700 years ago</span>
                                 <h4>Mount Mazama Eruption</h4>
-                                <p>The eruption that created Crater Lake deposited ash across CSNM, forming the 
+                                <p>The eruption that created Crater Lake deposited ash across the monument, forming the 
                                 parent material for today's Andisols</p>
                             </div>
                             <div class="timeline-event">
@@ -672,13 +687,6 @@
                                 <p>Soils continue developing through weathering, erosion, and biological activity at 
                                 rates of inches per millennium</p>
                             </div>
-                        </div>
-                        <div class="climate-fact">
-                            <i class="fas fa-clock"></i>
-                            <p><strong>Oregon State University Research:</strong> For over 100 years, OSU soil scientists 
-                            have been mapping Oregon's soils acre by acre. Their work shows it takes 500-1,000 years to 
-                            form one inch of topsoil in Oregon's climate—meaning a six-inch topsoil layer represents 
-                            3,000-6,000 years of soil formation.</p>
                         </div>
                     </div>
                     <div class="story-visual">
@@ -732,28 +740,28 @@
                 </div>
             </section>
 
-            <!-- Section 4: Soil Orders of CSNM -->
+            <!-- Section 4: Soil Orders of the Monument -->
             <section class="story-section soil-orders-section" data-section="soil-orders">
                 <div class="story-container-wrapper">
                     <!-- Text and Map Side by Side -->
                     <div class="story-content">
                         <div class="story-text">
-                            <h2>The Six Soil Orders of CSNM</h2>
+                            <h2>The Six Soil Orders of the Monument</h2>
                             <p class="story-lead">
                                 Soil taxonomy classifies soils into 12 orders based on their properties and formation 
-                                processes. CSNM hosts 6 of these orders, each representing different environmental 
+                                processes. The monument hosts 6 of these orders, each representing different environmental 
                                 conditions and stages of development.
                             </p>
                             <p>
                                 From young volcanic soils to ancient weathered profiles, these six orders tell the 
-                                story of CSNM's diverse landscapes and the processes that shaped them:
+                                story of the monument's diverse landscapes and the processes that shaped them:
                             </p>
                         </div>
                         <div class="story-visual">
                             <!-- Interactive Soil Orders Map for main section -->
                             <div id="soil-orders-map" class="story-interactive-map"></div>
                             <div class="map-caption">
-                                <strong>Interactive Map:</strong> Distribution of the six soil orders across CSNM, each color representing different 
+                                Distribution of the six soil orders across the monument, each color representing different 
                                 soil-forming processes and environmental conditions. Click polygons to explore.
                             </div>
                         </div>
@@ -764,7 +772,7 @@
                     <div class="soil-order-card">
                         <div class="order-header" style="background: #00A551;">
                             <h3>Mollisols</h3>
-                            <span class="order-percent">52.2% of CSNM</span>
+                            <span class="order-percent">52.2% of monument</span>
                         </div>
                         <div class="order-content">
                             <p><strong>The Prairie Soils:</strong> Dark, fertile soils with thick, organic-rich 
@@ -780,7 +788,7 @@
                     <div class="soil-order-card">
                         <div class="order-header" style="background: #CB7662;">
                             <h3>Inceptisols</h3>
-                            <span class="order-percent">30.9% of CSNM</span>
+                            <span class="order-percent">30.9% of monument</span>
                         </div>
                         <div class="order-content">
                             <p><strong>The Developing Soils:</strong> Young soils with weakly developed horizons. 
@@ -796,7 +804,7 @@
                     <div class="soil-order-card">
                         <div class="order-header" style="background: #EA028C;">
                             <h3>Andisols</h3>
-                            <span class="order-percent">11.1% of CSNM</span>
+                            <span class="order-percent">11.1% of monument</span>
                         </div>
                         <div class="order-content">
                             <p><strong>The Volcanic Soils:</strong> Young soils formed from volcanic ash and other 
@@ -813,7 +821,7 @@
                     <div class="soil-order-card">
                         <div class="order-header" style="background: #FFF100;">
                             <h3>Vertisols</h3>
-                            <span class="order-percent">5.6% of CSNM</span>
+                            <span class="order-percent">5.6% of monument</span>
                         </div>
                         <div class="order-content">
                             <p><strong>The Shrinking-Swelling Soils:</strong> Clay-rich soils that shrink when dry 
@@ -829,7 +837,7 @@
                     <div class="soil-order-card">
                         <div class="order-header" style="background: #B5D55D;">
                             <h3>Alfisols</h3>
-                            <span class="order-percent">0.2% of CSNM</span>
+                            <span class="order-percent">0.2% of monument</span>
                         </div>
                         <div class="order-content">
                             <p><strong>The Forest Soils:</strong> Moderately weathered soils typically found under 
@@ -837,7 +845,7 @@
                             and high base saturation.</p>
                             <ul>
                                 <li>Form under 10,000-100,000 years</li>
-                                <li>Very limited presence in CSNM</li>
+                                <li>Very limited presence in the monument</li>
                                 <li>Support productive forests</li>
                                 <li>Good water and nutrient retention</li>
                             </ul>
@@ -846,7 +854,7 @@
                     <div class="soil-order-card">
                         <div class="order-header" style="background: #75CDD6;">
                             <h3>Entisols</h3>
-                            <span class="order-percent"><1% of CSNM</span>
+                            <span class="order-percent"><1% of monument</span>
                         </div>
                         <div class="order-content">
                             <p><strong>The Young Soils:</strong> Recently formed soils with little or no profile 
@@ -854,7 +862,7 @@
                             <ul>
                                 <li>Less than 10,000 years old</li>
                                 <li>Minimal horizon development</li>
-                                <li>Minor presence in CSNM</li>
+                                <li>Minor presence in the monument</li>
                                 <li>Properties reflect parent material</li>
                             </ul>
                         </div>
@@ -862,8 +870,8 @@
                 </div>
             </section>
 
-            <!-- Section 5: Serpentine Soils (now renumbered) -->
-            <section class="story-section" data-section="serpentine">
+            <!-- Section: Soil Texture and Particle Classes -->
+            <section class="story-section" data-section="soil-properties">
                 <div class="story-content">
                     <div class="story-text">
                         <h2>Soil Texture and Particle Classes</h2>
@@ -872,7 +880,7 @@
                             determine water retention, nutrient availability, and plant growth potential.
                         </p>
                         <p>
-                            CSNM's diverse parent materials create soils ranging from coarse, rocky textures 
+                            The monument's diverse parent materials create soils ranging from coarse, rocky textures 
                             in steep terrain to fine, clay-rich soils in protected valleys. Each texture class 
                             supports different plant communities and ecological functions:
                         </p>
@@ -894,7 +902,7 @@
                         <!-- Interactive Particle Size Map -->
                         <div id="particle-size-map" class="story-interactive-map"></div>
                         <div class="map-caption">
-                            <strong>Interactive Map:</strong> Soil texture classes across CSNM. 
+                            Soil texture classes across the monument. 
                             Different colors represent particle size distributions from fine clays to coarse sands.
                         </div>
                         <div class="map-legend" style="display: none;">
@@ -951,21 +959,18 @@
                 </div>
             </section>
 
-            <!-- Land Cover and Vegetation section removed - content integrated into CLORPT Organisms section -->
-
-            <!-- Section 4: Soil Properties -->
-            <section class="story-section" data-section="properties">
+            <!-- Section: Soil Chemistry (separated from texture) -->
+            <section class="story-section" data-section="soil-chemistry">
                 <div class="story-content">
                     <div class="story-text">
-                        <h2>Soil Chemical Properties</h2>
+                        <h2>Soil Chemistry</h2>
                         <p class="story-lead">
-                            Understanding soil chemistry—from carbon storage to pH levels—reveals how 
+                            Understanding soil chemistry—from carbon storage to pH levels—reveals how
                             these soils support plant life and store essential nutrients.
                         </p>
                         <p>
-                            Scientists examine soil properties at different depths to understand 
-                            how water, nutrients, and organic matter move through the profile. 
-                            Two key properties tell important stories:
+                            Scientists examine properties at different depths to understand how water, nutrients,
+                            and organic matter move through the profile. Two key properties tell important stories:
                         </p>
                         <div class="property-selector">
                             <button class="property-btn active" data-property="oc">
@@ -980,7 +985,7 @@
                         <div class="property-description">
                             <div class="property-info active" data-info="oc">
                                 <h4>Organic Carbon Storage</h4>
-                                <p>CSNM's soils store significant amounts of carbon in organic matter, playing a crucial role in nutrient cycling and carbon sequestration. Darker areas show higher carbon content.</p>
+                                <p>The monument's soils store significant amounts of carbon in organic matter, playing a crucial role in nutrient cycling and carbon sequestration. Darker areas show higher carbon content.</p>
                             </div>
                             <div class="property-info" data-info="ph">
                                 <h4>Soil Acidity</h4>
@@ -1073,75 +1078,98 @@
                 </div>
             </section>
 
-            <!-- Section 7: Conservation -->
-            <section class="story-section" data-section="conservation">
+            <!-- Section: The Serpentine Challenge (New Dedicated Section) -->
+            <section class="story-section" data-section="serpentine">
                 <div class="story-content">
                     <div class="story-text">
-                        <h2>Geological Foundation</h2>
+                        <h2>The Serpentine Challenge</h2>
                         <p class="story-lead">
-                            The bedrock beneath CSNM tells a story of ancient oceans, volcanic eruptions, 
-                            and mountain-building events that created the foundation for today's soils.
+                            The Klamath-Siskiyou region contains North America's largest serpentine area,
+                            where toxic soils have created islands of endemic species found nowhere else on Earth.
                         </p>
                         <p>
-                            Understanding lithology—the physical and chemical characteristics of rocks—
-                            helps explain why different areas of the monument have such distinct soil 
-                            properties and support different ecosystems:
+                            Serpentine soils, derived from ultramafic rocks formed deep in Earth's mantle, present one of nature's
+                            most extreme challenges for plant life. These soils are characterized by toxic levels of heavy metals,
+                            severe nutrient imbalances, and a hostile chemistry that excludes most plant species.
                         </p>
-                        <div class="conservation-goals">
-                            <div class="goal-item">
-                                <i class="fas fa-mountain"></i>
-                                <div>
-                                    <h4>Volcanic Origins</h4>
-                                    <p>Volcanic rocks and ash deposits create nutrient-rich parent materials that weather into fertile soils</p>
+                        <div class="serpentine-grid">
+                        <div class="serpentine-property">
+                            <h4>Extreme Chemistry</h4>
+                            <div class="chemistry-list">
+                                <div class="chemistry-item">
+                                    <span class="label">Ca:Mg ratio:</span>
+                                    <span class="value">&lt; 1 (toxic)</span>
+                                </div>
+                                <div class="chemistry-item">
+                                    <span class="label">Nickel:</span>
+                                    <span class="value">Up to 3,800 µg/g</span>
+                                </div>
+                                <div class="chemistry-item">
+                                    <span class="label">Chromium:</span>
+                                    <span class="value">Elevated</span>
+                                </div>
+                                <div class="chemistry-item">
+                                    <span class="label">Nitrogen:</span>
+                                    <span class="value">Severely limited</span>
                                 </div>
                             </div>
-                            <div class="goal-item">
-                                <i class="fas fa-gem"></i>
-                                <div>
-                                    <h4>Serpentine Complex</h4>
-                                    <p>Ancient oceanic crust and mantle rocks create unique, mineral-rich soils with specialized plant communities</p>
+                        </div>
+                        <div class="serpentine-property">
+                            <h4>Plant Survival Strategies</h4>
+                            <div class="adaptation-table">
+                                <div class="adaptation-row">
+                                    <span class="adaptation-label">Hyperaccumulators:</span>
+                                    <span class="adaptation-desc">Concentrate metals in leaves</span>
+                                </div>
+                                <div class="adaptation-row">
+                                    <span class="adaptation-label">Metal excluders:</span>
+                                    <span class="adaptation-desc">Block toxic uptake</span>
+                                </div>
+                                <div class="adaptation-row">
+                                    <span class="adaptation-label">Carnivory:</span>
+                                    <span class="adaptation-desc">Darlingtonia captures insects for nitrogen</span>
+                                </div>
+                                <div class="adaptation-row">
+                                    <span class="adaptation-label">Stunted growth:</span>
+                                    <span class="adaptation-desc">Trees become shrubs to survive</span>
                                 </div>
                             </div>
-                            <div class="goal-item">
-                                <i class="fas fa-layer-group"></i>
-                                <div>
-                                    <h4>Sedimentary Layers</h4>
-                                    <p>Layered sedimentary rocks provide varied mineral compositions and drainage characteristics</p>
-                                </div>
+                        </div>
+                        <div class="serpentine-property">
+                            <h4>Endemic Species</h4>
+                            <div class="endemic-examples">
+                                <span class="endemic-tag">Epilobium siskiyouense</span>
+                                <span class="endemic-tag">Eriogonum alpinum</span>
+                                <span class="endemic-tag">Darlingtonia californica</span>
+                                <span class="endemic-tag">Streptanthus howellii</span>
                             </div>
-                            <div class="goal-item">
-                                <i class="fas fa-fire"></i>
-                                <div>
-                                    <h4>Metamorphic Rocks</h4>
-                                    <p>Heat and pressure-transformed rocks create complex mineral assemblages that influence soil chemistry</p>
-                                </div>
+                            <p class="endemic-note">Over 140 endemic species adapted to serpentine</p>
                             </div>
+                        </div>
+                        <div class="serpentine-citation">
+                        <i class="fas fa-info-circle"></i>
+                        Source: <a href="https://www.fs.usda.gov/wildflowers/beauty/serpentines/index.shtml" target="_blank" rel="noopener">
+                            USDA Forest Service - Serpentine Soils</a>
                         </div>
                     </div>
                     <div class="story-visual">
-                        <!-- Interactive Parent Material Map -->
-                        <div id="parent-material-map" class="story-interactive-map"></div>
-                        <div class="map-caption">
-                            <strong>Interactive Map:</strong> Geological parent materials underlying CSNM soils. 
-                            Colors represent different rock types and sediment sources that weather into soil.
-                        </div>
-                        <div class="conservation-stats">
-                            <div class="stat-card">
-                                <span class="stat-value">25+</span>
-                                <span class="stat-desc">Endemic plant species</span>
+                        <div class="serpentine-visual-container">
+                            <div class="serpentine-map-placeholder">
+                                <div class="serpentine-overlay">
+                                    <i class="fas fa-gem"></i>
+                                    <h3>Serpentine Outcrops</h3>
+                                    <p>These ultramafic soils create botanical islands of endemic species</p>
+                                </div>
                             </div>
-                            <div class="stat-card">
-                                <span class="stat-value">200+</span>
-                                <span class="stat-desc">Rare plant species</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-value">4</span>
-                                <span class="stat-desc">Major ecoregions</span>
+                            <div class="map-caption">
+                                <strong>Serpentine Challenge:</strong> Over 140 plant species have evolved to survive in these toxic soils,
+                                creating one of North America's most remarkable examples of adaptive evolution.
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
+
 
             <!-- Section 8: Call to Action -->
             <section class="story-section final-section" data-section="explore">
@@ -1149,7 +1177,7 @@
                     <div class="story-text centered">
                         <h2>Explore the Data</h2>
                         <p class="story-lead">
-                            You've journeyed through the complex story of CSNM's soils—from their ancient geological 
+                            You've journeyed through the complex story of the monument's soils—from their ancient geological 
                             origins to the living ecosystems they support today. Now it's time to explore this data 
                             yourself through our interactive mapping tools.
                         </p>
@@ -1174,7 +1202,7 @@
                     <div class="story-visual">
                         <div class="final-image">
                             <div class="final-overlay">
-                                <h3>Discover CSNM's Soil Story</h3>
+                                <h3>Discover the Monument's Soil Story</h3>
                                 <p>Interactive maps • Real data • Scientific insights</p>
                             </div>
                         </div>
