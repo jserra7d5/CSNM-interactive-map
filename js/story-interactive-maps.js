@@ -37,10 +37,14 @@ class StoryInteractiveMaps {
             }
             this.data.boundary = boundary;
             
-            // Initialize raster manager for handling TIFF files
-            if (typeof RasterManager !== 'undefined') {
+            // Use the global raster manager instance (same as main app)
+            if (window.rasterManager) {
+                this.rasterManager = window.rasterManager;
+                console.log('Using global RasterManager for story maps');
+            } else if (typeof RasterManager !== 'undefined') {
+                // Fallback: create new instance if global doesn't exist
                 this.rasterManager = new RasterManager();
-                console.log('RasterManager initialized for story maps');
+                console.log('Created new RasterManager for story maps');
             }
             
             this.initialized = true;
@@ -448,7 +452,7 @@ class StoryInteractiveMaps {
             return this.maps.get(containerId);
         }
         
-        // Create the map
+        // Create the map with explicit CRS
         const map = L.map(containerId, {
             center: options.center || [42.1, -122.466],
             zoom: options.zoom || 10,
@@ -459,7 +463,8 @@ class StoryInteractiveMaps {
             doubleClickZoom: true,
             boxZoom: false,
             keyboard: false,
-            attributionControl: false
+            attributionControl: false,
+            crs: L.CRS.EPSG3857  // Explicitly set Web Mercator
         });
         
         // Add minimal attribution
@@ -500,10 +505,10 @@ class StoryInteractiveMaps {
     async addRasterLayer(containerId, layerType, options = {}) {
         const mapObj = this.maps.get(containerId);
         if (!mapObj || !this.rasterManager) return;
-        
+
         try {
             let rasterResult;
-            
+
             switch (layerType) {
                 case 'elevation':
                     // Combine elevation with hillshade
@@ -511,31 +516,27 @@ class StoryInteractiveMaps {
                         includeHillshade: true
                     });
                     break;
-                    
+
                 case 'landcover':
                     rasterResult = await this.rasterManager.createTiffLayer('nlcd', null);
                     break;
-                    
+
                 case 'precipitation':
                     rasterResult = await this.rasterManager.createTiffLayer('precipitationAnnual', null);
                     break;
-                    
+
                 case 'temperature':
                     rasterResult = await this.rasterManager.createTiffLayer('meanTemp', null);
                     break;
-                    
+
                 case 'oc':
-                    const ocDepth = options.depth || 0; // Default to 0-5cm
-                    rasterResult = await this.rasterManager.createTiffLayer('oc', ocDepth);
-                    this.currentDepths.set(containerId, ocDepth);
-                    break;
-                    
                 case 'ph':
-                    const phDepth = options.depth || 0; // Default to 0-5cm
-                    rasterResult = await this.rasterManager.createTiffLayer('ph', phDepth);
-                    this.currentDepths.set(containerId, phDepth);
+                    // Use custom rendering for OC/pH to fix alignment issues
+                    const depth = options.depth || 0;
+                    rasterResult = await this.createCustomSoilRasterLayer(mapObj.map, layerType, depth);
+                    this.currentDepths.set(containerId, depth);
                     break;
-                    
+
                 default:
                     console.warn(`Unknown raster layer type: ${layerType}`);
                     return;
@@ -544,9 +545,15 @@ class StoryInteractiveMaps {
             if (rasterResult && rasterResult.layer) {
                 rasterResult.layer.addTo(mapObj.map);
                 mapObj.layers.raster = rasterResult.layer;
-                
+
                 // Store data range for legend creation
                 mapObj.dataRange = rasterResult.dataRange;
+
+                // Force map to properly recalculate after adding raster
+                setTimeout(() => {
+                    mapObj.map.invalidateSize();
+                    // Don't change the zoom/bounds - let the raster stretch to fit
+                }, 100);
             }
             
         } catch (error) {
@@ -604,6 +611,198 @@ class StoryInteractiveMaps {
         await this.addRasterLayer(containerId, newType, { depth: currentDepth });
     }
     
+    // Create custom soil raster layer with proper alignment
+    async createCustomSoilRasterLayer(map, property, depth) {
+        console.log(`Creating custom raster layer for ${property} at depth ${depth}`);
+
+        // Get depth name for legend
+        const depthNames = ['0-5cm', '5-15cm', '15-30cm', '30-60cm', '60-100cm', '100-200cm'];
+        const depthName = depthNames[depth] || '0-5cm';
+
+        // Get the TIFF data directly
+        const filename = this.rasterManager.getRasterFilename(property, depth);
+        const response = await fetch(filename);
+        const arrayBuffer = await response.arrayBuffer();
+
+        // Load TIFF using GeoTIFF library
+        const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer);
+        const image = await tiff.getImage();
+        const rasters = await image.readRasters();
+        const data = rasters[0];
+
+        const width = image.getWidth();
+        const height = image.getHeight();
+        const bbox = image.getBoundingBox(); // [west, south, east, north]
+
+        console.log(`TIFF dimensions: ${width}x${height}, bbox: ${bbox}`);
+
+        // Monument bounds from boundary file (verified correct)
+        const monumentBounds = {
+            west: -122.6740,
+            south: 41.9459,
+            east: -122.1502,
+            north: 42.3171
+        };
+
+        // Calculate actual data range - matching main map's approach
+        // Filter out no-data values (0, -9999, null, NaN)
+        const validData = Array.from(data).filter(v => {
+            return v !== null && !isNaN(v) && v !== -9999 && v !== 0 && v > 0;
+        });
+
+        // Calculate min/max/mean like the main map
+        let dataMin, dataMax, mean;
+        if (validData.length > 0) {
+            dataMin = validData.reduce((acc, val) => Math.min(acc, val), validData[0]);
+            dataMax = validData.reduce((acc, val) => Math.max(acc, val), validData[0]);
+            mean = validData.reduce((a, b) => a + b, 0) / validData.length;
+        } else {
+            dataMin = dataMax = mean = 0;
+        }
+
+        console.log(`🌍 RASTER: ${property} data range: min=${dataMin.toFixed(2)}, max=${dataMax.toFixed(2)}, mean=${mean.toFixed(2)}, valid values: ${validData.length}`);
+
+        // Store data and bounds for tile rendering
+        const tiffData = data;
+        const tiffWidth = width;
+        const tiffHeight = height;
+        const soilProperty = property;
+
+        // Color functions need to be defined outside the GridLayer
+        const getOCColor = function(normalized) {
+            // Brown color scale for organic carbon
+            if (normalized < 0.25) {
+                return {r: 255, g: 248, b: 220}; // Light cream
+            } else if (normalized < 0.5) {
+                return {r: 222, g: 184, b: 135}; // Tan
+            } else if (normalized < 0.75) {
+                return {r: 210, g: 105, b: 30}; // Brown
+            } else {
+                return {r: 139, g: 69, b: 19}; // Dark brown
+            }
+        };
+
+        const getPHColor = function(normalized) {
+            // Rainbow scale for pH
+            if (normalized < 0.25) {
+                return {r: 255, g: 0, b: 0}; // Red (acidic)
+            } else if (normalized < 0.5) {
+                return {r: 255, g: 255, b: 0}; // Yellow
+            } else if (normalized < 0.75) {
+                return {r: 0, g: 255, b: 0}; // Green
+            } else {
+                return {r: 0, g: 0, b: 255}; // Blue (alkaline)
+            }
+        };
+
+        // Create custom GridLayer for on-the-fly rendering
+        const CustomRasterLayer = L.GridLayer.extend({
+            createTile: function(coords) {
+                const tile = document.createElement('canvas');
+                const ctx = tile.getContext('2d');
+                tile.width = tile.height = 256;
+
+                // Get tile bounds in lat/lng
+                const tileBounds = this._tileCoordsToBounds(coords);
+                const west = tileBounds.getWest();
+                const east = tileBounds.getEast();
+                const south = tileBounds.getSouth();
+                const north = tileBounds.getNorth();
+
+                // Create ImageData for the tile
+                const imageData = ctx.createImageData(256, 256);
+
+                // Fill tile pixels by sampling from TIFF data
+                for (let py = 0; py < 256; py++) {
+                    for (let px = 0; px < 256; px++) {
+                        // Calculate lat/lng for this pixel
+                        const lng = west + (px / 256) * (east - west);
+                        const lat = north - (py / 256) * (north - south);
+
+                        // Map to TIFF pixel coordinates using monument bounds (with interpolation)
+                        const tiffXFloat = (lng - monumentBounds.west) /
+                                          (monumentBounds.east - monumentBounds.west) * (tiffWidth - 1);
+                        const tiffYFloat = (monumentBounds.north - lat) /
+                                          (monumentBounds.north - monumentBounds.south) * (tiffHeight - 1);
+
+                        const tiffX = Math.floor(tiffXFloat);
+                        const tiffY = Math.floor(tiffYFloat);
+
+                        // Check if within TIFF bounds
+                        if (tiffX >= 0 && tiffX < tiffWidth - 1 && tiffY >= 0 && tiffY < tiffHeight - 1) {
+                            // Bilinear interpolation for smoother rendering
+                            const fx = tiffXFloat - tiffX;
+                            const fy = tiffYFloat - tiffY;
+
+                            const v00 = tiffData[tiffY * tiffWidth + tiffX];
+                            const v10 = tiffData[tiffY * tiffWidth + tiffX + 1];
+                            const v01 = tiffData[(tiffY + 1) * tiffWidth + tiffX];
+                            const v11 = tiffData[(tiffY + 1) * tiffWidth + tiffX + 1];
+
+                            // Check if all values are valid for interpolation
+                            if (v00 <= 0 || v10 <= 0 || v01 <= 0 || v11 <= 0 ||
+                                isNaN(v00) || isNaN(v10) || isNaN(v01) || isNaN(v11)) {
+                                continue; // Skip this pixel if any surrounding value is invalid
+                            }
+
+                            // Interpolate
+                            const value = v00 * (1 - fx) * (1 - fy) +
+                                         v10 * fx * (1 - fy) +
+                                         v01 * (1 - fx) * fy +
+                                         v11 * fx * fy;
+
+                            // Skip if interpolated value is invalid
+                            if (value <= 0 || isNaN(value)) {
+                                continue;
+                            }
+
+                            // Get color for value
+                            let color;
+                            if (soilProperty === 'oc') {
+                                // Organic carbon color scale using actual data range
+                                const normalized = Math.min(Math.max((value - dataMin) / (dataMax - dataMin), 0), 1);
+                                color = getOCColor(normalized);
+                            } else {
+                                // pH color scale - pH typically ranges 4.5-7.5
+                                // But use actual data range if available
+                                const phMin = dataMin / 10; // pH values might be scaled by 10
+                                const phMax = dataMax / 10;
+                                const phValue = value / 10;
+                                const normalized = Math.min(Math.max((phValue - phMin) / (phMax - phMin), 0), 1);
+                                color = getPHColor(normalized);
+                            }
+
+                            // Set pixel
+                            const idx = (py * 256 + px) * 4;
+                            imageData.data[idx] = color.r;
+                            imageData.data[idx + 1] = color.g;
+                            imageData.data[idx + 2] = color.b;
+                            imageData.data[idx + 3] = value > 0 ? 230 : 0; // Transparency
+                        }
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                return tile;
+            }
+        });
+
+        // Create and return the layer
+        const propertyName = property === 'oc' ? 'Organic Carbon' : 'Soil pH';
+        const layer = new CustomRasterLayer({
+            opacity: 0.9,
+            attribution: '',
+            name: `${propertyName} (${depthName})`,
+            title: `${propertyName} (${depthName})`
+        });
+
+        // Return layer and data range (mean was already calculated earlier)
+        return {
+            layer: layer,
+            dataRange: { min: dataMin, max: dataMax, mean }
+        };
+    }
+
     // Cleanup all maps
     destroy() {
         for (const [containerId, mapObj] of this.maps) {

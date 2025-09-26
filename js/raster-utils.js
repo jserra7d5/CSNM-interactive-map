@@ -462,15 +462,34 @@ class RasterManager {
         }, 100); // Small delay to ensure 100% is visible before hiding
         
         // Create Leaflet canvas overlay
-        const bounds = [
-            [bbox[1], bbox[0]], // SW corner
-            [bbox[3], bbox[2]]  // NE corner
-        ];
+        // For OC/pH, completely override the bounds to match the monument exactly
+        let bounds;
+
+        if (property === 'oc' || property === 'ph') {
+            // Force exact monument bounds regardless of what TIFF says
+            // These bounds match the red boundary exactly
+            bounds = [
+                [41.9459, -122.6740],  // SW corner - exact from boundary
+                [42.3171, -122.1502]   // NE corner - exact from boundary
+            ];
+            console.log(`🗺️ RASTER BOUNDS: Forcing monument bounds for ${property}`);
+            console.log(`   Original TIFF bbox was: [${bbox}]`);
+            console.log(`   Using forced bounds: SW[${bounds[0]}] NE[${bounds[1]}]`);
+        } else {
+            // Other rasters use their natural bounds
+            bounds = [
+                [bbox[1], bbox[0]], // SW corner (lat, lng)
+                [bbox[3], bbox[2]]  // NE corner (lat, lng)
+            ];
+            console.log(`🗺️ RASTER BOUNDS for ${property}: using natural TIFF bounds`);
+        }
         
         const overlay = L.imageOverlay(canvas.toDataURL(), bounds, {
             opacity: 0.9,
             interactive: true,
-            className: 'crisp-raster'
+            className: 'crisp-raster',
+            // Ensure the raster is properly positioned
+            attribution: `${property.toUpperCase()} raster`
         });
         
         // Add click handler for raster values

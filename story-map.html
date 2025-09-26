@@ -993,49 +993,49 @@
                             <!-- Interactive Soil Property Maps (toggled by buttons) -->
                             <div id="properties-oc-map" class="story-interactive-map" style="height: 450px;"></div>
                             <div id="properties-ph-map" class="story-interactive-map" style="display: none; height: 450px;"></div>
-                            
-                            <!-- Depth selector for soil properties -->
-                            <div class="depth-selector">
-                                <label for="properties-depth">Depth:</label>
-                                <select id="properties-depth" class="depth-dropdown">
-                                    <option value="0">0-5 cm</option>
-                                    <option value="1">5-15 cm</option>
-                                    <option value="2">15-30 cm</option>
-                                    <option value="3">30-60 cm</option>
-                                    <option value="4">60-100 cm</option>
-                                    <option value="5">100-200 cm</option>
-                                </select>
-                            </div>
                         </div>
                         
                         <!-- Dynamic legends for OC and pH -->
                         <div id="oc-legend" class="map-legend">
-                            <h5>Organic Carbon (g/kg) - 0-5cm depth</h5>
+                            <h5>Organic Carbon (g/kg)</h5>
                             <div class="gradient-legend">
                                 <div class="gradient-bar" style="background: linear-gradient(to right, #FFF8DC, #DEB887, #D2691E, #8B4513, #654321);"></div>
-                                <div class="gradient-labels">
-                                    <span>0</span>
-                                    <span>20</span>
-                                    <span>40</span>
-                                    <span>60</span>
-                                    <span>80</span>
-                                    <span>100+</span>
+                                <div class="gradient-ticks">
+                                    <span class="tick"></span>
+                                    <span class="tick"></span>
+                                    <span class="tick"></span>
+                                    <span class="tick"></span>
+                                    <span class="tick"></span>
+                                </div>
+                                <div class="gradient-labels" id="oc-legend-labels">
+                                    <!-- Values will be dynamically updated -->
+                                    <span>-</span>
+                                    <span>-</span>
+                                    <span>-</span>
+                                    <span>-</span>
+                                    <span>-</span>
                                 </div>
                             </div>
                         </div>
                         
                         <div id="ph-legend" class="map-legend" style="display: none;">
-                            <h5>Soil pH - 0-5cm depth</h5>
+                            <h5>Soil pH</h5>
                             <div class="gradient-legend">
                                 <div class="gradient-bar" style="background: linear-gradient(to right, #FF0000, #FF4500, #FFA500, #FFFF00, #32CD32, #00BFFF, #4169E1, #0000FF);"></div>
-                                <div class="gradient-labels">
-                                    <span>4.5</span>
-                                    <span>5.0</span>
-                                    <span>5.5</span>
-                                    <span>6.0</span>
-                                    <span>6.5</span>
-                                    <span>7.0</span>
-                                    <span>7.5</span>
+                                <div class="gradient-ticks">
+                                    <span class="tick"></span>
+                                    <span class="tick"></span>
+                                    <span class="tick"></span>
+                                    <span class="tick"></span>
+                                    <span class="tick"></span>
+                                </div>
+                                <div class="gradient-labels" id="ph-legend-labels">
+                                    <!-- Values will be dynamically updated -->
+                                    <span>-</span>
+                                    <span>-</span>
+                                    <span>-</span>
+                                    <span>-</span>
+                                    <span>-</span>
                                 </div>
                             </div>
                         </div>
@@ -1058,6 +1058,14 @@
                                 <div class="depth-option" data-depth="3">
                                     <span class="depth-label">Deep</span>
                                     <span class="depth-range">30-60 cm</span>
+                                </div>
+                                <div class="depth-option" data-depth="4">
+                                    <span class="depth-label">Deeper</span>
+                                    <span class="depth-range">60-100 cm</span>
+                                </div>
+                                <div class="depth-option" data-depth="5">
+                                    <span class="depth-label">Deepest</span>
+                                    <span class="depth-range">100-200 cm</span>
                                 </div>
                             </div>
                         </div>

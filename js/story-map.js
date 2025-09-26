@@ -281,22 +281,44 @@ class StoryMap {
                         window.dispatchEvent(new Event('resize'));
                     }, 200);
                 }
-                
-                // Add organic carbon legend
-                const ocLegend = `
-                    <h5>Organic Carbon (g/kg) - 0-5cm depth</h5>
-                    <div class="gradient-legend">
-                        <div class="gradient-bar" style="background: linear-gradient(to right, #FFF8DC, #DEB887, #D2691E, #8B4513, #654321);"></div>
-                        <div class="gradient-labels">
-                            <span>0</span>
-                            <span>20</span>
-                            <span>40</span>
-                            <span>60</span>
-                            <span>80</span>
-                        </div>
-                    </div>
-                `;
-                this.interactiveMaps.addLegend('properties-oc-map', ocLegend);
+
+                // Add legend based on actual data range - matching main map approach
+                setTimeout(() => {
+                    const mapObj = this.interactiveMaps.maps.get('properties-oc-map');
+                    console.log('OC map object:', mapObj);
+                    console.log('OC dataRange:', mapObj?.dataRange);
+                    if (mapObj && mapObj.dataRange) {
+                        const { min, max } = mapObj.dataRange;
+                        console.log(`OC range: ${min} - ${max}`);
+                        // Create 5 evenly spaced values like main map
+                        const values = [];
+                        for (let i = 0; i < 5; i++) {
+                            const value = min + (max - min) * (i / 4);
+                            values.push(value.toFixed(1));
+                        }
+                        const ocLegend = `
+                            <h5>Soil Organic Carbon (0-5 cm) [g/kg]</h5>
+                            <div class="gradient-legend">
+                                <div class="gradient-bar" style="background: linear-gradient(to right, #FFF8DC, #DEB887, #D2691E, #8B4513, #654321);"></div>
+                                <div class="gradient-labels">
+                                    ${values.map(v => `<span>${v}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                        // Don't add Leaflet control legend - only use HTML legend
+
+                        // Update HTML legend too
+                        const ocLabelsContainer = document.getElementById('oc-legend-labels');
+                        if (ocLabelsContainer) {
+                            const spans = ocLabelsContainer.querySelectorAll('span');
+                            if (spans.length >= 5) {
+                                for (let i = 0; i < 5; i++) {
+                                    spans[i].textContent = values[i];
+                                }
+                            }
+                        }
+                    }
+                }, 2000);
                 console.log('Organic carbon map created successfully');
             } catch (error) {
                 console.error('Error creating organic carbon map:', error);
@@ -319,22 +341,43 @@ class StoryMap {
                         window.dispatchEvent(new Event('resize'));
                     }, 200);
                 }
-                
-                // Add pH legend
-                const phLegend = `
-                    <h5>Soil pH - 0-5cm depth</h5>
-                    <div class="gradient-legend">
-                        <div class="gradient-bar" style="background: linear-gradient(to right, #FF0000, #FF6600, #FFFF00, #00FF00, #0000FF);"></div>
-                        <div class="gradient-labels">
-                            <span>4.5</span>
-                            <span>5.5</span>
-                            <span>6.5</span>
-                            <span>7.5</span>
-                            <span>8.5</span>
-                        </div>
-                    </div>
-                `;
-                this.interactiveMaps.addLegend('properties-ph-map', phLegend);
+
+                // Add legend based on actual data range - matching main map approach
+                setTimeout(() => {
+                    const mapObj = this.interactiveMaps.maps.get('properties-ph-map');
+                    if (mapObj && mapObj.dataRange) {
+                        const { min, max } = mapObj.dataRange;
+                        // Create 5 evenly spaced values like OC
+                        const values = [];
+                        for (let i = 0; i < 5; i++) {
+                            const value = min + (max - min) * (i / 4);
+                            // pH values are scaled by 10 in the data
+                            const displayValue = value > 10 ? (value / 10).toFixed(1) : value.toFixed(1);
+                            values.push(displayValue);
+                        }
+                        const phLegend = `
+                            <h5>Soil pH</h5>
+                            <div class="gradient-legend">
+                                <div class="gradient-bar" style="background: linear-gradient(to right, #FF0000, #FF4500, #FFA500, #FFFF00, #32CD32, #00BFFF, #4169E1, #0000FF);"></div>
+                                <div class="gradient-labels">
+                                    ${values.map(v => `<span>${v}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                        // Don't add Leaflet control legend - only use HTML legend
+
+                        // Update HTML legend too
+                        const phLabelsContainer = document.getElementById('ph-legend-labels');
+                        if (phLabelsContainer) {
+                            const spans = phLabelsContainer.querySelectorAll('span');
+                            if (spans.length >= 5) {
+                                for (let i = 0; i < 5; i++) {
+                                    spans[i].textContent = values[i];
+                                }
+                            }
+                        }
+                    }
+                }, 2000);
                 console.log('pH map created successfully');
             } catch (error) {
                 console.error('Error creating pH map:', error);
@@ -512,29 +555,40 @@ class StoryMap {
             }
         }
         
-        // Update depth selector in case of depth-specific updates
-        const depthSelector = document.getElementById('properties-depth');
-        if (depthSelector && this.interactiveMaps) {
-            const depth = parseInt(depthSelector.value) || 0;
+        // Update depth based on dropdown or active depth option
+        const depthDropdown = document.getElementById('properties-depth');
+        if (depthDropdown && this.interactiveMaps) {
+            const depth = parseInt(depthDropdown.value) || 0;
             this.updatePropertiesMap(property, depth);
+        } else {
+            const activeDepthOption = document.querySelector('.depth-option.active');
+            if (activeDepthOption && this.interactiveMaps) {
+                const depth = parseInt(activeDepthOption.getAttribute('data-depth')) || 0;
+                this.updatePropertiesMap(property, depth);
+            }
         }
     }
     
     setupDepthSelector() {
-        // Handle both old depth options and new dropdown
+        // Handle depth option buttons
         const depthOptions = document.querySelectorAll('.depth-option');
         const depthDropdown = document.getElementById('properties-depth');
-        
-        // Old style depth options (if they exist)
+
+        // Depth option buttons
         depthOptions.forEach(option => {
             option.addEventListener('click', () => {
                 const depth = parseInt(option.getAttribute('data-depth'));
                 console.log(`Depth option clicked: ${depth}`);
-                
+
                 // Update active states
                 depthOptions.forEach(o => o.classList.remove('active'));
                 option.classList.add('active');
-                
+
+                // Sync with dropdown if it exists
+                if (depthDropdown) {
+                    depthDropdown.value = depth;
+                }
+
                 // Update properties map with new depth
                 const activeProperty = document.querySelector('.property-btn.active');
                 if (activeProperty) {
@@ -544,24 +598,28 @@ class StoryMap {
                 }
             });
         });
-        
-        // New dropdown depth selector
+
+        // Depth dropdown selector
         if (depthDropdown) {
             console.log('Setting up depth dropdown listener');
             depthDropdown.addEventListener('change', (e) => {
                 const depth = parseInt(e.target.value);
                 console.log(`Depth dropdown changed to: ${depth}`);
+
+                // Sync with depth option buttons if they exist
+                depthOptions.forEach(o => o.classList.remove('active'));
+                const matchingOption = document.querySelector(`.depth-option[data-depth="${depth}"]`);
+                if (matchingOption) {
+                    matchingOption.classList.add('active');
+                }
+
                 const activeProperty = document.querySelector('.property-btn.active');
                 if (activeProperty) {
                     const property = activeProperty.getAttribute('data-property');
                     console.log(`Updating ${property} map to depth ${depth}`);
                     this.updatePropertiesMap(property, depth);
-                } else {
-                    console.warn('No active property button found');
                 }
             });
-        } else {
-            console.warn('Depth dropdown not found');
         }
     }
     
@@ -623,53 +681,95 @@ class StoryMap {
             
             // Update legend with new depth
             const depthLabels = ['0-5cm', '5-15cm', '15-30cm', '30-60cm', '60-100cm', '100-200cm'];
-            
-            // Update the legend on the map
-            let newLegend;
-            if (property === 'oc') {
-                newLegend = `
-                    <h5>Organic Carbon (g/kg) - ${depthLabels[depth]} depth</h5>
-                    <div class="gradient-legend">
-                        <div class="gradient-bar" style="background: linear-gradient(to right, #FFF8DC, #DEB887, #D2691E, #8B4513, #654321);"></div>
-                        <div class="gradient-labels">
-                            <span>0</span>
-                            <span>20</span>
-                            <span>40</span>
-                            <span>60</span>
-                            <span>80</span>
-                        </div>
-                    </div>
-                `;
-            } else {
-                newLegend = `
-                    <h5>Soil pH - ${depthLabels[depth]} depth</h5>
-                    <div class="gradient-legend">
-                        <div class="gradient-bar" style="background: linear-gradient(to right, #FF0000, #FF6600, #FFFF00, #00FF00, #0000FF);"></div>
-                        <div class="gradient-labels">
-                            <span>4.5</span>
-                            <span>5.5</span>
-                            <span>6.5</span>
-                            <span>7.5</span>
-                            <span>8.5</span>
-                        </div>
-                    </div>
-                `;
-            }
-            this.interactiveMaps.addLegend(mapId, newLegend);
-            
-            // Also update the HTML legend if it exists
-            const legendId = property === 'oc' ? 'oc-legend' : 'ph-legend';
-            const legend = document.getElementById(legendId);
-            if (legend) {
-                const title = legend.querySelector('h5');
-                if (title) {
+
+            // Update the Leaflet control legend with actual data range - matching main map
+            setTimeout(() => {
+                const mapObj = this.interactiveMaps.maps.get(mapId);
+                if (mapObj && mapObj.dataRange) {
+                    const { min, max } = mapObj.dataRange;
+                    const depthLabel = depthLabels[depth];
+                    let newLegend;
+
                     if (property === 'oc') {
-                        title.textContent = `Organic Carbon (g/kg) - ${depthLabels[depth]} depth`;
+                        // Create 5 evenly spaced values
+                        const values = [];
+                        for (let i = 0; i < 5; i++) {
+                            const value = min + (max - min) * (i / 4);
+                            values.push(value.toFixed(1));
+                        }
+                        newLegend = `
+                            <h5>Soil Organic Carbon (${depthLabel}) [g/kg]</h5>
+                            <div class="gradient-legend">
+                                <div class="gradient-bar" style="background: linear-gradient(to right, #FFF8DC, #DEB887, #D2691E, #8B4513, #654321);"></div>
+                                <div class="gradient-labels">
+                                    ${values.map(v => `<span>${v}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
                     } else {
-                        title.textContent = `Soil pH - ${depthLabels[depth]} depth`;
+                        // pH - create 5 evenly spaced values like OC
+                        const values = [];
+                        for (let i = 0; i < 5; i++) {
+                            const value = min + (max - min) * (i / 4);
+                            // pH values are scaled by 10 in the data
+                            const displayValue = value > 10 ? (value / 10).toFixed(1) : value.toFixed(1);
+                            values.push(displayValue);
+                        }
+                        newLegend = `
+                            <h5>Soil pH (${depthLabel})</h5>
+                            <div class="gradient-legend">
+                                <div class="gradient-bar" style="background: linear-gradient(to right, #FF0000, #FF4500, #FFA500, #FFFF00, #32CD32, #00BFFF, #4169E1, #0000FF);"></div>
+                                <div class="gradient-labels">
+                                    ${values.map(v => `<span>${v}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    // Don't add Leaflet control legend - only use HTML legend
+                }
+            }, 500);
+
+            // Also update the HTML legend with actual values
+            setTimeout(() => {
+                const mapObj = this.interactiveMaps.maps.get(mapId);
+                if (mapObj && mapObj.dataRange) {
+                    const { min, max } = mapObj.dataRange;
+                    const legendId = property === 'oc' ? 'oc-legend' : 'ph-legend';
+                    const labelsId = property === 'oc' ? 'oc-legend-labels' : 'ph-legend-labels';
+
+                    const legend = document.getElementById(legendId);
+                    const labelsContainer = document.getElementById(labelsId);
+
+                    if (legend) {
+                        const title = legend.querySelector('h5');
+                        if (title) {
+                            if (property === 'oc') {
+                                title.textContent = `Organic Carbon (g/kg) - ${depthLabels[depth]}`;
+                            } else {
+                                title.textContent = `Soil pH - ${depthLabels[depth]}`;
+                            }
+                        }
+                    }
+
+                    if (labelsContainer) {
+                        const spans = labelsContainer.querySelectorAll('span');
+                        if (property === 'oc' && spans.length >= 5) {
+                            // Update 5 labels for OC
+                            for (let i = 0; i < 5; i++) {
+                                const value = min + (max - min) * (i / 4);
+                                spans[i].textContent = value.toFixed(1);
+                            }
+                        } else if (property === 'ph' && spans.length >= 5) {
+                            // Update 5 labels for pH
+                            for (let i = 0; i < 5; i++) {
+                                const value = min + (max - min) * (i / 4);
+                                const displayValue = value > 10 ? (value / 10).toFixed(1) : value.toFixed(1);
+                                spans[i].textContent = displayValue;
+                            }
+                        }
                     }
                 }
-            }
+            }, 600);
         }
     }
     

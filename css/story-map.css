@@ -395,10 +395,13 @@ html {
 }
 
 /* Force proper aspect ratio for OC/pH maps */
+/* Monument is roughly square when corrected for latitude */
 #properties-oc-map,
 #properties-ph-map {
-    height: 450px !important;
+    height: 500px !important;
+    position: relative;
 }
+
 
 /* Screenshot Images */
 .story-screenshot {
@@ -2005,7 +2008,6 @@ html {
     font-weight: 600;
     color: #2c3e50;
     margin: 0 0 10px 0;
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
@@ -2039,6 +2041,7 @@ html {
 /* Gradient Legend */
 .gradient-legend {
     margin-top: 10px;
+    position: relative;
 }
 
 .gradient-bar {
@@ -2048,11 +2051,54 @@ html {
     margin: 8px 0;
 }
 
+.gradient-ticks {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    height: 6px;
+    margin-top: -6px;
+    margin-bottom: 2px;
+}
+
+.gradient-ticks .tick {
+    width: 1px;
+    height: 6px;
+    background-color: #333;
+    display: block;
+    position: relative;
+}
+
+/* Align first and last tick with edges of gradient bar */
+.gradient-ticks .tick:first-child {
+    margin-left: -0.5px;
+}
+
+.gradient-ticks .tick:last-child {
+    margin-right: -0.5px;
+}
+
 .gradient-labels {
     display: flex;
     justify-content: space-between;
     font-size: 0.75rem;
     color: #666;
+    position: relative;
+}
+
+.gradient-labels span {
+    flex: 0 0 auto;
+    text-align: center;
+}
+
+/* Adjust first and last label positioning to align with ticks */
+.gradient-labels span:first-child {
+    text-align: left;
+    margin-left: -10px;
+}
+
+.gradient-labels span:last-child {
+    text-align: right;
+    margin-right: -10px;
 }
 
 /* Dynamic legend visibility */
