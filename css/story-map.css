@@ -250,6 +250,12 @@ html {
     overflow: hidden;
 }
 
+/* Force proper aspect ratio for OC/pH maps */
+#properties-oc-map,
+#properties-ph-map {
+    height: 450px !important;
+}
+
 /* Screenshot Images */
 .story-screenshot {
     width: 100%;
@@ -319,6 +325,448 @@ html {
 .story-map-legend .legend-label {
     color: #555;
     font-size: 11px;
+}
+
+/* Gradient legends within story map legend controls */
+.story-map-legend .gradient-legend {
+    margin-top: 5px;
+}
+
+.story-map-legend .gradient-bar {
+    height: 15px;
+    width: 100%;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+}
+
+.story-map-legend .gradient-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 10px;
+    color: #666;
+}
+
+.story-map-legend h5 {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+}
+
+/* Vertical Elevation Legend */
+.elevation-map-container {
+    display: flex;
+    gap: 15px;
+    align-items: stretch;
+}
+
+.elevation-map-container #relief-elevation-map {
+    flex: 1;
+}
+
+.vertical-elevation-legend {
+    width: 80px;
+    background: white;
+    border-radius: 8px;
+    padding: 15px 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.vertical-elevation-legend .legend-title {
+    font-weight: 600;
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.vertical-elevation-legend .legend-scale {
+    flex: 1;
+    position: relative;
+    min-height: 300px;
+}
+
+.vertical-elevation-legend .legend-gradient {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to bottom, #ffffff, #dc2626, #f97316, #fbbf24, #10b981, #1e3a8a);
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.vertical-elevation-legend .legend-ticks {
+    position: absolute;
+    left: 35px;
+    top: 0;
+    bottom: 0;
+    width: 35px;
+}
+
+.vertical-elevation-legend .tick {
+    position: absolute;
+    left: 0;
+    display: flex;
+    align-items: center;
+    transform: translateY(-50%); /* Center the tick on its position */
+}
+
+.vertical-elevation-legend .tick::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    width: 20px;
+    height: 1px;
+    background: #666;
+}
+
+.vertical-elevation-legend .tick span {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* Horizontal Land Cover Legend (below map) */
+.horizontal-landcover-legend {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.horizontal-landcover-legend .legend-title {
+    font-weight: 600;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 6px;
+}
+
+.horizontal-landcover-legend .legend-items {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px 10px;
+}
+
+.horizontal-landcover-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.horizontal-landcover-legend .color-box {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.horizontal-landcover-legend .label {
+    font-size: 10px;
+    color: #555;
+    line-height: 1.2;
+}
+
+/* Parent material map - no legend needed, full width */
+
+/* Removed .vertical-landcover-legend - now using .horizontal-landcover-legend below map */
+
+/* Precipitation Map Container */
+.precipitation-map-container {
+    display: flex;
+    gap: 15px;
+    align-items: stretch;
+}
+
+.precipitation-map-container #climate-precip-map {
+    flex: 1;
+}
+
+/* Vertical Precipitation Legend */
+.vertical-precipitation-legend {
+    width: 100px;
+    background: white;
+    border-radius: 8px;
+    padding: 15px 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.vertical-precipitation-legend .legend-title {
+    font-weight: 600;
+    font-size: 10px;
+    margin-bottom: 10px;
+    color: #333;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.vertical-precipitation-legend .legend-scale {
+    position: relative;
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vertical-precipitation-legend .legend-gradient {
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(to bottom, 
+        #4a90e2 0%,     /* Blue at top (wet) */
+        #5ba3e5 20%,
+        #7bbce8 40%,
+        #f4e4b1 60%,    /* Tan/yellow in middle */
+        #d4a373 80%,
+        #8b6f47 100%    /* Brown at bottom (dry) */
+    );
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.vertical-precipitation-legend .legend-ticks {
+    position: relative;
+    flex: 1;
+    height: 100%;
+}
+
+.vertical-precipitation-legend .tick {
+    position: absolute;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    transform: translateY(-50%);
+}
+
+.vertical-precipitation-legend .tick::before {
+    content: '';
+    width: 6px;
+    height: 1px;
+    background: #666;
+    margin-right: 4px;
+    position: absolute;
+    left: -8px;
+}
+
+.vertical-precipitation-legend .tick span {
+    font-size: 10px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* Temperature Map Container */
+.temperature-map-container {
+    display: flex;
+    gap: 15px;
+    align-items: stretch;
+}
+
+.temperature-map-container #climate-temp-map {
+    flex: 1;
+}
+
+/* Vertical Temperature Legend */
+.vertical-temperature-legend {
+    width: 100px;
+    background: white;
+    border-radius: 8px;
+    padding: 15px 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.vertical-temperature-legend .legend-title {
+    font-weight: 600;
+    font-size: 10px;
+    margin-bottom: 10px;
+    color: #333;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.vertical-temperature-legend .legend-scale {
+    position: relative;
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vertical-temperature-legend .legend-gradient {
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(to bottom, 
+        #ff0000 0%,     /* Red at top (hot) */
+        #ffa500 20%,
+        #ffff00 40%,
+        #32cd32 60%,
+        #00bfff 80%,
+        #0000ff 100%    /* Blue at bottom (cold) */
+    );
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.vertical-temperature-legend .legend-ticks {
+    position: relative;
+    flex: 1;
+    height: 100%;
+}
+
+.vertical-temperature-legend .tick {
+    position: absolute;
+    left: 0;
+    display: flex;
+    align-items: center;
+    transform: translateY(-50%);
+}
+
+.vertical-temperature-legend .tick::before {
+    content: '';
+    width: 8px;
+    height: 1px;
+    background: #666;
+    margin-right: 4px;
+}
+
+.vertical-temperature-legend .tick span {
+    font-size: 10px;
+    color: #666;
+    white-space: nowrap;
+}
+
+/* Mobile responsiveness for elevation legend */
+@media (max-width: 768px) {
+    .elevation-map-container {
+        flex-direction: column;
+    }
+    
+    .vertical-elevation-legend {
+        width: 100%;
+        flex-direction: row;
+        padding: 10px;
+        min-height: auto;
+    }
+    
+    .vertical-elevation-legend .legend-scale {
+        min-height: 60px;
+        width: 100%;
+    }
+    
+    .vertical-elevation-legend .legend-gradient {
+        top: 10px;
+        left: 0;
+        right: 0;
+        bottom: auto;
+        height: 20px;
+        width: auto;
+        background: linear-gradient(to right, #1e3a8a, #10b981, #fbbf24, #f97316, #dc2626, #ffffff);
+    }
+    
+    .vertical-elevation-legend .legend-ticks {
+        top: 35px;
+        left: 0;
+        right: 0;
+        bottom: auto;
+        width: auto;
+        height: 25px;
+    }
+    
+    .vertical-elevation-legend .tick {
+        top: auto !important;
+        bottom: 0;
+        transform: none; /* Remove vertical centering for horizontal layout */
+    }
+    
+    .vertical-elevation-legend .tick::before {
+        top: -15px;
+        left: auto;
+        width: 1px;
+        height: 10px;
+    }
+    
+    .vertical-elevation-legend .tick:nth-child(1) { left: 100%; transform: translateX(-100%); }
+    .vertical-elevation-legend .tick:nth-child(2) { left: 80%; }
+    .vertical-elevation-legend .tick:nth-child(3) { left: 60%; }
+    .vertical-elevation-legend .tick:nth-child(4) { left: 40%; }
+    .vertical-elevation-legend .tick:nth-child(5) { left: 20%; }
+    .vertical-elevation-legend .tick:nth-child(6) { left: 0%; }
+    
+    /* Land cover legend mobile */
+    .horizontal-landcover-legend .legend-items {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px 8px;
+    }
+    
+    .horizontal-landcover-legend .label {
+        font-size: 9px;
+    }
+    
+    /* Parent material map mobile - no legend needed */
+    
+    /* Precipitation legend mobile */
+    .precipitation-map-container {
+        flex-direction: column;
+    }
+    
+    .vertical-precipitation-legend {
+        width: 100%;
+        flex-direction: row;
+        padding: 10px;
+        min-height: auto;
+    }
+    
+    .vertical-precipitation-legend .legend-scale {
+        flex-direction: row;
+        min-height: 40px;
+        width: 100%;
+    }
+    
+    .vertical-precipitation-legend .legend-gradient {
+        width: 100%;
+        height: 20px;
+        background: linear-gradient(to right, 
+            #8b6f47 0%,
+            #d4a373 20%,
+            #f4e4b1 40%,
+            #7bbce8 60%,
+            #5ba3e5 80%,
+            #4a90e2 100%
+        );
+    }
+    
+    .vertical-precipitation-legend .legend-ticks {
+        width: 100%;
+        height: auto;
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+    }
+    
+    .vertical-precipitation-legend .tick {
+        position: static;
+        transform: none;
+    }
+    
+    .vertical-precipitation-legend .tick::before {
+        display: none;
+    }
 }
 
 /* Story Map Popup */

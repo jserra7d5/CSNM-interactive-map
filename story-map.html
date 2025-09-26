@@ -135,14 +135,6 @@
                             most diverse soil landscapes. Let's explore each factor to understand how CSNM's soils came to be.
                         </p>
                     </div>
-                    <div class="story-visual">
-                        <!-- Interactive Soil Orders Map -->
-                        <div id="clorpt-intro-map" class="story-interactive-map"></div>
-                        <div class="map-caption">
-                            <strong>Interactive Map:</strong> Explore the soil orders across CSNM. 
-                            Click and drag to pan, use zoom controls to explore. Click polygons for details.
-                        </div>
-                    </div>
                 </div>
             </section>
 
@@ -173,10 +165,56 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/annual-precipitation.png" alt="Climate - Annual precipitation patterns across CSNM" class="story-screenshot">
+                        <!-- Interactive Precipitation Map -->
+                        <div class="precipitation-map-container">
+                            <div id="climate-precip-map" class="story-interactive-map"></div>
+                            <div class="vertical-precipitation-legend">
+                                <div class="legend-title">Annual<br>Precipitation<br>[mm]</div>
+                                <div class="legend-scale">
+                                    <div class="legend-gradient"></div>
+                                    <div class="legend-ticks">
+                                        <div class="tick" style="top: 0%"><span>1460</span></div>
+                                        <div class="tick" style="top: 25%"><span>1210</span></div>
+                                        <div class="tick" style="top: 50%"><span>960</span></div>
+                                        <div class="tick" style="top: 75%"><span>710</span></div>
+                                        <div class="tick" style="top: 100%"><span>459</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="map-caption">
-                            Precipitation varies dramatically across the monument, from 20 inches in valleys to 60+ inches 
-                            on mountain peaks, creating diverse soil moisture regimes
+                            <strong>Interactive Map:</strong> 30-year precipitation normals. Precipitation varies dramatically 
+                            across the monument, from 18 inches (459mm) in valleys to 57 inches (1460mm) on mountain peaks.
+                        </div>
+                    </div>
+                    
+                    <!-- Temperature Map -->
+                    <div class="story-visual" style="margin-top: 40px;">
+                        <h3>Temperature Gradients</h3>
+                        <p>
+                            Annual temperatures range from 2°C to 14°C, with most falling between November 
+                            and April. Summer drought conditions and winter moisture create unique soil weathering 
+                            patterns and influence which plant communities can thrive.
+                        </p>
+                        <div class="temperature-map-container">
+                            <div id="climate-temp-map" class="story-interactive-map"></div>
+                            <div class="vertical-temperature-legend">
+                                <div class="legend-title">Mean Annual<br>Temperature<br>(°C)</div>
+                                <div class="legend-scale">
+                                    <div class="legend-gradient"></div>
+                                    <div class="legend-ticks">
+                                        <div class="tick" style="top: 0%"><span>14</span></div>
+                                        <div class="tick" style="top: 25%"><span>11</span></div>
+                                        <div class="tick" style="top: 50%"><span>8</span></div>
+                                        <div class="tick" style="top: 75%"><span>5</span></div>
+                                        <div class="tick" style="top: 100%"><span>2</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="map-caption">
+                            <strong>Interactive Map:</strong> Mean annual temperatures decrease with elevation, creating distinct 
+                            climate zones that control soil formation rates and vegetation communities.
                         </div>
                     </div>
                 </div>
@@ -223,10 +261,82 @@
                         </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/land-cover.png" alt="Organisms - Land cover and vegetation across CSNM" class="story-screenshot">
+                        <!-- Interactive Land Cover Map -->
+                        <div id="organisms-landcover-map" class="story-interactive-map"></div>
+                        <!-- Land Cover Legend Below Map -->
+                        <div class="horizontal-landcover-legend">
+                                <div class="legend-title">Land Cover</div>
+                                <div class="legend-items">
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #466b9f;"></span>
+                                        <span class="label">Open Water</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #d1def8;"></span>
+                                        <span class="label">Perennial Ice/Snow</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #dec5c5;"></span>
+                                        <span class="label">Developed, Open Space</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #d99282;"></span>
+                                        <span class="label">Developed, Low Intensity</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #eb0000;"></span>
+                                        <span class="label">Developed, Medium Intensity</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #ab0000;"></span>
+                                        <span class="label">Developed, High Intensity</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #b3ac9f;"></span>
+                                        <span class="label">Barren Land</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #68ab5f;"></span>
+                                        <span class="label">Deciduous Forest</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #1c5f2c;"></span>
+                                        <span class="label">Evergreen Forest</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #b5c58f;"></span>
+                                        <span class="label">Mixed Forest</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #ccb879;"></span>
+                                        <span class="label">Shrub/Scrub</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #dfdfc2;"></span>
+                                        <span class="label">Grassland/Herbaceous</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #dcd939;"></span>
+                                        <span class="label">Pasture/Hay</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #ab6c28;"></span>
+                                        <span class="label">Cultivated Crops</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #b8d9eb;"></span>
+                                        <span class="label">Woody Wetlands</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="color-box" style="background: #6c9fb8;"></span>
+                                        <span class="label">Emergent Herbaceous Wetlands</span>
+                                    </div>
+                                </div>
+                            </div>
                         <div class="map-caption">
-                            Diverse vegetation communities from oak woodlands to alpine meadows each contribute 
-                            distinct organic inputs and root systems that shape soil development
+                            <strong>Interactive Map:</strong> The diverse vegetation communities across CSNM both reflect and influence 
+                            soil properties. From oak woodlands to alpine meadows, each vegetation type contributes 
+                            unique organic matter and influences soil chemistry.
                         </div>
                     </div>
                 </div>
@@ -269,12 +379,67 @@
                             is called a catena. CSNM's varied topography creates numerous catenas, each telling a 
                             story of erosion, transport, and deposition.</p>
                         </div>
+                        
+                        <h3>Elevation's Impact on Soil Formation</h3>
+                        <p>
+                            Temperature, precipitation, and growing season length all change dramatically 
+                            with elevation, creating a complex mosaic of soil development patterns. 
+                            Higher elevations experience slower soil formation due to:
+                        </p>
+                        <div class="volcanic-features">
+                            <div class="feature-card">
+                                <i class="fas fa-thermometer-half"></i>
+                                <h4>Lower Temperatures</h4>
+                                <p>Cooler temperatures at high elevations slow chemical weathering and organic matter decomposition</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-snowflake"></i>
+                                <h4>Shorter Growing Season</h4>
+                                <p>Limited frost-free periods reduce biological activity and soil development rates</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-mountain"></i>
+                                <h4>Steep Slopes</h4>
+                                <p>Gravity and erosion move materials downslope, creating thin soils on ridges and deeper soils in valleys</p>
+                            </div>
+                        </div>
                     </div>
                     <div class="story-visual">
-                        <img src="storymap_screenshots/elevation-hillshade.png" alt="Relief - Elevation and topography across CSNM" class="story-screenshot">
+                        <!-- Interactive Elevation Map with Vertical Legend -->
+                        <div class="elevation-map-container">
+                            <div id="relief-elevation-map" class="story-interactive-map"></div>
+                            <div class="vertical-elevation-legend">
+                                <div class="legend-title">Elevation (m)</div>
+                                <div class="legend-scale">
+                                    <div class="legend-gradient"></div>
+                                    <div class="legend-ticks">
+                                        <div class="tick" style="top: 0%"><span>2000</span></div>
+                                        <div class="tick" style="top: 20%"><span>1735</span></div>
+                                        <div class="tick" style="top: 40%"><span>1470</span></div>
+                                        <div class="tick" style="top: 60%"><span>1205</span></div>
+                                        <div class="tick" style="top: 80%"><span>940</span></div>
+                                        <div class="tick" style="top: 100%"><span>675</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="map-caption">
-                            Elevation ranges over 6,000 feet create distinct soil zones, with shallow soils on 
-                            steep slopes and deep accumulations in protected valleys
+                            <strong>Interactive Map:</strong> From valley floors at 2,215 feet (675m) to Mt. Ashland's peak at 6,562 feet (2000m), 
+                            elevation creates distinct soil zones. Shallow soils form on steep slopes while deep accumulations develop in protected valleys.
+                        </div>
+                        <div class="elevation-profile">
+                            <h4>Elevation Zones</h4>
+                            <div class="profile-chart">
+                                <div class="elevation-bar" style="height: 60%; background: #dc2626;" data-elevation="7533ft">
+                                    <span class="elevation-label">Mt. Ashland<br>7,533 ft</span>
+                                </div>
+                                <div class="elevation-bar" style="height: 40%; background: #f97316;" data-elevation="4500ft">
+                                    <span class="elevation-label">Mid Slopes<br>4,500 ft</span>
+                                </div>
+                                <div class="elevation-bar" style="height: 20%; background: #fbbf24;" data-elevation="2000ft">
+                                    <span class="elevation-label">Valley Floor<br>2,000 ft</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -295,26 +460,46 @@
                         </p>
                         <div class="parent-materials">
                             <div class="material-card">
-                                <div class="material-icon" style="background: #D2691E;">V</div>
-                                <h4>Volcanic Materials</h4>
-                                <p>Basalts and andesites from Cascade volcanism weather to form fertile, clay-rich soils</p>
+                                <div class="material-icon" style="background: #cd853f;"></div>
+                                <h4>Volcanic</h4>
+                                <p>Ash deposits and lava flows from the Cascade volcanoes, including Mount Mazama's eruption that created Crater Lake</p>
                             </div>
                             <div class="material-card">
-                                <div class="material-icon" style="background: #2E7D32;">S</div>
-                                <h4>Serpentinite</h4>
-                                <p>Ultramafic rocks high in magnesium and heavy metals, creating unique soil chemistry</p>
+                                <div class="material-icon" style="background: #8b7355;"></div>
+                                <h4>Colluvial</h4>
+                                <p>Gravity-deposited materials from hillslopes, creating mixed soils with angular rock fragments</p>
                             </div>
                             <div class="material-card">
-                                <div class="material-icon" style="background: #5D6D7E;">M</div>
-                                <h4>Marine Sediments</h4>
-                                <p>Ancient ocean floor sediments uplifted during mountain building events</p>
+                                <div class="material-icon" style="background: #5b92e5;"></div>
+                                <h4>Alluvial</h4>
+                                <p>Stream-deposited sediments in valleys, typically well-sorted and stratified, forming fertile soils</p>
                             </div>
                             <div class="material-card">
-                                <div class="material-icon" style="background: #8B7355;">G</div>
-                                <h4>Granitic Rocks</h4>
-                                <p>Intrusive igneous rocks that weather slowly, producing sandy, acidic soils</p>
+                                <div class="material-icon" style="background: #6495ed;"></div>
+                                <h4>Fluvial</h4>
+                                <p>River terrace deposits from ancient and modern waterways, creating productive agricultural soils</p>
+                            </div>
+                            <div class="material-card">
+                                <div class="material-icon" style="background: #87ceeb;"></div>
+                                <h4>Lacustrine</h4>
+                                <p>Fine-grained lake bed sediments from ancient water bodies, often clay-rich and poorly drained</p>
+                            </div>
+                            <div class="material-card">
+                                <div class="material-icon" style="background: #654321;"></div>
+                                <h4>Mountainous</h4>
+                                <p>Residual materials weathered in place from bedrock on steep slopes and ridgetops</p>
                             </div>
                         </div>
+                    </div>
+                    <div class="story-visual">
+                        <!-- Interactive Parent Material Map for CLORPT -->
+                        <div id="clorpt-parent-material-map" class="story-interactive-map" style="height: 500px;"></div>
+                        <div class="map-caption">
+                            <strong>Interactive Map:</strong> Parent materials from three converging mountain ranges create a complex geological foundation. 
+                            The diverse parent materials—from volcanic ash to river deposits—directly influence soil properties across the monument.
+                        </div>
+                    </div>
+                    <div class="story-text">
                         <div class="serpentine-callout">
                             <i class="fas fa-gem"></i>
                             <div>
@@ -322,13 +507,6 @@
                                 <p>Serpentine soils have Ca:Mg ratios <1, high levels of nickel and chromium, and low 
                                 essential nutrients—conditions toxic to most plants but supporting rare endemic species.</p>
                             </div>
-                        </div>
-                    </div>
-                    <div class="story-visual">
-                        <img src="storymap_screenshots/parent-material.png" alt="Parent Material - Geological substrate across CSNM" class="story-screenshot">
-                        <div class="map-caption">
-                            Diverse parent materials from volcanic, metamorphic, and sedimentary origins create 
-                            a complex mosaic of soil chemical and physical properties
                         </div>
                     </div>
                 </div>
@@ -710,221 +888,9 @@
                 </div>
             </section>
 
-            <!-- Section 4: Volcanic Origins -->
-            <section class="story-section" data-section="volcanic">
-                <div class="story-content">
-                    <div class="story-text">
-                        <h2>Elevation and Topographic Influence</h2>
-                        <p class="story-lead">
-                            From valley floors at 1,200 feet to Mt. Ashland's peak at 7,533 feet, 
-                            elevation creates distinct soil zones across the monument's landscape.
-                        </p>
-                        <p>
-                            Temperature, precipitation, and growing season length all change dramatically 
-                            with elevation, creating a complex mosaic of soil development patterns. 
-                            Higher elevations experience slower soil formation due to:
-                        </p>
-                        <div class="volcanic-features">
-                            <div class="feature-card">
-                                <i class="fas fa-thermometer-half"></i>
-                                <h4>Lower Temperatures</h4>
-                                <p>Cooler temperatures at high elevations slow chemical weathering and organic matter decomposition</p>
-                            </div>
-                            <div class="feature-card">
-                                <i class="fas fa-snowflake"></i>
-                                <h4>Shorter Growing Season</h4>
-                                <p>Limited frost-free periods reduce biological activity and soil development rates</p>
-                            </div>
-                            <div class="feature-card">
-                                <i class="fas fa-mountain"></i>
-                                <h4>Steep Slopes</h4>
-                                <p>Gravity and erosion move materials downslope, creating thin soils on ridges and deeper soils in valleys</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="story-visual">
-                        <img src="storymap_screenshots/elevation-hillshade.png" alt="Elevation map showing topographic relief across CSNM" class="story-screenshot">
-                        <div class="map-legend">
-                            <h5>Elevation (meters)</h5>
-                            <div class="gradient-legend">
-                                <div class="gradient-bar" style="background: linear-gradient(to right, #1e3a8a, #10b981, #fbbf24, #f97316, #dc2626);"></div>
-                                <div class="gradient-labels">
-                                    <span>400m</span>
-                                    <span>800m</span>
-                                    <span>1200m</span>
-                                    <span>1600m</span>
-                                    <span>2000m</span>
-                                    <span>2300m</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="elevation-profile">
-                            <h4>Elevation and Soil Formation</h4>
-                            <div class="profile-chart">
-                                <div class="elevation-bar" style="height: 60%; background: #dc2626;" data-elevation="7533ft">
-                                    <span class="elevation-label">Mt. Ashland<br>7,533 ft</span>
-                                </div>
-                                <div class="elevation-bar" style="height: 40%; background: #f97316;" data-elevation="4500ft">
-                                    <span class="elevation-label">Mid Slopes<br>4,500 ft</span>
-                                </div>
-                                <div class="elevation-bar" style="height: 20%; background: #fbbf24;" data-elevation="2000ft">
-                                    <span class="elevation-label">Valley Floor<br>2,000 ft</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <!-- Land Cover and Vegetation section removed - content integrated into CLORPT Organisms section -->
 
-            <!-- Section 5: Climate Effects -->
-            <section class="story-section" data-section="climate">
-                <div class="story-content">
-                    <div class="story-text">
-                        <h2>Land Cover and Vegetation</h2>
-                        <p class="story-lead">
-                            The diverse vegetation communities across CSNM both reflect and influence 
-                            soil properties, creating a complex relationship between plants and soils.
-                        </p>
-                        <p>
-                            From oak woodlands in dry valleys to dense conifer forests on north-facing slopes, 
-                            different vegetation types contribute organic matter, modify soil chemistry, and 
-                            protect against erosion in distinct ways:
-                        </p>
-                        <div class="climate-zones">
-                            <div class="zone-card">
-                                <div class="zone-header">
-                                    <h4>Oak Woodlands & Grasslands</h4>
-                                    <span class="temp-range">Deciduous</span>
-                                </div>
-                                <p>Oak woodlands contribute nutrient-rich leaf litter and create deep, fertile soils in valleys</p>
-                            </div>
-                            <div class="zone-card">
-                                <h4>Mixed Conifer Forests</h4>
-                                <span class="temp-range">Evergreen</span>
-                                <p>Coniferous forests produce acidic organic matter and thick duff layers that modify soil chemistry</p>
-                            </div>
-                            <div class="zone-card">
-                                <h4>Shrublands & Alpine</h4>
-                                <span class="temp-range">Hardy</span>
-                                <p>Drought-tolerant shrubs and alpine plants adapt to thin, rocky soils and harsh conditions</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="story-visual">
-                        <img src="storymap_screenshots/land-cover.png" alt="Land Cover map showing vegetation distribution across CSNM" class="story-screenshot">
-                        <div class="map-legend">
-                            <h5>Land Cover Classification</h5>
-                            <div class="legend-items vertical">
-                                <div class="legend-item">
-                                    <span class="legend-color-box" style="background-color: #006400;"></span>
-                                    <span>Evergreen Forest</span>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color-box" style="background-color: #90EE90;"></span>
-                                    <span>Mixed Forest</span>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color-box" style="background-color: #8FBC8F;"></span>
-                                    <span>Deciduous Forest</span>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color-box" style="background-color: #DAA520;"></span>
-                                    <span>Shrubland</span>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color-box" style="background-color: #F0E68C;"></span>
-                                    <span>Grassland/Herbaceous</span>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color-box" style="background-color: #CD853F;"></span>
-                                    <span>Barren Land</span>
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color-box" style="background-color: #87CEEB;"></span>
-                                    <span>Wetlands</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="climate-chart">
-                            <h4>Temperature Gradient</h4>
-                            <div class="temp-gradient">
-                                <div class="gradient-bar"></div>
-                                <div class="gradient-labels">
-                                    <span>30°F</span>
-                                    <span>40°F</span>
-                                    <span>50°F</span>
-                                    <span>55°F</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 5.5: Climate Patterns -->
-            <section class="story-section" data-section="climate-patterns">
-                <div class="story-content">
-                    <div class="story-text">
-                        <h2>Climate Patterns</h2>
-                        <p class="story-lead">
-                            The Mediterranean climate of CSNM shapes soil formation through distinct patterns 
-                            of temperature and precipitation that vary dramatically with elevation and aspect.
-                        </p>
-                        <p>
-                            Annual precipitation ranges from 20 to 60 inches, with most falling between November 
-                            and April. Summer drought conditions and winter moisture create unique soil weathering 
-                            patterns and influence which plant communities can thrive.
-                        </p>
-                        <div class="climate-toggle">
-                            <button class="climate-btn active" data-climate="precipitation">
-                                <i class="fas fa-cloud-rain"></i> Precipitation
-                            </button>
-                            <button class="climate-btn" data-climate="temperature">
-                                <i class="fas fa-thermometer-half"></i> Temperature
-                            </button>
-                        </div>
-                    </div>
-                    <div class="story-visual">
-                        <img id="precipitation-screenshot" src="storymap_screenshots/annual-precipitation.png" alt="Annual precipitation map showing rainfall patterns across CSNM" class="story-screenshot">
-                        <img id="temperature-screenshot" src="storymap_screenshots/mean-temperature-climate.png" alt="Mean temperature map showing temperature patterns across CSNM" class="story-screenshot" style="display: none;">
-                        
-                        <!-- Dynamic climate legends -->
-                        <div id="precip-legend" class="map-legend">
-                            <h5>Annual Precipitation (inches)</h5>
-                            <div class="gradient-legend">
-                                <div class="gradient-bar" style="background: linear-gradient(to right, #8B4513, #D2691E, #FFD700, #90EE90, #4682B4, #000080);"></div>
-                                <div class="gradient-labels">
-                                    <span>20"</span>
-                                    <span>30"</span>
-                                    <span>40"</span>
-                                    <span>50"</span>
-                                    <span>60"</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div id="temp-legend" class="map-legend" style="display: none;">
-                            <h5>Mean Annual Temperature (°C)</h5>
-                            <div class="gradient-legend">
-                                <div class="gradient-bar" style="background: linear-gradient(to right, #0000FF, #00BFFF, #32CD32, #FFFF00, #FFA500, #FF0000);"></div>
-                                <div class="gradient-labels">
-                                    <span>2°C</span>
-                                    <span>5°C</span>
-                                    <span>8°C</span>
-                                    <span>11°C</span>
-                                    <span>14°C</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="map-caption" id="climate-caption">
-                            Annual precipitation varies from 20 inches in rain shadow valleys to over 60 inches on exposed ridges
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 6: Soil Properties -->
+            <!-- Section 4: Soil Properties -->
             <section class="story-section" data-section="properties">
                 <div class="story-content">
                     <div class="story-text">
@@ -961,8 +927,22 @@
                     </div>
                     <div class="story-visual">
                         <div id="properties-map-container">
-                            <img id="oc-screenshot" src="storymap_screenshots/organic-carbon-0-5cm.png" alt="Organic Carbon map showing carbon distribution in CSNM soils" class="story-screenshot">
-                            <img id="ph-screenshot" src="storymap_screenshots/soil-ph-0-5cm.png" alt="Soil pH map showing acidity levels across CSNM" class="story-screenshot" style="display: none;">
+                            <!-- Interactive Soil Property Maps (toggled by buttons) -->
+                            <div id="properties-oc-map" class="story-interactive-map" style="height: 450px;"></div>
+                            <div id="properties-ph-map" class="story-interactive-map" style="display: none; height: 450px;"></div>
+                            
+                            <!-- Depth selector for soil properties -->
+                            <div class="depth-selector">
+                                <label for="properties-depth">Depth:</label>
+                                <select id="properties-depth" class="depth-dropdown">
+                                    <option value="0">0-5 cm</option>
+                                    <option value="1">5-15 cm</option>
+                                    <option value="2">15-30 cm</option>
+                                    <option value="3">30-60 cm</option>
+                                    <option value="4">60-100 cm</option>
+                                    <option value="5">100-200 cm</option>
+                                </select>
+                            </div>
                         </div>
                         
                         <!-- Dynamic legends for OC and pH -->

@@ -305,9 +305,12 @@ class RasterManager {
                 
                 // Check for no-data values
                 let isNoData;
-                if (property === 'nlcd' || property === 'lithology') {
-                    // For classification rasters, common no-data values are 0, 255, and -9999
-                    isNoData = value === null || isNaN(value) || value === -9999 || value === 255 || value === 0;
+                if (property === 'nlcd') {
+                    // For NLCD classification, 0 and 255 are no-data, valid values are 11-95
+                    isNoData = value === null || isNaN(value) || value === -9999 || value === 255 || value === 0 || value < 11 || value > 95;
+                } else if (property === 'lithology') {
+                    // For lithology classification rasters, common no-data values are -9999 and 255
+                    isNoData = value === null || isNaN(value) || value === -9999 || value === 255;
                 } else if (property === 'elevation') {
                     // For elevation, check for various no-data representations
                     isNoData = value === null || isNaN(value) || value === -9999 || value === -3.4028235e+38 || value < -1000;
@@ -430,6 +433,11 @@ class RasterManager {
         
         // Put image data on canvas
         ctx.putImageData(imageData, 0, 0);
+        
+        // Log classification raster unique values
+        if ((property === 'nlcd' || property === 'lithology') && uniqueValues.size > 0) {
+            console.log(`🌍 RASTER: ${property} unique values:`, Array.from(uniqueValues).sort((a,b) => a-b));
+        }
         
         // Log hillshade statistics if elevation was processed
         if (property === 'elevation' && hillshadeStats.processed > 0) {
@@ -579,7 +587,7 @@ class RasterManager {
     getRasterFilename(property, depth = 0) {
         // Classification rasters and elevation don't have depth levels
         if (property === 'nlcd') {
-            return CONFIG.dataPaths.nlcd;
+            return CONFIG.dataPaths.nlcd || 'data/rasters/NLCD_2024_CSNM.tif';
         }
         if (property === 'lithology') {
             return CONFIG.dataPaths.lithology;
@@ -589,7 +597,7 @@ class RasterManager {
         }
         
         // Handle precipitation separately from other climate variables
-        if (property === 'precipitation') {
+        if (property === 'precipitation' || property === 'precipitationAnnual') {
             return CONFIG.dataPaths.precipitationAnnual;
         }
         
@@ -854,7 +862,7 @@ class RasterManager {
             const b = Math.round(lowerColor.b + (upperColor.b - lowerColor.b) * fraction);
             
             return `rgb(${r}, ${g}, ${b})`;
-        } else if (property === 'precipitation') {
+        } else if (property === 'precipitation' || property === 'precipitationAnnual') {
             // Precipitation uses brown (dry) to blue (wet) color scheme
             const precipConfig = CONFIG.climateColors.precipitation;
             const configMin = precipConfig.min;
@@ -969,7 +977,6 @@ class RasterManager {
             'oc': 'g/kg',
             'ph': 'pH units',
             'meanTemp': '°C',
-            'landcover': 'class',
             'elevation': 'meters',
             'prism-temp': '°C',
             'prism-precip': 'mm',
@@ -1234,11 +1241,18 @@ class RasterManager {
                 source: 'SoilGrids 250m',
                 depths: CONFIG.depthLevels.labels
             },
-            'landcover': {
-                name: 'Land Cover',
-                description: 'ESA WorldCover 2021 Land Cover Classification',
-                units: 'class',
-                source: 'ESA WorldCover 2021',
+            'precipitationAnnual': {
+                name: 'Annual Precipitation',
+                description: '30-year normal precipitation',
+                units: 'inches',
+                source: 'PRISM Climate Data',
+                depths: null
+            },
+            'precipitation': {
+                name: 'Annual Precipitation',
+                description: '30-year normal precipitation',
+                units: 'inches',
+                source: 'PRISM Climate Data',
                 depths: null
             },
             'elevation': {

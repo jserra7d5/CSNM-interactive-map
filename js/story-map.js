@@ -34,8 +34,8 @@ class StoryMap {
                 this.interactiveMaps = new StoryInteractiveMaps();
                 await this.interactiveMaps.init();
                 // Small delay to ensure DOM is ready
-                setTimeout(() => {
-                    this.createInteractiveMaps();
+                setTimeout(async () => {
+                    await this.createInteractiveMaps();
                 }, 100);
             } catch (e) {
                 console.warn('Interactive maps not available:', e);
@@ -70,35 +70,19 @@ class StoryMap {
     }
     
     // Create interactive maps in their containers
-    createInteractiveMaps() {
+    async createInteractiveMaps() {
         if (!this.interactiveMaps) return;
         
         console.log('Creating interactive story maps...');
         
-        // Create soil orders map for CLORPT intro
-        const clorptMap = document.getElementById('clorpt-intro-map');
-        if (clorptMap) {
-            this.interactiveMaps.createMap('clorpt-intro-map', 'soilOrders', {
-                zoom: 10
-            });
-            
-            // Add legend for soil orders
-            const soilOrderLegend = [
-                { color: '#00A551', label: 'Mollisols' },
-                { color: '#CB7662', label: 'Inceptisols' },
-                { color: '#EA028C', label: 'Andisols' },
-                { color: '#FFF100', label: 'Vertisols' },
-                { color: '#B5D55D', label: 'Alfisols' },
-                { color: '#75CDD6', label: 'Entisols' }
-            ];
-            this.interactiveMaps.addLegend('clorpt-intro-map', soilOrderLegend);
-        }
+        // CLORPT intro section now has no map - just header text
         
         // Create main soil orders map
         const soilOrdersMap = document.getElementById('soil-orders-map');
         if (soilOrdersMap) {
             this.interactiveMaps.createMap('soil-orders-map', 'soilOrders', {
-                zoom: 10
+                zoom: 10.5,  // Zoomed in one more notch
+                center: [42.13, -122.466]
             });
             
             // Add the same legend
@@ -117,7 +101,8 @@ class StoryMap {
         const particleMap = document.getElementById('particle-size-map');
         if (particleMap) {
             this.interactiveMaps.createMap('particle-size-map', 'particleSizes', {
-                zoom: 10
+                zoom: 9.5,
+                center: [42.13, -122.466]
             });
             
             // Add legend for particle sizes
@@ -133,32 +118,200 @@ class StoryMap {
             this.interactiveMaps.addLegend('particle-size-map', particleLegend);
         }
         
-        // Create parent material map
-        const parentMap = document.getElementById('parent-material-map');
-        if (parentMap) {
-            console.log('Creating parent material map...');
+        // Create parent material map for CLORPT section
+        const clorptParentMap = document.getElementById('clorpt-parent-material-map');
+        if (clorptParentMap) {
+            console.log('Creating CLORPT parent material map...');
+            this.interactiveMaps.createMap('clorpt-parent-material-map', 'parentMaterial', {
+                zoom: 10.5,  // Zoomed in more to focus on parent materials
+                center: [42.13, -122.466],
+                zoomControl: true
+            });
+            
+            // No legend for parent material map - descriptions in text
+            console.log('CLORPT parent material map created successfully');
+        }
+        
+        // Also create parent material map for Geological Foundation section (if it exists)
+        const geoParentMap = document.getElementById('parent-material-map');
+        if (geoParentMap) {
+            console.log('Creating Geological Foundation parent material map...');
+            // Add a small delay to ensure data is fully loaded
+            setTimeout(() => {
+                try {
+                    this.interactiveMaps.createMap('parent-material-map', 'parentMaterial', {
+                        zoom: 10.5,  // Zoomed in more to focus on parent materials
+                        center: [42.13, -122.466]
+                    });
+                    // Use same legend as CLORPT - recreate it since it's out of scope
+                    const geoParentLegend = [
+                        { color: '#356eff', label: 'Water' },
+                        { color: '#acb6da', label: 'Carbonate' },
+                        { color: '#d6b879', label: 'Non-carbonate' },
+                        { color: '#313131', label: 'Alkaline intrusive' },
+                        { color: '#eda800', label: 'Silicic residual' },
+                        { color: '#616161', label: 'Extrusive volcanic' },
+                        { color: '#d6d6d6', label: 'Colluvial sediment' },
+                        { color: '#d0ddae', label: 'Glacial till clay' },
+                        { color: '#b8d279', label: 'Glacial till loam' },
+                        { color: '#d5d378', label: 'Glacial till coarse' },
+                        { color: '#70a663', label: 'Glacial lake sediment' },
+                        { color: '#cc6a70', label: 'Glacial outwash fine' },
+                        { color: '#8ab3d5', label: 'Glacial outwash sandy' },
+                        { color: '#6db155', label: 'Glacial outwash coarse' },
+                        { color: '#9b6d55', label: 'Hydric' },
+                        { color: '#feeec9', label: 'Eolian sediment coarse' },
+                        { color: '#d6b879', label: 'Eolian sediment fine' },
+                        { color: '#00b7ec', label: 'Saline lake sediment' },
+                        { color: '#ffda90', label: 'Alluvium fine' },
+                        { color: '#f8b28c', label: 'Coastal sediment coarse' }
+                    ];
+                    // Legend is displayed externally, not inside the map
+                    console.log('Geological Foundation parent material map created successfully');
+                } catch (error) {
+                    console.error('Error creating geological parent material map:', error);
+                }
+            }, 500); // Delay to ensure data is loaded
+        }
+        
+        // Initialize Land Cover Map
+        if (document.getElementById('organisms-landcover-map')) {
             try {
-                this.interactiveMaps.createMap('parent-material-map', 'parentMaterial', {
-                    zoom: 10
+                await this.interactiveMaps.createRasterMap('organisms-landcover-map', 'landcover', {
+                    title: 'Land Cover Classification',
+                    zoom: 9.5,
+                    center: [42.13, -122.466]
                 });
                 
-                // Add legend for parent materials
-                const parentLegend = [
-                    { color: '#D2691E', label: 'Volcanic' },
-                    { color: '#4682B4', label: 'Alluvial' },
-                    { color: '#95A5A6', label: 'Mixed colluvium' },
-                    { color: '#CD853F', label: 'Plateau deposits' },
-                    { color: '#FFF100', label: 'Clay-rich sediments' },
-                    { color: '#8B7355', label: 'Basin deposits' },
-                    { color: '#2E7D32', label: 'Serpentine' }
-                ];
-                this.interactiveMaps.addLegend('parent-material-map', parentLegend);
-                console.log('Parent material map created successfully');
+                // No need to add legend - it's now outside the map as a vertical legend
+                console.log('Land cover map created successfully');
             } catch (error) {
-                console.error('Error creating parent material map:', error);
+                console.error('Error creating land cover map:', error);
             }
-        } else {
-            console.warn('Parent material map container not found');
+        }
+        
+        // Initialize Elevation Map  
+        if (document.getElementById('relief-elevation-map')) {
+            try {
+                await this.interactiveMaps.createRasterMap('relief-elevation-map', 'elevation', {
+                    title: 'Elevation & Hillshade',
+                    zoom: 9.5,
+                    center: [42.13, -122.466]
+                });
+                
+                // No need to add legend - it's now outside the map as a vertical legend
+                console.log('Elevation map created successfully');
+            } catch (error) {
+                console.error('Error creating elevation map:', error);
+            }
+        }
+        
+        // Initialize Climate Maps (Precipitation and Temperature)
+        if (document.getElementById('climate-precip-map')) {
+            try {
+                await this.interactiveMaps.createRasterMap('climate-precip-map', 'precipitation', {
+                    title: '30-Year Normal Precipitation',
+                    zoom: 9.5,  // Zoomed out to show regional context
+                    center: [42.13, -122.466]  // Slightly shifted north to move monument down in view
+                });
+                
+                // Legend is displayed externally, not inside the map
+                console.log('Precipitation map created successfully');
+            } catch (error) {
+                console.error('Error creating precipitation map:', error);
+            }
+        }
+        
+        if (document.getElementById('climate-temp-map')) {
+            try {
+                await this.interactiveMaps.createRasterMap('climate-temp-map', 'temperature', {
+                    title: '30-Year Normal Temperature',
+                    zoom: 9.5,  // Zoomed out to show regional context
+                    center: [42.13, -122.466]  // Slightly shifted north to move monument down in view
+                });
+                
+                // Legend is displayed externally, not inside the map
+                console.log('Temperature map created successfully');
+            } catch (error) {
+                console.error('Error creating temperature map:', error);
+            }
+        }
+        
+        // Initialize Soil Property Maps (Organic Carbon and pH)
+        if (document.getElementById('properties-oc-map')) {
+            try {
+                const ocMap = await this.interactiveMaps.createRasterMap('properties-oc-map', 'oc', {
+                    title: 'Organic Carbon',
+                    depth: 0,
+                    zoom: 9.5,
+                    center: [42.13, -122.466]
+                });
+                // Force map to recalculate size to fix aspect ratio
+                if (ocMap) {
+                    setTimeout(() => {
+                        ocMap.invalidateSize();
+                        // Also trigger resize event to ensure proper rendering
+                        window.dispatchEvent(new Event('resize'));
+                    }, 200);
+                }
+                
+                // Add organic carbon legend
+                const ocLegend = `
+                    <h5>Organic Carbon (g/kg) - 0-5cm depth</h5>
+                    <div class="gradient-legend">
+                        <div class="gradient-bar" style="background: linear-gradient(to right, #FFF8DC, #DEB887, #D2691E, #8B4513, #654321);"></div>
+                        <div class="gradient-labels">
+                            <span>0</span>
+                            <span>20</span>
+                            <span>40</span>
+                            <span>60</span>
+                            <span>80</span>
+                        </div>
+                    </div>
+                `;
+                this.interactiveMaps.addLegend('properties-oc-map', ocLegend);
+                console.log('Organic carbon map created successfully');
+            } catch (error) {
+                console.error('Error creating organic carbon map:', error);
+            }
+        }
+        
+        if (document.getElementById('properties-ph-map')) {
+            try {
+                const phMap = await this.interactiveMaps.createRasterMap('properties-ph-map', 'ph', {
+                    title: 'Soil pH',
+                    depth: 0,
+                    zoom: 9.5,
+                    center: [42.13, -122.466]
+                });
+                // Force map to recalculate size to fix aspect ratio
+                if (phMap) {
+                    setTimeout(() => {
+                        phMap.invalidateSize();
+                        // Also trigger resize event to ensure proper rendering
+                        window.dispatchEvent(new Event('resize'));
+                    }, 200);
+                }
+                
+                // Add pH legend
+                const phLegend = `
+                    <h5>Soil pH - 0-5cm depth</h5>
+                    <div class="gradient-legend">
+                        <div class="gradient-bar" style="background: linear-gradient(to right, #FF0000, #FF6600, #FFFF00, #00FF00, #0000FF);"></div>
+                        <div class="gradient-labels">
+                            <span>4.5</span>
+                            <span>5.5</span>
+                            <span>6.5</span>
+                            <span>7.5</span>
+                            <span>8.5</span>
+                        </div>
+                    </div>
+                `;
+                this.interactiveMaps.addLegend('properties-ph-map', phLegend);
+                console.log('pH map created successfully');
+            } catch (error) {
+                console.error('Error creating pH map:', error);
+            }
         }
     }
     
@@ -303,32 +456,53 @@ class StoryMap {
     }
     
     updatePropertiesScreenshots(property) {
-        const ocScreenshot = document.getElementById('oc-screenshot');
-        const phScreenshot = document.getElementById('ph-screenshot');
+        const ocMap = document.getElementById('properties-oc-map');
+        const phMap = document.getElementById('properties-ph-map');
         const ocLegend = document.getElementById('oc-legend');
         const phLegend = document.getElementById('ph-legend');
         
-        if (ocScreenshot && phScreenshot) {
+        if (ocMap && phMap) {
             if (property === 'oc') {
-                ocScreenshot.style.display = 'block';
-                phScreenshot.style.display = 'none';
+                ocMap.style.display = 'block';
+                phMap.style.display = 'none';
                 if (ocLegend) ocLegend.style.display = 'block';
                 if (phLegend) phLegend.style.display = 'none';
+                // Invalidate OC map size when shown
+                const ocMapObj = this.interactiveMaps.maps.get('properties-oc-map');
+                if (ocMapObj && ocMapObj.map) {
+                    setTimeout(() => ocMapObj.map.invalidateSize(), 100);
+                }
             } else if (property === 'ph') {
-                ocScreenshot.style.display = 'none';
-                phScreenshot.style.display = 'block';
+                ocMap.style.display = 'none';
+                phMap.style.display = 'block';
                 if (ocLegend) ocLegend.style.display = 'none';
                 if (phLegend) phLegend.style.display = 'block';
+                // Invalidate pH map size when shown
+                const phMapObj = this.interactiveMaps.maps.get('properties-ph-map');
+                if (phMapObj && phMapObj.map) {
+                    setTimeout(() => phMapObj.map.invalidateSize(), 100);
+                }
             }
+        }
+        
+        // Update depth selector in case of depth-specific updates
+        const depthSelector = document.getElementById('properties-depth');
+        if (depthSelector && this.interactiveMaps) {
+            const depth = parseInt(depthSelector.value) || 0;
+            this.updatePropertiesMap(property, depth);
         }
     }
     
     setupDepthSelector() {
+        // Handle both old depth options and new dropdown
         const depthOptions = document.querySelectorAll('.depth-option');
+        const depthDropdown = document.getElementById('properties-depth');
         
+        // Old style depth options (if they exist)
         depthOptions.forEach(option => {
             option.addEventListener('click', () => {
                 const depth = parseInt(option.getAttribute('data-depth'));
+                console.log(`Depth option clicked: ${depth}`);
                 
                 // Update active states
                 depthOptions.forEach(o => o.classList.remove('active'));
@@ -338,16 +512,36 @@ class StoryMap {
                 const activeProperty = document.querySelector('.property-btn.active');
                 if (activeProperty) {
                     const property = activeProperty.getAttribute('data-property');
+                    console.log(`Updating ${property} map to depth ${depth}`);
                     this.updatePropertiesMap(property, depth);
                 }
             });
         });
+        
+        // New dropdown depth selector
+        if (depthDropdown) {
+            console.log('Setting up depth dropdown listener');
+            depthDropdown.addEventListener('change', (e) => {
+                const depth = parseInt(e.target.value);
+                console.log(`Depth dropdown changed to: ${depth}`);
+                const activeProperty = document.querySelector('.property-btn.active');
+                if (activeProperty) {
+                    const property = activeProperty.getAttribute('data-property');
+                    console.log(`Updating ${property} map to depth ${depth}`);
+                    this.updatePropertiesMap(property, depth);
+                } else {
+                    console.warn('No active property button found');
+                }
+            });
+        } else {
+            console.warn('Depth dropdown not found');
+        }
     }
     
     setupClimateToggle() {
         const climateBtns = document.querySelectorAll('.climate-btn');
-        const precipitationImg = document.getElementById('precipitation-screenshot');
-        const temperatureImg = document.getElementById('temperature-screenshot');
+        const precipMap = document.getElementById('climate-precip-map');
+        const tempMap = document.getElementById('climate-temp-map');
         const precipLegend = document.getElementById('precip-legend');
         const tempLegend = document.getElementById('temp-legend');
         const climateCaption = document.getElementById('climate-caption');
@@ -360,18 +554,18 @@ class StoryMap {
                 climateBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
-                // Toggle images and legends
+                // Toggle maps and legends
                 if (climate === 'precipitation') {
-                    if (precipitationImg) precipitationImg.style.display = 'block';
-                    if (temperatureImg) temperatureImg.style.display = 'none';
+                    if (precipMap) precipMap.style.display = 'block';
+                    if (tempMap) tempMap.style.display = 'none';
                     if (precipLegend) precipLegend.style.display = 'block';
                     if (tempLegend) tempLegend.style.display = 'none';
                     if (climateCaption) {
                         climateCaption.textContent = 'Annual precipitation varies from 20 inches in rain shadow valleys to over 60 inches on exposed ridges';
                     }
                 } else if (climate === 'temperature') {
-                    if (precipitationImg) precipitationImg.style.display = 'none';
-                    if (temperatureImg) temperatureImg.style.display = 'block';
+                    if (precipMap) precipMap.style.display = 'none';
+                    if (tempMap) tempMap.style.display = 'block';
                     if (precipLegend) precipLegend.style.display = 'none';
                     if (tempLegend) tempLegend.style.display = 'block';
                     if (climateCaption) {
@@ -380,6 +574,76 @@ class StoryMap {
                 }
             });
         });
+    }
+    
+    updatePropertiesMap(property, depth) {
+        // Update the raster map with new depth
+        if (!this.interactiveMaps) return;
+        
+        const mapId = property === 'oc' ? 'properties-oc-map' : 'properties-ph-map';
+        const mapContainer = document.getElementById(mapId);
+        
+        if (mapContainer && mapContainer.style.display !== 'none') {
+            // Update the raster layer with new depth
+            console.log(`Updating ${property} map to depth index ${depth}`);
+            this.interactiveMaps.changeDepth(mapId, depth).then(() => {
+                // Force map to recalculate size after depth change
+                const mapObj = this.interactiveMaps.maps.get(mapId);
+                if (mapObj && mapObj.map) {
+                    setTimeout(() => mapObj.map.invalidateSize(), 150);
+                }
+            });
+            
+            // Update legend with new depth
+            const depthLabels = ['0-5cm', '5-15cm', '15-30cm', '30-60cm', '60-100cm', '100-200cm'];
+            
+            // Update the legend on the map
+            let newLegend;
+            if (property === 'oc') {
+                newLegend = `
+                    <h5>Organic Carbon (g/kg) - ${depthLabels[depth]} depth</h5>
+                    <div class="gradient-legend">
+                        <div class="gradient-bar" style="background: linear-gradient(to right, #FFF8DC, #DEB887, #D2691E, #8B4513, #654321);"></div>
+                        <div class="gradient-labels">
+                            <span>0</span>
+                            <span>20</span>
+                            <span>40</span>
+                            <span>60</span>
+                            <span>80</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                newLegend = `
+                    <h5>Soil pH - ${depthLabels[depth]} depth</h5>
+                    <div class="gradient-legend">
+                        <div class="gradient-bar" style="background: linear-gradient(to right, #FF0000, #FF6600, #FFFF00, #00FF00, #0000FF);"></div>
+                        <div class="gradient-labels">
+                            <span>4.5</span>
+                            <span>5.5</span>
+                            <span>6.5</span>
+                            <span>7.5</span>
+                            <span>8.5</span>
+                        </div>
+                    </div>
+                `;
+            }
+            this.interactiveMaps.addLegend(mapId, newLegend);
+            
+            // Also update the HTML legend if it exists
+            const legendId = property === 'oc' ? 'oc-legend' : 'ph-legend';
+            const legend = document.getElementById(legendId);
+            if (legend) {
+                const title = legend.querySelector('h5');
+                if (title) {
+                    if (property === 'oc') {
+                        title.textContent = `Organic Carbon (g/kg) - ${depthLabels[depth]} depth`;
+                    } else {
+                        title.textContent = `Soil pH - ${depthLabels[depth]} depth`;
+                    }
+                }
+            }
+        }
     }
     
     async loadStoryData() {
@@ -714,24 +978,6 @@ class StoryMap {
         }
     }
     
-    updatePropertiesMap(property, depth = 0) {
-        const mapId = 'properties-map';
-        const mapObj = this.maps[mapId];
-        if (!mapObj) return;
-        
-        console.log(`Updating properties map for: ${property} at depth ${depth}`);
-        
-        // This would integrate with the raster system for actual data display
-        // For now, just update the base layer
-        switch (property) {
-            case 'oc':
-                this.addBaseLayer(mapId, 'terrain');
-                break;
-            case 'ph':
-                this.addBaseLayer(mapId, 'satellite');
-                break;
-        }
-    }
     
     focusOnSerpentineAreas() {
         const mapId = 'serpentine-map';
