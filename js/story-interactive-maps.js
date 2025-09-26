@@ -164,10 +164,11 @@ class StoryInteractiveMaps {
                     const color = CONFIG.soilOrderColors[order] || CONFIG.soilOrderColors['Unknown'];
                     return {
                         fillColor: color,
-                        weight: 0.5,
-                        opacity: 0.7,
-                        color: '#666',
-                        fillOpacity: 0.8
+                        weight: 0,  // Remove borders to eliminate white gaps
+                        opacity: 1,
+                        color: color,
+                        fillOpacity: 0.9,  // Increase fill opacity for better coverage
+                        smoothFactor: 0  // Reduce polygon simplification
                     };
                 };
                 popupFunction = (feature) => {
@@ -191,10 +192,11 @@ class StoryInteractiveMaps {
                     const color = CONFIG.particleSizeColors[size] || CONFIG.particleSizeColors['Unknown'] || '#808080';
                     return {
                         fillColor: color,
-                        weight: 0.5,
-                        opacity: 0.7,
-                        color: '#666',
-                        fillOpacity: 0.8
+                        weight: 0,  // Remove borders to eliminate white gaps
+                        opacity: 1,
+                        color: color,
+                        fillOpacity: 0.9,  // Increase fill opacity for better coverage
+                        smoothFactor: 0  // Reduce polygon simplification
                     };
                 };
                 popupFunction = (feature) => {
@@ -256,10 +258,11 @@ class StoryInteractiveMaps {
                     
                     return {
                         fillColor: color,
-                        weight: 0.5,
-                        opacity: 0.7,
-                        color: '#666',
-                        fillOpacity: 0.8
+                        weight: 0,  // Remove borders to eliminate white gaps
+                        opacity: 1,
+                        color: color,
+                        fillOpacity: 0.9,  // Increase fill opacity for better coverage
+                        smoothFactor: 0  // Reduce polygon simplification
                     };
                 };
                 
@@ -321,13 +324,12 @@ class StoryInteractiveMaps {
                     });
                 }
                 
-                // Add hover effect
+                // Add hover effect with subtle highlight
                 layer.on({
                     mouseover: (e) => {
                         const layer = e.target;
                         layer.setStyle({
-                            weight: 2,
-                            opacity: 1
+                            fillOpacity: 1  // Just increase opacity, no border
                         });
                     },
                     mouseout: (e) => {

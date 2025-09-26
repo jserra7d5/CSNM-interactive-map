@@ -820,11 +820,12 @@ class MapManager {
         
         return {
             fillColor: color,
-            weight: 0.5,
-            color: '#333',
-            opacity: 0.8,
-            fillOpacity: 0.7,
-            fill: true
+            weight: 0,  // Remove borders to eliminate white gaps
+            color: color,
+            opacity: 1,
+            fillOpacity: 0.9,  // Increase fill opacity for better coverage
+            fill: true,
+            smoothFactor: 0  // Reduce polygon simplification
         };
     }
     
@@ -843,11 +844,12 @@ class MapManager {
         
         return {
             fillColor: color,
-            weight: 0.5,
-            color: '#333',
-            opacity: 0.8,
-            fillOpacity: 0.7,
-            fill: true
+            weight: 0,  // Remove borders to eliminate white gaps
+            color: color,
+            opacity: 1,
+            fillOpacity: 0.9,  // Increase fill opacity for better coverage
+            fill: true,
+            smoothFactor: 0  // Reduce polygon simplification
         };
     }
 
@@ -866,11 +868,12 @@ class MapManager {
         
         return {
             fillColor: color,
-            weight: 0.5,
-            color: '#333',
-            opacity: 0.8,
-            fillOpacity: 0.7,
-            fill: true
+            weight: 0,  // Remove borders to eliminate white gaps
+            color: color,
+            opacity: 1,
+            fillOpacity: 0.9,  // Increase fill opacity for better coverage
+            fill: true,
+            smoothFactor: 0  // Reduce polygon simplification
         };
     }
     

@@ -11,7 +11,9 @@ class StoryMap {
         this.scrollTimeout = null;
         this.isScrolling = false;
         this.interactiveMaps = null; // For the new interactive maps
-        
+        this.timelineItems = [];
+        this.visitedSections = new Set();
+
         this.init();
     }
     
@@ -66,7 +68,32 @@ class StoryMap {
     
     setupSections() {
         this.sections = Array.from(document.querySelectorAll('.story-section'));
+        this.timelineItems = Array.from(document.querySelectorAll('.timeline-item'));
         console.log(`Found ${this.sections.length} story sections`);
+        console.log(`Found ${this.timelineItems.length} timeline items`);
+
+        // Setup timeline click handlers
+        this.setupTimelineNavigation();
+    }
+
+    setupTimelineNavigation() {
+        this.timelineItems.forEach((item, index) => {
+            item.addEventListener('click', () => {
+                const sectionId = item.getAttribute('data-section');
+                const targetSection = document.querySelector(`.story-section[data-section="${sectionId}"]`);
+
+                if (targetSection) {
+                    // Smooth scroll to section
+                    const yOffset = -80; // Account for fixed header
+                    const y = targetSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+                    window.scrollTo({
+                        top: y,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
     }
     
     // Create interactive maps in their containers
@@ -341,8 +368,8 @@ class StoryMap {
                 });
             },
             {
-                threshold: 0.3,
-                rootMargin: '-10% 0px -10% 0px'
+                threshold: 0.2,
+                rootMargin: '-25% 0px -50% 0px'  // Trigger when section is 25% from top
             }
         );
         
@@ -854,20 +881,56 @@ class StoryMap {
     }
     
     checkSectionVisibility() {
-        const viewportCenter = window.innerHeight / 2;
-        
+        const viewportTop = window.innerHeight * 0.3; // Check point is 30% from top of viewport
+
+        let activeSection = -1;
+
         this.sections.forEach((section, index) => {
             const rect = section.getBoundingClientRect();
-            const sectionCenter = rect.top + rect.height / 2;
-            
-            // Check if section center is near viewport center
-            if (Math.abs(sectionCenter - viewportCenter) < window.innerHeight * 0.3) {
-                if (this.currentSection !== index) {
-                    this.currentSection = index;
-                    this.onSectionChange(index);
-                }
+
+            // Section is considered active when its top crosses the check point
+            // or when it's the last section that has started
+            if (rect.top <= viewportTop && rect.bottom > viewportTop) {
+                activeSection = index;
+            }
+
+            // Mark sections as visited if they've been scrolled past
+            if (rect.top < viewportTop) {
+                this.visitedSections.add(index);
             }
         });
+
+        // If no section is exactly at the checkpoint, use the last visited section
+        if (activeSection === -1 && this.visitedSections.size > 0) {
+            activeSection = Math.max(...this.visitedSections);
+        }
+
+        // Update if the active section has changed
+        if (activeSection !== -1 && this.currentSection !== activeSection) {
+            this.currentSection = activeSection;
+            this.onSectionChange(activeSection);
+            this.updateTimelineIndicator(activeSection);
+        }
+
+        // Update visited state on timeline
+        this.updateTimelineVisitedStates();
+    }
+
+    updateTimelineIndicator(activeIndex) {
+        // Remove active class from all timeline items
+        this.timelineItems.forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Add active class to current timeline item
+        if (this.timelineItems[activeIndex]) {
+            this.timelineItems[activeIndex].classList.add('active');
+        }
+    }
+
+    updateTimelineVisitedStates() {
+        // No longer adding visited class since we don't want to highlight previously visited sections
+        // Still tracking visited sections internally for other logic
     }
     
     onSectionVisible(section) {
@@ -1000,29 +1063,47 @@ class StoryMap {
     startStory() {
         // Initial animation
         document.body.classList.add('story-loaded');
-        
+
         // Make sure first section is visible
         const firstSection = this.sections[0];
         if (firstSection) {
             firstSection.classList.add('visible');
         }
-        
+
+        // Initialize first timeline item as active
+        if (this.timelineItems[0]) {
+            this.timelineItems[0].classList.add('active');
+            // Still track visited internally but don't add class
+            this.visitedSections.add(0);
+        }
+
         console.log('Story map started');
     }
     
     restartStory() {
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
+
         // Reset all interactive states
         this.resetInteractiveStates();
-        
+
         // Reset progress
         const progressFill = document.querySelector('.story-progress-fill');
         if (progressFill) {
             progressFill.style.width = '0%';
         }
-        
+
+        // Reset timeline
+        this.visitedSections.clear();
+        this.visitedSections.add(0);
+        this.currentSection = 0;
+        this.timelineItems.forEach((item, index) => {
+            item.classList.remove('active', 'visited');
+            if (index === 0) {
+                item.classList.add('active');
+            }
+        });
+
         console.log('Story restarted');
     }
     
