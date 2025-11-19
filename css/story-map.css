@@ -2342,17 +2342,18 @@ html {
     display: flex;
     justify-content: space-between;
     padding: 8px;
-    background: rgba(0, 0, 0, 0.2);
+    background: #f3f4f6;
     border-radius: 4px;
+    margin-bottom: 4px;
 }
 
 .chemistry-item .label {
-    color: #94a3b8;
+    color: #1f2937;
     font-weight: 500;
 }
 
 .chemistry-item .value {
-    color: #fbbf24;
+    color: #dc2626;
     font-weight: 600;
 }
 
@@ -2368,7 +2369,7 @@ html {
 .adaptation-label {
     display: table-cell;
     padding: 8px 15px 8px 0;
-    color: #60a5fa;
+    color: #1f2937;
     font-weight: 600;
     white-space: nowrap;
     vertical-align: top;
@@ -2378,7 +2379,7 @@ html {
 .adaptation-desc {
     display: table-cell;
     padding: 8px 0;
-    color: #e2e8f0;
+    color: #374151;
     font-size: 14px;
     line-height: 1.5;
     vertical-align: top;
@@ -2464,19 +2465,19 @@ html {
 }
 
 .endemic-tag {
-    background: rgba(74, 222, 128, 0.2);
-    color: #4ade80;
+    background: #ecfdf5;
+    color: #059669;
     padding: 4px 12px;
     border-radius: 16px;
     font-size: 13px;
     font-style: italic;
-    border: 1px solid rgba(74, 222, 128, 0.3);
+    border: 1px solid #10b981;
 }
 
 .endemic-note {
     margin: 10px 0 0 0;
     font-size: 14px;
-    color: #ffffff;
+    color: #374151;
     text-align: center;
 }
 
