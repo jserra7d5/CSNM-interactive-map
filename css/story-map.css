@@ -117,6 +117,7 @@ html {
         opacity: 0;
         transform: translateX(-20px) translateY(-50%);
     }
+
     to {
         opacity: 1;
         transform: translateX(0) translateY(-50%);
@@ -350,6 +351,11 @@ html {
     color: #2c3e50;
     margin-bottom: 1.5rem;
     line-height: 1.2;
+    text-align: center;
+}
+
+h3 {
+    text-align: center;
 }
 
 .story-lead {
@@ -358,6 +364,7 @@ html {
     color: #34495e;
     margin-bottom: 2rem;
     line-height: 1.5;
+    text-align: center;
 }
 
 .story-text p {
@@ -412,6 +419,7 @@ html {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     border: 1px solid #e0e0e0;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
 }
 
 .story-screenshot:hover {
@@ -562,7 +570,8 @@ html {
     left: 0;
     display: flex;
     align-items: center;
-    transform: translateY(-50%); /* Center the tick on its position */
+    transform: translateY(-50%);
+    /* Center the tick on its position */
 }
 
 .vertical-elevation-legend .tick::before {
@@ -672,14 +681,17 @@ html {
 .vertical-precipitation-legend .legend-gradient {
     width: 20px;
     height: 100%;
-    background: linear-gradient(to bottom, 
-        #4a90e2 0%,     /* Blue at top (wet) */
-        #5ba3e5 20%,
-        #7bbce8 40%,
-        #f4e4b1 60%,    /* Tan/yellow in middle */
-        #d4a373 80%,
-        #8b6f47 100%    /* Brown at bottom (dry) */
-    );
+    background: linear-gradient(to bottom,
+            #4a90e2 0%,
+            /* Blue at top (wet) */
+            #5ba3e5 20%,
+            #7bbce8 40%,
+            #f4e4b1 60%,
+            /* Tan/yellow in middle */
+            #d4a373 80%,
+            #8b6f47 100%
+            /* Brown at bottom (dry) */
+        );
     border-radius: 2px;
     border: 1px solid rgba(0, 0, 0, 0.2);
 }
@@ -759,16 +771,25 @@ html {
     width: 20px;
     height: 100%;
     background: linear-gradient(to bottom,
-        #b40426 0%,     /* Dark red at top (warmest) */
-        #d73027 12.5%,  /* Red */
-        #f46d43 25%,    /* Orange-red */
-        #fdae61 37.5%,  /* Light orange */
-        #fee090 50%,    /* Pale yellow */
-        #e0f3f8 62.5%,  /* Pale blue */
-        #abd9e9 75%,    /* Light blue */
-        #74add1 87.5%,  /* Medium blue */
-        #4575b4 100%    /* Dark blue at bottom (coldest) */
-    );
+            #b40426 0%,
+            /* Dark red at top (warmest) */
+            #d73027 12.5%,
+            /* Red */
+            #f46d43 25%,
+            /* Orange-red */
+            #fdae61 37.5%,
+            /* Light orange */
+            #fee090 50%,
+            /* Pale yellow */
+            #e0f3f8 62.5%,
+            /* Pale blue */
+            #abd9e9 75%,
+            /* Light blue */
+            #74add1 87.5%,
+            /* Medium blue */
+            #4575b4 100%
+            /* Dark blue at bottom (coldest) */
+        );
     border-radius: 2px;
     border: 1px solid rgba(0, 0, 0, 0.2);
 }
@@ -806,19 +827,19 @@ html {
     .elevation-map-container {
         flex-direction: column;
     }
-    
+
     .vertical-elevation-legend {
         width: 100%;
         flex-direction: row;
         padding: 10px;
         min-height: auto;
     }
-    
+
     .vertical-elevation-legend .legend-scale {
         min-height: 60px;
         width: 100%;
     }
-    
+
     .vertical-elevation-legend .legend-gradient {
         top: 10px;
         left: 0;
@@ -828,7 +849,7 @@ html {
         width: auto;
         background: linear-gradient(to right, #1e3a8a, #10b981, #fbbf24, #f97316, #dc2626, #ffffff);
     }
-    
+
     .vertical-elevation-legend .legend-ticks {
         top: 35px;
         left: 0;
@@ -837,70 +858,88 @@ html {
         width: auto;
         height: 25px;
     }
-    
+
     .vertical-elevation-legend .tick {
         top: auto !important;
         bottom: 0;
-        transform: none; /* Remove vertical centering for horizontal layout */
+        transform: none;
+        /* Remove vertical centering for horizontal layout */
     }
-    
+
     .vertical-elevation-legend .tick::before {
         top: -15px;
         left: auto;
         width: 1px;
         height: 10px;
     }
-    
-    .vertical-elevation-legend .tick:nth-child(1) { left: 100%; transform: translateX(-100%); }
-    .vertical-elevation-legend .tick:nth-child(2) { left: 80%; }
-    .vertical-elevation-legend .tick:nth-child(3) { left: 60%; }
-    .vertical-elevation-legend .tick:nth-child(4) { left: 40%; }
-    .vertical-elevation-legend .tick:nth-child(5) { left: 20%; }
-    .vertical-elevation-legend .tick:nth-child(6) { left: 0%; }
-    
+
+    .vertical-elevation-legend .tick:nth-child(1) {
+        left: 100%;
+        transform: translateX(-100%);
+    }
+
+    .vertical-elevation-legend .tick:nth-child(2) {
+        left: 80%;
+    }
+
+    .vertical-elevation-legend .tick:nth-child(3) {
+        left: 60%;
+    }
+
+    .vertical-elevation-legend .tick:nth-child(4) {
+        left: 40%;
+    }
+
+    .vertical-elevation-legend .tick:nth-child(5) {
+        left: 20%;
+    }
+
+    .vertical-elevation-legend .tick:nth-child(6) {
+        left: 0%;
+    }
+
     /* Land cover legend mobile */
     .horizontal-landcover-legend .legend-items {
         grid-template-columns: repeat(2, 1fr);
         gap: 4px 8px;
     }
-    
+
     .horizontal-landcover-legend .label {
         font-size: 9px;
     }
-    
+
     /* Parent material map mobile - no legend needed */
-    
+
     /* Precipitation legend mobile */
     .precipitation-map-container {
         flex-direction: column;
     }
-    
+
     .vertical-precipitation-legend {
         width: 100%;
         flex-direction: row;
         padding: 10px;
         min-height: auto;
     }
-    
+
     .vertical-precipitation-legend .legend-scale {
         flex-direction: row;
         min-height: 40px;
         width: 100%;
     }
-    
+
     .vertical-precipitation-legend .legend-gradient {
         width: 100%;
         height: 20px;
-        background: linear-gradient(to right, 
-            #8b6f47 0%,
-            #d4a373 20%,
-            #f4e4b1 40%,
-            #7bbce8 60%,
-            #5ba3e5 80%,
-            #4a90e2 100%
-        );
+        background: linear-gradient(to right,
+                #8b6f47 0%,
+                #d4a373 20%,
+                #f4e4b1 40%,
+                #7bbce8 60%,
+                #5ba3e5 80%,
+                #4a90e2 100%);
     }
-    
+
     .vertical-precipitation-legend .legend-ticks {
         width: 100%;
         height: auto;
@@ -908,12 +947,12 @@ html {
         justify-content: space-between;
         margin-top: 5px;
     }
-    
+
     .vertical-precipitation-legend .tick {
         position: static;
         transform: none;
     }
-    
+
     .vertical-precipitation-legend .tick::before {
         display: none;
     }
@@ -1536,14 +1575,20 @@ html {
 }
 
 /* New CLORPT Individual Sections */
-.organism-roles, .relief-zones, .parent-materials, .time-stages {
+.organism-roles,
+.relief-zones,
+.parent-materials,
+.time-stages {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
     margin: 30px 0;
 }
 
-.role-card, .zone-card, .material-card, .stage-card {
+.role-card,
+.zone-card,
+.material-card,
+.stage-card {
     background: white;
     border-radius: 8px;
     padding: 20px;
@@ -1551,7 +1596,10 @@ html {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.role-card:hover, .zone-card:hover, .material-card:hover, .stage-card:hover {
+.role-card:hover,
+.zone-card:hover,
+.material-card:hover,
+.stage-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
@@ -1847,11 +1895,13 @@ html {
     height: auto;
     object-fit: contain;
     border-radius: 12px;
-    display: none; /* Hide all by default */
+    display: none;
+    /* Hide all by default */
 }
 
 #clorpt-map-container img.active {
-    display: block; /* Show only the active one */
+    display: block;
+    /* Show only the active one */
 }
 
 /* Photo Credit Styles */
@@ -1879,56 +1929,56 @@ html {
     .story-nav-content {
         padding: 0 15px;
     }
-    
+
     .story-title {
         font-size: 16px;
     }
-    
+
     .story-progress {
         width: 80px;
     }
-    
+
     .story-content {
         grid-template-columns: 1fr;
         gap: 40px;
         padding: 0 15px;
     }
-    
+
     .story-section {
         padding: 60px 20px;
     }
-    
+
     .story-text h2 {
         font-size: 2rem;
     }
-    
+
     .story-lead {
         font-size: 1.1rem;
     }
-    
+
     .story-stats {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .factors-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .volcanic-features {
         grid-template-columns: 1fr;
     }
-    
+
     .conservation-stats {
         grid-template-columns: 1fr;
         gap: 15px;
     }
-    
+
     .cta-buttons {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .property-selector {
         flex-direction: column;
     }
@@ -1938,33 +1988,34 @@ html {
     .story-text h2 {
         font-size: 1.8rem;
     }
-    
+
     .story-lead {
         font-size: 1rem;
     }
-    
+
     .story-map,
     .story-screenshot {
         height: 300px;
     }
-    
+
     .story-screenshot.large {
         height: 350px;
     }
-    
+
     .story-screenshot.compact {
         height: 280px;
     }
-    
+
     #properties-map-container {
         height: 300px;
     }
-    
+
     .btn-lg {
         padding: 15px 25px;
         font-size: 1rem;
     }
 }
+
 /* Climate Toggle Buttons */
 .climate-toggle {
     display: flex;
@@ -2131,11 +2182,15 @@ html {
     text-align: center;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .clorpt-content {
     max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0 auto !important;
     position: relative;
     z-index: 1;
 }
@@ -2147,6 +2202,7 @@ html {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 2px;
+    text-align: center;
 }
 
 .clorpt-equation {
@@ -2166,11 +2222,25 @@ html {
     margin: 0 3px;
 }
 
-.factor-c { color: #60a5fa; }
-.factor-o { color: #34d399; }
-.factor-r { color: #fb923c; }
-.factor-p { color: #c084fc; }
-.factor-t { color: #f472b6; }
+.factor-c {
+    color: #60a5fa;
+}
+
+.factor-o {
+    color: #34d399;
+}
+
+.factor-r {
+    color: #fb923c;
+}
+
+.factor-p {
+    color: #c084fc;
+}
+
+.factor-t {
+    color: #f472b6;
+}
 
 .clorpt-lead {
     font-size: 20px;
@@ -2441,6 +2511,14 @@ html {
     color: #FFD700;
     margin-bottom: 20px;
     display: block;
+}
+
+.serpentine-over.clorpt-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
 .serpentine-overlay h3 {
