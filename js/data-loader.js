@@ -104,6 +104,29 @@ class DataLoader {
         }
     }
     
+    // Load JSON data with caching
+    async loadJSON(url, cacheKey = null) {
+        const key = cacheKey || url;
+
+        // Return cached data if available
+        if (this.cache.has(key)) {
+            return this.cache.get(key);
+        }
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            this.cache.set(key, data);
+            return data;
+        } catch (error) {
+            throw new Error(`Failed to load JSON from ${url}: ${error.message}`);
+        }
+    }
+
     // Load CSV data
     async loadCSV(url, cacheKey = null) {
         const key = cacheKey || url;
@@ -181,14 +204,21 @@ class DataLoader {
                 CONFIG.dataPaths.serviceRoads,
                 'serviceRoads'
             );
-            
+
+            // Load soil suitability ratings
+            dataPromises.soilSuitability = this.loadJSON(
+                CONFIG.dataPaths.soilSuitability,
+                'soilSuitability'
+            );
+
             // Wait for all data to load
             const results = await Promise.allSettled([
                 dataPromises.soilPolygons,
                 dataPromises.boundaryPolygon,
                 dataPromises.mapunitTable,
                 dataPromises.highways,
-                dataPromises.serviceRoads
+                dataPromises.serviceRoads,
+                dataPromises.soilSuitability
             ]);
             
             // Check for failures
@@ -202,7 +232,8 @@ class DataLoader {
                 boundaryPolygon: results[1].status === 'fulfilled' ? results[1].value : null,
                 mapunitTable: results[2].status === 'fulfilled' ? results[2].value : null,
                 highways: results[3].status === 'fulfilled' ? results[3].value : null,
-                serviceRoads: results[4].status === 'fulfilled' ? results[4].value : null
+                serviceRoads: results[4].status === 'fulfilled' ? results[4].value : null,
+                soilSuitability: results[5].status === 'fulfilled' ? results[5].value : null
             };
             
             // Process and enhance the data
@@ -228,7 +259,12 @@ class DataLoader {
         if (data.mapunitTable) {
             processed.mapunitLookup = this.createMapunitLookup(data.mapunitTable);
         }
-        
+
+        // Pass through soil suitability data
+        if (data.soilSuitability) {
+            processed.soilSuitability = data.soilSuitability;
+        }
+
         return processed;
     }
     

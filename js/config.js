@@ -464,7 +464,8 @@ const CONFIG = {
         nlcd: "data/rasters/NLCD_2024_CSNM.tif",
         lithology: "data/rasters/Lithology_CSNM.tif",
         climateNormals: "data/rasters/CSNM_climate_normals_stack.tif",
-        precipitationAnnual: "data/rasters/CSNM_precipitation_annual.tif"
+        precipitationAnnual: "data/rasters/CSNM_precipitation_annual.tif",
+        soilSuitability: "data/soil_suitability_ratings.json"
     },
     
     // Points of Interest

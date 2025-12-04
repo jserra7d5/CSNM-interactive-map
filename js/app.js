@@ -50,7 +50,10 @@ class SoilExplorerApp {
             this.uiController.showLoading('Loading soil data...');
             
             this.appData = await this.dataLoader.loadAllData();
-            
+
+            // Expose app data globally for UI components to access (e.g., soil suitability)
+            window.appData = this.appData;
+
             // Don't hide loading yet - keep it for polygon loading
             this.uiController.updateUIForDataState(true);
             
@@ -376,6 +379,9 @@ class SoilExplorerApp {
                         comppct_r: props.comppct_r || 'placeholder',
                         compkind: props.compkind || 'placeholder',
                         majcompflag: props.majcompflag || 'placeholder',
+                        // Add MUKEY for soil suitability lookup
+                        MUKEY: props.MUKEY || props.mukey,
+                        cokey: props.cokey,
                         // Add taxonomy fields
                         taxclname: props.taxclname,
                         taxorder: props.taxorder,

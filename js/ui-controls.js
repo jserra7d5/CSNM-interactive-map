@@ -1300,21 +1300,14 @@ class UIController {
                     </div>
                 </div>
                 
+                <!-- Forest Productivity section hidden - no data available in current SSURGO dataset -->
+
                 <div class="detail-section">
-                    <div class="detail-section-header collapsed" data-section="forest-productivity">
-                        <i class="fas fa-caret-down section-arrow"></i> Forest Productivity
-                    </div>
-                    <div class="detail-section-content" style="display: none;">
-                        <p>placeholder</p>
-                    </div>
-                </div>
-                
-                <div class="detail-section">
-                    <div class="detail-section-header collapsed" data-section="soil-suitability">
+                    <div class="detail-section-header ${this.openSections.has('soil-suitability') ? 'active' : 'collapsed'}" data-section="soil-suitability">
                         <i class="fas fa-caret-down section-arrow"></i> Soil Suitability Ratings
                     </div>
-                    <div class="detail-section-content" style="display: none;">
-                        <p>placeholder</p>
+                    <div class="detail-section-content" style="display: ${this.openSections.has('soil-suitability') ? 'block' : 'none'};" id="soil-suitability-content">
+                        <p>Loading soil suitability data...</p>
                     </div>
                 </div>
                 
@@ -1391,6 +1384,7 @@ class UIController {
             this.populateSoilTaxonomy(componentData);
             this.populateLandClassification(componentData);
             this.populateHydraulicErosion(componentData);
+            this.populateSoilSuitability(componentData);
         }
     }
     
@@ -1770,7 +1764,150 @@ class UIController {
         html += '</ul>';
         hydraulicContent.innerHTML = html;
     }
-    
+
+    // Populate soil suitability ratings section
+    populateSoilSuitability(componentData) {
+        const suitabilityContent = document.getElementById('soil-suitability-content');
+        if (!suitabilityContent) return;
+
+        // Get the MUKEY from component data - try multiple possible locations
+        let mukey = componentData.MUKEY || componentData.mukey ||
+                   componentData.properties?.MUKEY || componentData.properties?.mukey ||
+                   componentData.mukey_1 || componentData.properties?.mukey_1;
+        const compname = componentData.compname || componentData.properties?.compname;
+
+        // Convert to string for lookup (JSON keys are strings)
+        if (mukey) {
+            mukey = String(mukey);
+        }
+
+        if (!mukey) {
+            suitabilityContent.innerHTML = '<p style="font-style: italic;">No MUKEY available for this component</p>';
+            return;
+        }
+
+        // Get the soil suitability data from the global app data
+        // This data is loaded via dataLoader and stored in the app
+        const soilSuitabilityData = window.appData?.soilSuitability?.data;
+
+        if (!soilSuitabilityData || !soilSuitabilityData[mukey]) {
+            suitabilityContent.innerHTML = '<p style="font-style: italic;">No soil suitability data available for this map unit</p>';
+            return;
+        }
+
+        const mukeyData = soilSuitabilityData[mukey];
+
+        // Find the matching component or use the first one
+        let componentSuitability = mukeyData[compname];
+        if (!componentSuitability && Object.keys(mukeyData).length > 0) {
+            // Use first component if exact match not found
+            const firstCompName = Object.keys(mukeyData)[0];
+            componentSuitability = mukeyData[firstCompName];
+        }
+
+        if (!componentSuitability || !componentSuitability.interpretations) {
+            suitabilityContent.innerHTML = '<p style="font-style: italic;">No interpretations available for this component</p>';
+            return;
+        }
+
+        const interpretations = componentSuitability.interpretations;
+
+        // Create tabbed interface for different categories
+        const categoryLabels = {
+            'engineering': 'Engineering',
+            'agriculture': 'Agriculture',
+            'waste_management': 'Waste Related',
+            'urban_recreation': 'Urban/Rec',
+            'building_site': 'DHS',
+            'irrigation': 'Irrigation',
+            'forestry': 'Forestry',
+            'wildlife': 'Wildlife',
+            'rangeland': 'Rangeland'
+        };
+
+        // Filter to only categories with data
+        const availableCategories = Object.keys(interpretations).filter(
+            cat => interpretations[cat] && Object.keys(interpretations[cat]).length > 0
+        );
+
+        if (availableCategories.length === 0) {
+            suitabilityContent.innerHTML = '<p style="font-style: italic;">No interpretations available</p>';
+            return;
+        }
+
+        // Build the HTML with tabs
+        let html = '<div class="suitability-tabs">';
+
+        // Tab buttons
+        html += '<div class="suitability-tab-buttons">';
+        availableCategories.forEach((cat, index) => {
+            const label = categoryLabels[cat] || cat;
+            const activeClass = index === 0 ? 'active' : '';
+            html += `<button class="suitability-tab-btn ${activeClass}" data-category="${cat}">${label}</button>`;
+        });
+        html += '</div>';
+
+        // Tab content
+        html += '<div class="suitability-tab-content">';
+        availableCategories.forEach((cat, index) => {
+            const displayStyle = index === 0 ? 'block' : 'none';
+            html += `<div class="suitability-tab-pane" data-category="${cat}" style="display: ${displayStyle};">`;
+            html += `<h4>${categoryLabels[cat] || cat} Ratings</h4>`;
+            html += '<ul class="suitability-list">';
+
+            const catInterps = interpretations[cat];
+            Object.entries(catInterps).forEach(([name, rating]) => {
+                const ratingClass = this.getSuitabilityRatingClass(rating);
+                html += `<li class="suitability-item">
+                    <span class="suitability-name">${name}</span>
+                    <span class="suitability-rating ${ratingClass}">${rating}</span>
+                </li>`;
+            });
+
+            html += '</ul></div>';
+        });
+        html += '</div></div>';
+
+        suitabilityContent.innerHTML = html;
+
+        // Add tab click handlers
+        const tabButtons = suitabilityContent.querySelectorAll('.suitability-tab-btn');
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active from all buttons
+                tabButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Hide all panes
+                const panes = suitabilityContent.querySelectorAll('.suitability-tab-pane');
+                panes.forEach(p => p.style.display = 'none');
+
+                // Show selected pane
+                const category = btn.dataset.category;
+                const selectedPane = suitabilityContent.querySelector(`.suitability-tab-pane[data-category="${category}"]`);
+                if (selectedPane) {
+                    selectedPane.style.display = 'block';
+                }
+            });
+        });
+    }
+
+    // Get CSS class for suitability rating
+    getSuitabilityRatingClass(rating) {
+        if (!rating) return '';
+        const ratingLower = rating.toLowerCase();
+        if (ratingLower.includes('not limited') || ratingLower === 'good' || ratingLower === 'well suited') {
+            return 'rating-good';
+        } else if (ratingLower.includes('somewhat limited') || ratingLower === 'fair' || ratingLower.includes('moderately')) {
+            return 'rating-fair';
+        } else if (ratingLower.includes('very limited') || ratingLower.includes('severely') || ratingLower === 'poor') {
+            return 'rating-poor';
+        } else if (ratingLower.includes('not suited') || ratingLower.includes('not rated')) {
+            return 'rating-not-rated';
+        }
+        return 'rating-limited';
+    }
+
     // Attach event handlers for detail panel
     attachDetailPanelEventHandlers() {
         // Re-attach close button handler
@@ -1941,29 +2078,7 @@ class UIController {
             } catch (wssError) {
             }
             
-            // Second try: SoilWeb API (may fail due to CORS)
-            if (!data) {
-                try {
-                    const baseURL = 'https://casoilresource.lawr.ucdavis.edu/soil_web/reflector_api/soils.php';
-                    const params = new URLSearchParams({
-                        what: 'osd_query',
-                        q_string: seriesName.toLowerCase()
-                    });
-                    
-                    const response = await fetch(`${baseURL}?${params}`, {
-                        mode: 'cors'
-                    });
-                    
-                    if (response.ok) {
-                        data = await response.json();
-                    }
-                } catch (corsError) {
-                    // Expected CORS error - API doesn't support CORS
-                    // Silently continue to CORS proxy method
-                }
-            }
-            
-            // Third try: Use a CORS proxy (for development)
+            // SoilWeb API doesn't support CORS, so go straight to CORS proxy
             if (!data) {
                 try {
                     // Try cors-anywhere alternative

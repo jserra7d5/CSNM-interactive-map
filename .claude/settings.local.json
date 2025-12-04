@@ -9,13 +9,14 @@
       "WebFetch(domain:pubs.usgs.gov)",
       "WebFetch(domain:mrdata.usgs.gov)",
       "WebFetch(domain:localhost)",
-      "WebFetch(domain:www.fs.usda.gov)"
+      "WebFetch(domain:www.fs.usda.gov)",
+      "Bash(source .venv/bin/activate)"
     ],
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "bigquery"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

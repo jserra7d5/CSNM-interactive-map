@@ -123,15 +123,15 @@
                         <div class="story-stats">
                             <div class="stat-item">
                                 <span class="stat-number">114,000</span>
-                                <span class="stat-label">acres protected</span>
+                                <span class="stat-label">acres protected <small>(Source: <a href="https://www.blm.gov/programs/national-conservation-lands/oregon-washington/cascade-siskiyou" target="_blank">BLM</a>)</small></span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-number">6</span>
-                                <span class="stat-label">soil orders present</span>
+                                <span class="stat-number">7</span>
+                                <span class="stat-label">soil orders present <small>(Source: <a href="https://websoilsurvey.nrcs.usda.gov/" target="_blank">SSURGO</a>)</small></span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-number">300+</span>
-                                <span class="stat-label">plant species <small>(Source: BLM)</small></span>
+                                <span class="stat-label">plant species <small>(Source: <a href="https://www.blm.gov/programs/national-conservation-lands/oregon-washington/cascade-siskiyou" target="_blank">BLM</a>)</small></span>
                             </div>
                         </div>
                     </div>
@@ -221,6 +221,7 @@
                                 class="factor-r">r</span>, <span class="factor-p">p</span>, <span
                                 class="factor-t">t</span>)
                         </div>
+                        <p style="font-size: 0.9em; color: #666; margin-top: -10px; font-style: italic;">(The "L" is silent—"cl" represents climate)</p>
                         <p class="clorpt-lead">
                             In 1941, soil scientist Hans Jenny revolutionized our understanding of soil formation with
                             this
@@ -398,10 +399,9 @@
                         <div class="serpentine-callout">
                             <i class="fas fa-leaf"></i>
                             <div>
-                                <h4>Serpentine Specialists</h4>
-                                <p>Over 140 endemic plant species have adapted to the monument's unique geology,
-                                    creating unique
-                                    plant-soil relationships found nowhere else on Earth.</p>
+                                <h4>Serpentine-Adapted Plants</h4>
+                                <p>The monument's ultramafic (serpentine) soils host numerous endemic plant species that have evolved tolerance to challenging soil chemistry. These serpentine-adapted species demonstrate remarkable plant-soil relationships.
+                                <small>(<a href="https://www.fs.usda.gov/detail/rogue-siskiyou/learning/nature-science/?cid=stelprdb5316974" target="_blank">USFS Rogue River-Siskiyou</a>)</small></p>
                             </div>
                         </div>
                     </div>
@@ -826,15 +826,14 @@
             <!-- Text and Map Side by Side -->
             <div class="story-content">
                 <div class="story-text">
-                    <h2>The Six Soil Orders of the Monument</h2>
+                    <h2>The Seven Soil Orders of the Monument</h2>
                     <p class="story-lead">
                         Soil taxonomy classifies soils into 12 orders based on their properties and formation
-                        processes. The monument hosts 6 of these orders, each representing different
-                        environmental
-                        conditions and stages of development.
+                        processes. The monument hosts 7 of these orders, each representing different
+                        environmental conditions and stages of development.
                     </p>
                     <p>
-                        From young volcanic soils to ancient weathered profiles, these six orders tell the
+                        From young volcanic soils to ancient weathered profiles, these seven orders tell the
                         story of the monument's diverse landscapes and the processes that shaped them:
                     </p>
                 </div>
@@ -842,9 +841,9 @@
                     <!-- Interactive Soil Orders Map for main section -->
                     <div id="soil-orders-map" class="story-interactive-map"></div>
                     <div class="map-caption">
-                        Distribution of the six soil orders across the monument, each color representing
-                        different
-                        soil-forming processes and environmental conditions. Click polygons to explore.
+                        Distribution of the dominant soil orders across the monument, each color representing
+                        different soil-forming processes and environmental conditions. Click polygons to explore.
+                        <em>Note: Histosols occur as minor components in wetland areas.</em>
                     </div>
                 </div>
             </div>
@@ -938,8 +937,7 @@
                 <div class="soil-order-card">
                     <div class="order-header" style="background: #75CDD6;">
                         <h3>Entisols</h3>
-                        <span class="order-percent">
-                            <1% of monument</span>
+                        <span class="order-percent">&lt;1% of monument</span>
                     </div>
                     <div class="order-content">
                         <p><strong>The Young Soils:</strong> Recently formed soils with little or no profile
@@ -949,6 +947,22 @@
                             <li>Minimal horizon development</li>
                             <li>Minor presence in the monument</li>
                             <li>Properties reflect parent material</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="soil-order-card">
+                    <div class="order-header" style="background: #AE5044;">
+                        <h3>Histosols</h3>
+                        <span class="order-percent">&lt;1% of monument</span>
+                    </div>
+                    <div class="order-content">
+                        <p><strong>The Organic Soils:</strong> Soils composed primarily of organic material, formed in
+                            wetlands where saturated conditions slow decomposition. Found in bogs, marshes, and seeps.</p>
+                        <ul>
+                            <li>High organic matter content (>20-30%)</li>
+                            <li>Form in persistently wet environments</li>
+                            <li>Rare in the monument (non-dominant component)</li>
+                            <li>Important carbon storage and water filtration</li>
                         </ul>
                     </div>
                 </div>
@@ -1195,7 +1209,7 @@
                         <div class="chemistry-list">
                             <div class="chemistry-item">
                                 <span class="label">Ca:Mg ratio:</span>
-                                <span class="value">Low (often &lt; 1)</span>
+                                <span class="value">Low (often &lt; 1) — a traditional indicator of serpentine stress, though plant response varies by species</span>
                             </div>
                             <div class="chemistry-item">
                                 <span class="label">Nickel:</span>
@@ -1203,7 +1217,7 @@
                             </div>
                             <div class="chemistry-item">
                                 <span class="label">Chromium:</span>
-                                <span class="value">Elevated (potential toxicity)</span>
+                                <span class="value">Primarily Cr(III), the less toxic trivalent form naturally found in ultramafic rocks (<a href="https://www.epa.gov/sites/default/files/2016-09/documents/chromium-compounds.pdf" target="_blank">EPA</a>)</span>
                             </div>
                             <div class="chemistry-item">
                                 <span class="label">Nitrogen:</span>
