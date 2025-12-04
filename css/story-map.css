@@ -2179,12 +2179,26 @@ h3 {
 .clorpt-banner {
     background: none;
     padding: 80px 20px;
+    /* Add left padding to account for timeline, centering content in visible area */
+    padding-left: 180px;
     text-align: center;
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+@media (max-width: 1280px) and (min-width: 1025px) {
+    .clorpt-banner {
+        padding-left: 160px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .clorpt-banner {
+        padding-left: 20px;
+    }
 }
 
 .clorpt-content {

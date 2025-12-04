@@ -145,8 +145,8 @@ const CONFIG = {
     },
     
     // Lithology colors (geological rock types)
+    // Note: 0 is no-data (transparent), not a valid class
     lithologyColors: {
-        0: { color: "#356eff", name: "Water" },
         1: { color: "#acb6da", name: "Carbonate" },
         3: { color: "#d6b879", name: "Non-carbonate" },
         4: { color: "#313131", name: "Alkaline intrusive" },

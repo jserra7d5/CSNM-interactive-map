@@ -309,8 +309,9 @@ class RasterManager {
                     // For NLCD classification, 0 and 255 are no-data, valid values are 11-95
                     isNoData = value === null || isNaN(value) || value === -9999 || value === 255 || value === 0 || value < 11 || value > 95;
                 } else if (property === 'lithology') {
-                    // For lithology classification rasters, common no-data values are -9999 and 255
-                    isNoData = value === null || isNaN(value) || value === -9999 || value === 255;
+                    // For lithology classification rasters, common no-data values are 0, -9999 and 255
+                    // Note: 0 is no-data, not "Water" - matches the valid value filtering at line 235
+                    isNoData = value === null || isNaN(value) || value === -9999 || value === 255 || value === 0;
                 } else if (property === 'elevation') {
                     // For elevation, check for various no-data representations
                     isNoData = value === null || isNaN(value) || value === -9999 || value === -3.4028235e+38 || value < -1000;
