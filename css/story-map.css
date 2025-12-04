@@ -1,6 +1,22 @@
 /* Story Map Styles */
 /* ESRI-style Story Map with scroll-triggered animations and embedded maps */
 
+/* ============================================
+   CSS CUSTOM PROPERTIES
+   Consistent values for layout system
+   ============================================ */
+:root {
+    --timeline-width: 180px;
+    --timeline-width-medium: 160px;
+    --content-max-width: 1200px;
+    --content-readable-width: 800px;
+    --section-padding-y: 80px;
+    --section-padding-x: 20px;
+    --panel-gap: 60px;
+    --panel-gap-mobile: 40px;
+    --nav-height: 60px;
+}
+
 /* Reset any inherited styles that might prevent scrolling */
 html {
     height: auto;
@@ -256,6 +272,7 @@ html {
     min-height: 100vh;
     display: flex;
     align-items: center;
+    justify-content: center; /* Center content horizontally */
     padding: 80px 20px;
     opacity: 1;
     transform: translateY(0);
@@ -307,6 +324,19 @@ html {
 .story-content.centered {
     grid-template-columns: 1fr;
     text-align: center;
+    justify-items: center;
+}
+
+/* Limit text width for readability in centered layouts */
+.story-content.centered > .story-text {
+    max-width: var(--content-readable-width);
+    width: 100%;
+}
+
+/* Allow visuals to be full width */
+.story-content.centered > .story-visual {
+    max-width: 100%;
+    width: 100%;
 }
 
 /* Full-width story content for soil orders section */
@@ -314,6 +344,93 @@ html {
     grid-template-columns: 1fr;
     max-width: 1200px;
 }
+
+/* ============================================
+   PANEL LAYOUT SYSTEM
+   Consistent centering for all content
+   ============================================ */
+
+/* Panel Container - Centering wrapper for all content */
+.panel-container {
+    max-width: var(--content-max-width);
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* Panel Single - Centered single column for banners, CTAs */
+.panel-single {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* Limit text width for readability in single panels */
+.panel-single > .story-text,
+.panel-single > .panel-text,
+.panel-single > .clorpt-content {
+    max-width: var(--content-readable-width);
+    width: 100%;
+}
+
+/* Allow visuals to be full width in single panels */
+.panel-single > .story-visual,
+.panel-single > .panel-visual {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* Spacing between stacked visuals */
+.panel-single > .story-visual + .story-visual {
+    margin-top: 40px;
+}
+
+/* Panel Dual - Two columns side by side */
+.panel-dual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--panel-gap);
+    align-items: center;
+    max-width: var(--content-max-width);
+    width: 100%;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .panel-dual {
+        grid-template-columns: 1fr;
+        gap: var(--panel-gap-mobile);
+    }
+}
+
+/* Panel Cards - Card grid layout (for soil orders, etc.) */
+.panel-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin-top: 40px;
+    width: 100%;
+    max-width: var(--content-max-width);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 992px) {
+    .panel-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .panel-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   END PANEL LAYOUT SYSTEM
+   ============================================ */
 
 .story-text.centered {
     text-align: center;
@@ -1830,7 +1947,10 @@ h3 {
 .order-header {
     padding: 20px;
     color: white;
-    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
 }
 
 .order-header h3 {
@@ -1840,13 +1960,12 @@ h3 {
 }
 
 .order-percent {
-    position: absolute;
-    top: 20px;
-    right: 20px;
     background: rgba(255, 255, 255, 0.2);
     padding: 4px 12px;
     border-radius: 20px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .order-content {
@@ -2168,43 +2287,31 @@ h3 {
     display: block;
 }
 
-/* CLORPT Header Section */
+/* CLORPT Header Section - Clean panel-based layout */
+/* No viewport breakout needed - content centers in visible area */
 .clorpt-header {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    margin-left: calc(-50vw + 50%);
-    padding: 0 !important;
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    padding: 0;
 }
 
 .clorpt-banner {
     background: none;
-    padding: 80px 20px;
-    /* Add left padding to account for timeline, centering content in visible area */
-    padding-left: 180px;
+    padding: var(--section-padding-y) var(--section-padding-x);
     text-align: center;
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-@media (max-width: 1280px) and (min-width: 1025px) {
-    .clorpt-banner {
-        padding-left: 160px;
-    }
-}
-
-@media (max-width: 1024px) {
-    .clorpt-banner {
-        padding-left: 20px;
-    }
+    /* Parent .story-container handles timeline offset via padding-left */
 }
 
 .clorpt-content {
-    max-width: 1200px;
+    max-width: var(--content-max-width);
     width: 100%;
-    margin: 0 auto !important;
+    margin: 0 auto;
     position: relative;
     z-index: 1;
 }
