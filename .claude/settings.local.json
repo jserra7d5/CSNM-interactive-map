@@ -10,7 +10,9 @@
       "WebFetch(domain:mrdata.usgs.gov)",
       "WebFetch(domain:localhost)",
       "WebFetch(domain:www.fs.usda.gov)",
-      "Bash(source .venv/bin/activate)"
+      "Bash(source .venv/bin/activate)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)"
     ],
     "deny": [],
     "ask": []

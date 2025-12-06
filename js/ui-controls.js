@@ -1184,6 +1184,10 @@ class UIController {
                     <span class="survey-metadata-value">${surveyData.areaSymbol} <span class="mapunit-data-help">?</span></span>
                 </li>
                 <li class="survey-metadata-item">
+                    <span class="survey-metadata-label">Spatial Version:</span>
+                    <span class="survey-metadata-value">${surveyData.spatialVersion} <span class="mapunit-data-help">?</span></span>
+                </li>
+                <li class="survey-metadata-item">
                     <span class="survey-metadata-label">Scale:</span>
                     <span class="survey-metadata-value">${surveyData.scale} <span class="mapunit-data-help">?</span></span>
                 </li>

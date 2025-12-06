@@ -312,15 +312,18 @@ class SoilExplorerApp {
             console.warn('No feature or properties available for SSURGO detail panel');
             return;
         }
-        
+
         // Get all components for this map unit
         const mukey = feature.properties.MUKEY || feature.properties.mukey;
         const components = this.getMapUnitComponents(mukey);
-        
+
+        // Get pre-calculated statistics for this map unit
+        const muStats = this.appData?.mapunitStatistics?.[mukey] || {};
+
         // Prepare enhanced data with placeholder for missing fields
         const detailData = {
-            mapUnitName: feature.properties.muname || `${feature.properties.MUSYM || feature.properties.musym || 'placeholder'} - ${feature.properties.compname || 'placeholder'}`,
-            mapUnitSymbol: feature.properties.MUSYM || feature.properties.musym || 'placeholder',
+            mapUnitName: feature.properties.muname || muStats.muname || `${feature.properties.MUSYM || feature.properties.musym || 'placeholder'} - ${feature.properties.compname || 'placeholder'}`,
+            mapUnitSymbol: feature.properties.MUSYM || feature.properties.musym || muStats.musym || 'placeholder',
             components: components.map(comp => {
                 return {
                     ...comp,
@@ -330,7 +333,7 @@ class SoilExplorerApp {
             }),
             mapunitData: {
                 mukey: mukey || 'placeholder',
-                musym: feature.properties.MUSYM || feature.properties.musym || 'placeholder',
+                musym: feature.properties.MUSYM || feature.properties.musym || muStats.musym || 'placeholder',
                 nationalSymbol: 'placeholder',
                 orderOfMapping: 'placeholder',
                 mapUnitType: 'placeholder',
@@ -339,19 +342,20 @@ class SoilExplorerApp {
                 floodFrequency: 'placeholder',
                 floodFrequencyMax: 'placeholder',
                 pondingFrequency: 'placeholder',
-                drainageClass: this.getDominantDrainageClass(components) || 'placeholder',
-                drainageClassWet: this.getWettestDrainageClass(components) || 'placeholder',
-                hydricSoilsProportion: this.getHydricSoilsProportion(components) || 'placeholder',
+                drainageClass: muStats.dominantDrainage || this.getDominantDrainageClass(components) || 'placeholder',
+                drainageClassWet: muStats.wettestDrainage || this.getWettestDrainageClass(components) || 'placeholder',
+                hydricSoilsProportion: muStats.hydricSoilsProportion || 'placeholder',
                 waterTableDepthAnnual: 'placeholder',
                 waterTableDepthGrowing: 'placeholder',
                 bedrockDepth: 'placeholder',
-                hydgrp: this.getDominantHydgrp(components) || 'placeholder'
+                hydgrp: muStats.dominantHydgrp || this.getDominantHydgrp(components) || 'placeholder'
             },
             surveyMetadata: {
-                areaSymbol: 'placeholder',
-                scale: 'placeholder',
+                areaSymbol: muStats.areaSymbol || feature.properties.AREASYMBOL || 'placeholder',
+                scale: '1:24,000',
                 published: 'placeholder',
-                lastExport: 'placeholder'
+                lastExport: 'May 2025',
+                spatialVersion: muStats.spatialVersion || feature.properties.SPATIALVER || 'placeholder'
             }
         };
         
@@ -363,10 +367,10 @@ class SoilExplorerApp {
     // Get all components for a map unit
     getMapUnitComponents(mukey) {
         if (!this.appData || !this.appData.soilPolygons) return [];
-        
+
         const components = [];
         const seen = new Set();
-        
+
         // Search through all features to find components with this mukey
         this.appData.soilPolygons.features.forEach(feature => {
             const props = feature.properties;
@@ -470,23 +474,25 @@ class SoilExplorerApp {
     }
     
     // Get proportion of hydric soils
+    // NOTE: This function is now deprecated in favor of pre-calculated statistics
+    // from mapunit-statistics.json, but kept as a fallback
     getHydricSoilsProportion(components) {
         if (!components || components.length === 0) return null;
-        
+
         let hydricPercentage = 0;
         let totalPercentage = 0;
-        
+
         for (const comp of components) {
             const pct = typeof comp.comppct_r === 'number' ? comp.comppct_r : 0;
             totalPercentage += pct;
-            
+
             if (comp.hydricrating === 'Yes') {
                 hydricPercentage += pct;
             }
         }
-        
+
         if (totalPercentage === 0) return '0%';
-        
+
         return Math.round((hydricPercentage / totalPercentage) * 100) + '%';
     }
     

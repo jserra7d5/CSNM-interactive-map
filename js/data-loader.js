@@ -192,7 +192,13 @@ class DataLoader {
                 CONFIG.dataPaths.mapunitTable,
                 'mapunitTable'
             );
-            
+
+            // Load mapunit statistics (pre-calculated aggregate data)
+            dataPromises.mapunitStatistics = this.loadJSON(
+                CONFIG.dataPaths.mapunitStatistics,
+                'mapunitStatistics'
+            );
+
             // Load highways
             dataPromises.highways = this.loadGeoJSON(
                 CONFIG.dataPaths.highways,
@@ -216,24 +222,26 @@ class DataLoader {
                 dataPromises.soilPolygons,
                 dataPromises.boundaryPolygon,
                 dataPromises.mapunitTable,
+                dataPromises.mapunitStatistics,
                 dataPromises.highways,
                 dataPromises.serviceRoads,
                 dataPromises.soilSuitability
             ]);
-            
+
             // Check for failures
             const failures = results.filter(result => result.status === 'rejected');
             if (failures.length > 0) {
             }
-            
+
             // Return successful results
             const data = {
                 soilPolygons: results[0].status === 'fulfilled' ? results[0].value : null,
                 boundaryPolygon: results[1].status === 'fulfilled' ? results[1].value : null,
                 mapunitTable: results[2].status === 'fulfilled' ? results[2].value : null,
-                highways: results[3].status === 'fulfilled' ? results[3].value : null,
-                serviceRoads: results[4].status === 'fulfilled' ? results[4].value : null,
-                soilSuitability: results[5].status === 'fulfilled' ? results[5].value : null
+                mapunitStatistics: results[3].status === 'fulfilled' ? results[3].value : null,
+                highways: results[4].status === 'fulfilled' ? results[4].value : null,
+                serviceRoads: results[5].status === 'fulfilled' ? results[5].value : null,
+                soilSuitability: results[6].status === 'fulfilled' ? results[6].value : null
             };
             
             // Process and enhance the data
